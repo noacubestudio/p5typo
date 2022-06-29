@@ -1327,7 +1327,7 @@ function drawStyle (lineNum) {
          pop()
       }
 
-      function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, bg, flipped, arcQ, offQ) {
+      function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
          //strokeweight
          if (strokeGradient && !xrayMode) {
             strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
@@ -1391,8 +1391,8 @@ function drawStyle (lineNum) {
 
       // convenient values
       // per letter
-      const ascenders = max(Math.floor(animAscenders)+((letterOuter%2===0)?0:0), 1)
-      const descenders = max(Math.floor(animAscenders)+((letterOuter%2===0)?0:0), 1)
+      const ascenders = max(animAscenders+((letterOuter%2===0)?0:0), 1)
+      const descenders = max(animAscenders+((letterOuter%2===0)?0:0), 1)
       const weight = (letterOuter-letterInner)*0.5
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
       const topOffset = (letterOuter < 0) ? -animOffsetX : 0
@@ -1888,7 +1888,7 @@ function drawStyle (lineNum) {
    }
 
    const height = animSize + Math.abs(animOffsetY) + animStretchY
-   const asc = max(Math.floor(animAscenders)+((animSize%2===0)?0:0), 1)
+   const asc = animAscenders
 
    //(wip)
    startOffsetY += height + asc + 1
@@ -1902,7 +1902,8 @@ function drawStyle (lineNum) {
       push()
       if (webglMode) translate(0,0,-1)
       const height = animSize + Math.abs(animOffsetY) + animStretchY
-      const asc = max(Math.floor(animAscenders)+((animSize%2===0)?0:0), 1)
+      const width = totalWidth[lineNum] + Math.abs(animOffsetX)
+      const asc = animAscenders
 
       if (type === "debug") {
          lineColor.setAlpha(40)
@@ -1915,17 +1916,17 @@ function drawStyle (lineNum) {
          }
 
          //vertical gridlines
-        lineType(0, i, totalWidth[lineNum], i)
-        lineType(0, i+height, totalWidth[lineNum], i+height)
-        lineType(0, i-asc, totalWidth[lineNum], i-asc)
-        lineType(0, i+height/2-animOffsetY*0.5, totalWidth[lineNum], i+height/2-animOffsetY*0.5)
-        lineType(0, i+height/2+animOffsetY*0.5, totalWidth[lineNum], i+height/2+animOffsetY*0.5)
-        lineType(0, i+height+asc, totalWidth[lineNum], i+height+asc)
+        lineType(0, i, width, i)
+        lineType(0, i+height, width, i+height)
+        lineType(0, i-asc, width, i-asc)
+        lineType(0, i+height/2-animOffsetY*0.5, width, i+height/2-animOffsetY*0.5)
+        lineType(0, i+height/2+animOffsetY*0.5, width, i+height/2+animOffsetY*0.5)
+        lineType(0, i+height+asc, width, i+height+asc)
    
          //horizontal gridlines
          push()
          translate(0,i+height*0.5)
-         for (let j = 0; j <= totalWidth[lineNum]; j++) {
+         for (let j = 0; j <= width; j++) {
            lineType(j, -height/2-asc, j, height/2+asc)
          }
          pop()
@@ -1939,15 +1940,15 @@ function drawStyle (lineNum) {
             translate(animOffsetX,0)
          }
          if (type === "vertical" || type === "grid") {
-            for (let j = 0; j <= totalWidth[lineNum]; j++) {
+            for (let j = 0; j <= width; j++) {
               lineType(j, -height/2-asc, j, height/2+asc)
             }
          }
          if (type === "horizontal" || type === "grid") {
             let middleLine = ((animSize + animStretchY + animOffsetY) % 2 === 0) ? 0 : 0.5
             for (let k = middleLine; k <= totalHeight[lineNum]/2; k++) {
-              lineType(0, k, totalWidth[lineNum], k)
-              lineType(0, -k, totalWidth[lineNum], -k)
+              lineType(0, k, width, k)
+              lineType(0, -k, width, -k)
             }
          }
          pop()
