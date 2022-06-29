@@ -87,8 +87,6 @@ const newLineChar = String.fromCharCode(13, 10)
 
 function windowResized() {
    resizeCanvas(windowWidth-30, windowHeight-200)
-   cnv.style('display', 'block')
-   cnv.style('margin', '15px')
 }
 
 function setup () {
@@ -637,14 +635,14 @@ function draw () {
       return;
    }
 
-   // resize canvas to fit text better if in svg mode
+   // IN SVG MODE
+
+   // resize canvas to fit text better
    const hMargin = 3
    const vMargin = 3
    const newWidth = Math.max(...totalWidth) + hMargin*2
    const newHeight = (linesArray.length) * Math.max(...totalHeight) + vMargin*2
    resizeCanvas(newWidth*values.zoom.from, newHeight*values.zoom.from)
-   cnv.style('display', 'block')
-   cnv.style('margin', '15px')
 
    //first draw only
    if (initialDraw) {
@@ -1963,9 +1961,6 @@ function drawStyle (lineNum) {
 
 
 
-
-
-
 function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
    const weight = (outer-inner)*0.5
 
@@ -2022,7 +2017,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          charWidth = 2 + outer
          break;
       case " ":
-         charWidth = max([2, animSpacing*2, ceil(inner*0.5)])
+         charWidth = max([2, spacing*2, ceil(inner*0.5)])
          break;
       case "i":
       case ".":
@@ -2208,7 +2203,6 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
       // if there is no special overlaps, use the global spacing
       if (afterConnect === false && beforeConnect === false) {
-
          //regular spacing, if above minspacing
          if (minSpaceAfter !== undefined || minSpaceBefore !== undefined) {
             if (minSpaceBefore !== undefined) {
@@ -2216,12 +2210,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             } else {
                spacingResult = charWidth + max(spacing-1, minSpaceAfter)
             }
-         } else if ("-_ ".includes(char)) {
+         } else if ("-_ ‸".includes(char) || "-_ ‸".includes(nextchar)) {
             spacingResult = charWidth
          } else {
             // other punctuation?
-            spacingResult = charWidth
-            if (!"-_ ".includes(nextchar)) spacingResult += spacing
+            spacingResult = spacing
          }
       } else {
          spacingResult = charWidth + spaceAfter + spaceBefore

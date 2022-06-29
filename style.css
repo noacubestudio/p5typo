@@ -17,7 +17,7 @@ html, body {
 }
 
 canvas {
-  display: block;
+  /* display: block; */
 }
 
 #sketch-holder {
@@ -25,6 +25,7 @@ canvas {
   margin: 15px;
   display: block;
   border-radius: 0.5em;
+  background-color: rgb(var(--bg-color));
 }
 
 /* GUI */
