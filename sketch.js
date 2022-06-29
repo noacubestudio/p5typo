@@ -2055,7 +2055,6 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       charWidth -= 1
    }
 
-
    let spacingResult = 0
    if (isLastLetter === false) {
       // overlap after letter, overwrites default variable spacing
@@ -2210,11 +2209,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             } else {
                spacingResult = charWidth + max(spacing-1, minSpaceAfter)
             }
-         } else if ("-_ ‸".includes(char) || "-_ ‸".includes(nextchar)) {
-            spacingResult = charWidth
+         } else if (!"-_ ‸".includes(char) && !"-_ ‸".includes(nextchar)) {
+            spacingResult = charWidth + spacing
          } else {
             // other punctuation?
-            spacingResult = spacing
+            spacingResult = charWidth
          }
       } else {
          spacingResult = charWidth + spaceAfter + spaceBefore
