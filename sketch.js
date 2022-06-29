@@ -237,17 +237,31 @@ function createGUI () {
    for (const [property, numberInput] of Object.entries(numberInputsObj)) {
       numberInput.element.value = values[property].from
       numberInput.element.addEventListener('input', () => {
-         values[property].to = clamp(numberInput.element.value, numberInput.min, numberInput.max)
-         writeValuesToURL()
+         if (numberInput.element.value !== "") {
+            values[property].to = clamp(numberInput.element.value, numberInput.min, numberInput.max)
+            writeValuesToURL()
+         }
+      })
+      numberInput.element.addEventListener("focusout", () => {
+         if (numberInput.element.value === "") {
+            numberInput.element.value = values[property].from
+         }
       })
    }
 
    numberOffset = document.getElementById('number-offset')
    numberOffset.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
    numberOffset.addEventListener('input', () => {
-      values[(offsetDirection === "h") ? "offsetX" : "offsetY"].to = clamp(numberOffset.value, -10, 10)
-      values[(offsetDirection !== "h") ? "offsetX" : "offsetY"].to = 0
-      writeValuesToURL()
+      if (numberOffset.value !== "") {
+         values[(offsetDirection === "h") ? "offsetX" : "offsetY"].to = clamp(numberOffset.value, -10, 10)
+         values[(offsetDirection !== "h") ? "offsetX" : "offsetY"].to = 0
+         writeValuesToURL()
+      }
+   })
+   numberOffset.addEventListener("focusout", () => {
+      if (numberOffset.value === "") {
+         numberOffset.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
+      }
    })
 
    const offsetToggle = document.getElementById('toggle-offsetDirection')
@@ -685,7 +699,7 @@ function isin (char, sets) {
          }
          else if (set === "gap") {
             //separating regular letters
-            found = "., :;-_!?".includes(char)
+            found = "., :;-_!?‸".includes(char)
          }
       }
    });
@@ -698,17 +712,33 @@ function drawStyle (lineNum) {
    // current line text
    let lineText = linesArray[lineNum].toLowerCase()
 
+   // include caret into line so that it can be rendered
+   if (writingMode && (writeArea.selectionStart === writeArea.selectionEnd)) {
+      let totalChars = 0
+      for (let l = 0; l < linesArray.length; l++) {
+         //found current line
+         if (l === lineNum) {
+            for (let c = 0; c < lineText.length+1; c++) {
+               if (frameCount % 40 > 20 && totalChars+c === writeArea.selectionStart) {
+                  //insert caret character at position
+                  lineText = lineText.slice(0,c) + "‸" + lineText.slice(c)
+                  break;
+               }
+            }
+         } else {
+            totalChars += linesArray[l].length + 1
+         }
+      }
+   } 
+
+   let letterOpacity = 1.0
    // if line empty, but visible, put row of darker o's there
-   const oldLineColor = lineColor
    if (lineText.length === 0) {
       lineText = "o".repeat(9)
       if (!xrayMode) {
-         lineColor = lerpColor(lineColor, bgColor, 0.8)
+         letterOpacity = 0.2
       }
    }
-
-   // variables that grow until the end of the line
-   let verticalOffset = 0 // which side of letters is offset up/down
 
    // fadeout in wavemode
    function waveInner (i, inner, size) {
@@ -732,7 +762,8 @@ function drawStyle (lineNum) {
          letterInner = waveInner(c, letterInner, letterOuter)
 
          const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
-         total += addSpacingBetween(prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset).width
+         const isLastLetter = (c === charIndex)
+         total += letterKerning(isLastLetter, prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset)
       }
       return total
    }
@@ -744,13 +775,8 @@ function drawStyle (lineNum) {
          const char = lineText[c]
          const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
          const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
-         // WIP not writing this twice lol
-         let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
-         let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
-         letterInner = waveInner(c, letterInner, letterOuter)
 
-         const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
-         total += addSpacingBetween(prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset).offset
+         total += letterYOffsetCount(prevchar, char, nextchar)
       }
       return total;
    }
@@ -899,9 +925,10 @@ function drawStyle (lineNum) {
          // only if corner can be drawn at all
          const smallest = strokeSizes[strokeSizes.length-1]
          const biggest = strokeSizes[0]
-         //drawCornerFill(shape,arcQ,offQ,tx,ty,noSmol,noStretchX,noStretchY)
+
          if (!webglMode && strokeSizes.length > 1) {
-            if (cutMode === "" || cutMode === "branch" || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)) {
+            // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
+            if (cutMode === "" || cutMode === "branch") {
                drawCornerFill(shape,arcQ,offQ,tx,ty,noSmol,noStretchX,noStretchY)
             }
          }
@@ -1093,7 +1120,7 @@ function drawStyle (lineNum) {
          pop()
       }
 
-      function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, maxWeight) {
+      function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped) {
          //first, draw the fill
          if (!webglMode && strokeSizes.length > 1) {
             drawLineFill(strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom)
@@ -1286,7 +1313,7 @@ function drawStyle (lineNum) {
          pop()
       }
 
-      function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
+      function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, bg, flipped, arcQ, offQ) {
          //strokeweight
          if (strokeGradient && !xrayMode) {
             strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
@@ -1301,10 +1328,12 @@ function drawStyle (lineNum) {
          if ((biggest-smallest) <1) {
             innerEdgeReference = biggest-2
          }
-         stroke(lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1)))
+         let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
          if ((arcQ !== offQ) !== (flipped === "flipped")) {
-            stroke(lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1)))
+            lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
          }
+         lerpedColor = lerpColor(bgColor, lerpedColor, letterOpacity)
+         stroke(lerpedColor)
       }
 
       function getQuarterPos(offx, offy, biggest) {
@@ -1361,12 +1390,6 @@ function drawStyle (lineNum) {
       ;(function drawLetter () {
 
          const isFlipped = ("cktfe".includes(letter)) ? "" : "flipped"
-         // const nextVerticalOffset = offsetUntil(lineText, i+1)
-         // const underlapChar = (nextchar !== " ") ? nextchar : overnextchar
-         // switch(underlapChar) {
-
-         // }
-
          // draw chars
          switch(letter) {
             case "o":
@@ -1821,6 +1844,12 @@ function drawStyle (lineNum) {
                break;
             case " ":
                break;
+            case "‸":
+               //caret symbol
+               letterOpacity = 0.5
+               drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders+1, undefined, undefined)
+               drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders+1)
+               break;
             default:
                drawCorner("square",[letterOuter], 1, 1, 0, 0, "", "")
                drawCorner("square",[letterOuter], 2, 2, 0, 0, "", "")
@@ -1828,30 +1857,9 @@ function drawStyle (lineNum) {
                drawCorner("square",[letterOuter], 4, 4, 0, 0, "", "")
                break;
          }
+         letterOpacity = 1
       })()
-
-      if (writingMode) {
-         let totalChars = 0
-         let caretPos = writeArea.selectionStart
-
-         for (let l = 0; l < linesArray.length; l++) {
-            const line = linesArray[l]
-            //found current line
-            if (l === lineNum) {
-               if (frameCount % 40 > 20 && totalChars+layerArray.indexOf(layerPos)+1 === caretPos) {
-                  drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders+1)
-                  drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders+1)
-               }
-            } else {
-               totalChars += line.length + 1
-            }
-            
-         }
-      }
    }
-
-   // after the entire line is drawn
-   lineColor = oldLineColor
 
    const height = animSize + Math.abs(animOffsetY) + animStretchY
    const asc = max(Math.floor(animAscenders)+((animSize%2===0)?0:0), 1)
@@ -1930,7 +1938,7 @@ function drawStyle (lineNum) {
 
 
 
-function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
+function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
    const weight = (outer-inner)*0.5
 
    // negative spacing can't go past width of lines
@@ -2005,6 +2013,9 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
       case "?":
          charWidth = ceil(outer*0.5)
          break;
+      case "‸":
+         charWidth = 2
+         break;
    }
 
    // 1 less space after letters with cutoff
@@ -2016,198 +2027,230 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
       charWidth -= 1
    }
 
-   // overlap after letter, overwrites default variable spacing
-   // only happens if it connects into next letter
-   let spaceAfter = 0
-   let afterConnect = false
-   let minSpaceAfter
-   switch(char) {
-      case "s":
-         if (!altS) {
+
+   let spacingResult = 0
+   if (isLastLetter === false) {
+      // overlap after letter, overwrites default variable spacing
+      // only happens if it connects into next letter
+      let spaceAfter = 0
+      let afterConnect = false
+      let minSpaceAfter
+      switch(char) {
+         case "s":
+            if (!altS) {
+               if (!isin(nextchar,["gap", "ul"])) {
+                  spaceAfter = -weight
+                  afterConnect = true
+               } else {
+                  minSpaceAfter = 0
+               }
+            }
+            break;
+         case "k":
+         case "z":
+            if (!isin(nextchar,["gap", "dl"])) {
+               afterConnect = true
+            } else {
+               minSpaceAfter = 0
+            }
+            break;
+         case "x":
+            if (!(isin(nextchar,["gap", "dl"]) && isin(nextchar,["gap", "ul"]))) {
+               afterConnect = true
+            } else {
+               minSpaceAfter = 0
+            }
+            break;
+         case "t":
+         case "l":
+            if (!isin(nextchar,["gap", "dl"])) {
+               spaceAfter = -weight
+               afterConnect = true
+            } else {
+               minSpaceAfter = 0
+            }
+            break;
+         case "f":
+         case "c":
+         case "r":
             if (!isin(nextchar,["gap", "ul"])) {
                spaceAfter = -weight
                afterConnect = true
             } else {
                minSpaceAfter = 0
             }
-         }
-         break;
-      case "k":
-      case "z":
-         if (!isin(nextchar,["gap", "dl"])) {
-            afterConnect = true
-         } else {
-            minSpaceAfter = 0
-         }
-         break;
-      case "x":
-         if (!(isin(nextchar,["gap", "dl"]) && isin(nextchar,["gap", "ul"]))) {
-            afterConnect = true
-         } else {
-            minSpaceAfter = 0
-         }
-         break;
-      case "t":
-      case "l":
-         if (!isin(nextchar,["gap", "dl"])) {
-            spaceAfter = -weight
-            afterConnect = true
-         } else {
-            minSpaceAfter = 0
-         }
-         break;
-      case "f":
-      case "c":
-      case "r":
-         if (!isin(nextchar,["gap", "ul"])) {
-            spaceAfter = -weight
-            afterConnect = true
-         } else {
-            minSpaceAfter = 0
-         }
-         break;
-      case ".":
-      case ",":
-      case "!":
-      case "?":
-         if (!isin(nextchar,["gap"])) {
-            minSpaceAfter = 1
-         }
-   }
+            break;
+         case ".":
+         case ",":
+         case "!":
+         case "?":
+            if (!isin(nextchar,["gap"])) {
+               minSpaceAfter = 1
+            }
+      }
 
-   // depending on the next letter, adjust the spacing
-   // only if the current letter doesn't already overlap with it
-   let spaceBefore = 0
-   let beforeConnect = false
-   let minSpaceBefore
-   if (afterConnect === false) {
-      switch(nextchar) {
-         case "s":
-            if (!altS) {
-               if (!isin(char,["gap", "dr"])) {
+      // depending on the next letter, adjust the spacing
+      // only if the current letter doesn't already overlap with it
+      let spaceBefore = 0
+      let beforeConnect = false
+      let minSpaceBefore
+      if (afterConnect === false) {
+         switch(nextchar) {
+            case "s":
+               if (!altS) {
+                  if (!isin(char,["gap", "dr"])) {
+                     spaceBefore = -weight
+                     beforeConnect = true
+                  } else {
+                     if ("e".includes(char)) {
+                        beforeConnect = true
+                        spaceBefore = optionalGap
+                     } else {
+                        minSpaceBefore = optionalGap
+                     }
+                  }
+               } else {
+                  //alt s
+                  if (!isin(char, ["gap"])) {
+                     spaceBefore = -weight
+                     beforeConnect = true
+                  }
+               }
+               break;
+            case "x":
+               if (!(isin(char,["gap", "ur"]) && isin(char,["gap", "dr"]))) {
                   spaceBefore = -weight
                   beforeConnect = true
                } else {
                   if ("e".includes(char)) {
                      beforeConnect = true
-                     spaceBefore = optionalGap
                   } else {
-                     minSpaceBefore = optionalGap
+                     minSpaceBefore = 1
                   }
                }
-            } else {
-               //alt s
-               if (!isin(char, ["gap"])) {
-                  spaceBefore = -weight
-                  beforeConnect = true
-               }
-            }
-            break;
-         case "x":
-            if (!(isin(char,["gap", "ur"]) && isin(char,["gap", "dr"]))) {
+               break;
+            case "z":
+            case "j":
                spaceBefore = -weight
                beforeConnect = true
-            } else {
-               if ("e".includes(char)) {
-                  beforeConnect = true
-               } else {
-                  minSpaceBefore = 1
-               }
-            }
-            break;
-         case "z":
-         case "j":
-            spaceBefore = -weight
-            beforeConnect = true
-         case ",":
-         case ".":
-         case "!":
-         case "?":
-            minSpaceBefore = 1
-            break;
-      }
-   }
-
-   //extra special combinations
-   if ("ktlcrfsx".includes(char) && nextchar === "s") {
-      spaceBefore = -inner-weight-animStretchX
-      beforeConnect = true
-   }
-   if ("ktlcrfsx".includes(char) && nextchar === "x") {
-      spaceBefore = -inner-weight-animStretchX
-      beforeConnect = true
-   }
-   if ("ktlcrfsx".includes(char) && nextchar === "j") {
-      spaceBefore = -inner-weight-animStretchX
-      beforeConnect = true
-   }
-   if ("s".includes(char) && nextchar === "z") {
-      spaceBefore = -inner-weight-animStretchX
-      beforeConnect = true
-   }
-
-   // remove overlap spacing if next to space
-   if (isin(nextchar,["gap"])) {
-      spaceBefore = 0
-      beforeConnect = false
-   }
-   if (isin(char,["gap"])) {
-      spaceAfter = 0
-      afterConnect = false
-   }
-
-
-
-   let spacingResult = 0
-
-   // if there is no special overlaps, use the global spacing
-   if (afterConnect === false && beforeConnect === false) {
-
-      //regular spacing, if above minspacing
-      if (minSpaceAfter !== undefined || minSpaceBefore !== undefined) {
-         if (minSpaceBefore !== undefined) {
-            spacingResult = charWidth + max(spacing, minSpaceBefore)
-         } else {
-            spacingResult = charWidth + max(spacing-1, minSpaceAfter)
+            case ",":
+            case ".":
+            case "!":
+            case "?":
+               minSpaceBefore = 1
+               break;
          }
-      } else if ("-_ ".includes(char)) {
-         spacingResult = charWidth
+      }
+
+      //extra special combinations
+      if ("ktlcrfsx".includes(char) && nextchar === "s") {
+         spaceBefore = -inner-weight-animStretchX
+         beforeConnect = true
+      }
+      if ("ktlcrfsx".includes(char) && nextchar === "x") {
+         spaceBefore = -inner-weight-animStretchX
+         beforeConnect = true
+      }
+      if ("ktlcrfsx".includes(char) && nextchar === "j") {
+         spaceBefore = -inner-weight-animStretchX
+         beforeConnect = true
+      }
+      if ("s".includes(char) && nextchar === "z") {
+         spaceBefore = -inner-weight-animStretchX
+         beforeConnect = true
+      }
+
+      // remove overlap spacing if next to space
+      if (isin(nextchar,["gap"])) {
+         spaceBefore = 0
+         beforeConnect = false
+      }
+      if (isin(char,["gap"])) {
+         spaceAfter = 0
+         afterConnect = false
+      }
+
+      // if there is no special overlaps, use the global spacing
+      if (afterConnect === false && beforeConnect === false) {
+
+         //regular spacing, if above minspacing
+         if (minSpaceAfter !== undefined || minSpaceBefore !== undefined) {
+            if (minSpaceBefore !== undefined) {
+               spacingResult = charWidth + max(spacing, minSpaceBefore)
+            } else {
+               spacingResult = charWidth + max(spacing-1, minSpaceAfter)
+            }
+         } else if ("-_ ".includes(char)) {
+            spacingResult = charWidth
+         } else {
+            // other punctuation?
+            spacingResult = charWidth
+            if (!"-_ ".includes(nextchar)) spacingResult += spacing
+         }
       } else {
-         // other punctuation?
-         spacingResult = charWidth
-         if (!"-_ ".includes(nextchar)) spacingResult += spacing
+         spacingResult = charWidth + spaceAfter + spaceBefore
       }
    } else {
-      spacingResult = charWidth + spaceAfter + spaceBefore
+      // last letter
+      spacingResult = charWidth
    }
+
+   // stretchWidth
+   let stretchWidth = 0
+   switch (char) {
+      case "s": 
+         if (!altS) {
+            if (isin(prevchar,["gap", "dr"])) {
+               stretchWidth = extendOffset
+            } else {
+               stretchWidth = animStretchX
+            }
+            if (isin(nextchar,["gap", "ul"])) {
+               stretchWidth += extendOffset
+            } else {
+               stretchWidth += animStretchX
+            }
+         }
+         break;
+      case "m":
+      case "w":
+      case "x":
+         stretchWidth += animStretchX * 2
+         break;
+      case "i":
+      case ".":
+      case ",":
+      case "!":
+      case " ":
+         stretchWidth = 0
+      default:
+         stretchWidth = animStretchX
+   }
+
+   return spacingResult + stretchWidth
+}
+
+function letterYOffsetCount (prevchar, char, nextchar) {
 
    // width for vertical offset
    let offsetSegments = 0
-   let stretchWidth = 0
    switch (char) {
       case "m":
       case "w":
-      case "s":
       case "x":
          offsetSegments = 2
+         break;
+      case "s":
          if (char === "s") {
             if (!altS) {
                // stretch spacing depends on if it connects
                if (isin(prevchar,["gap", "dr"])) {
-                  stretchWidth += extendOffset
-               } else {
-                  stretchWidth += animStretchX
-                  offsetSegments -=1
+                  offsetSegments +=1
                }
                if (isin(nextchar,["gap", "ul"])) {
-                  stretchWidth += extendOffset
-               } else {
-                  stretchWidth += animStretchX
-                  offsetSegments -=1
+                  offsetSegments +=1
                }
             }
-         } else {
-            stretchWidth += animStretchX * 2
          }
          break;
       case "i":
@@ -2216,24 +2259,19 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
       case "!":
       case " ":
          offsetSegments = 0
-         stretchWidth += animStretchX * 0
          break;
       case "z":
          offsetSegments = 2
          break;
       default:
          offsetSegments = 1
-         stretchWidth += animStretchX * 1
          break;
    }
 
-   return {
-      width: spacingResult + stretchWidth,
-      offset: offsetSegments
-   }
+   return offsetSegments
 }
 
-function arcUntil(circleSize, y, altValue) {
+function arcUntil (circleSize, y, altValue) {
    //if too close
    if (y <= 0) {
       return altValue
