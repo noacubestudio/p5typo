@@ -43,25 +43,25 @@ let values = {
    stretchY: {from: 0, to: undefined, lerp: 0},
    weight: {from: 7, to: undefined, lerp: 0},
    ascenders: {from: 2, to: undefined, lerp: 0},
-   scale: {from: 10, to: undefined, lerp: 0},
+   zoom: {from: 10, to: undefined, lerp: 0},
 }
 
 // calculated every frame based on current lerps
-let typeSize
-let typeRings
-let typeSpacing
-let typeOffsetX
-let typeOffsetY
-let typeStretchX
-let typeStretchY
-let typeWeight
-let typeAscenders
-let themeDark
-let themeLight
-let typeSpacingY = undefined//5*0.25 +1
+let animSize
+let animRings
+let animSpacing
+let animOffsetX
+let animOffsetY
+let animStretchX
+let animStretchY
+let animWeight
+let animAscenders
+let animZoom
+let animColorDark
+let animColorLight
 
 const numberInputsObj = {
-   scale: {element: document.getElementById('number-scale'), min: 1, max:50},
+   zoom: {element: document.getElementById('number-scale'), min: 1, max:50},
    weight: {element: document.getElementById('number-weight'), min: 1, max: 9},
    spacing: {element: document.getElementById('number-spacing'), min: -2, max:2},
    size: {element: document.getElementById('number-size'), min: 1, max:50},
@@ -78,6 +78,7 @@ const validLetters = "abcdefghijklmnopqrstuvwxyzäöü,.!?-_ "
 // use alt letters?
 let altS = false
 let altM = false
+let altNH = true
 
 // helpful
 const newLineChar = String.fromCharCode(13, 10)
@@ -99,10 +100,10 @@ function setup () {
       strokeCap(ROUND)
       textFont("Courier Mono")
       frameRate(60)
-      if (svgMode) strokeScaleFactor = values.scale.from
+      if (svgMode) strokeScaleFactor = values.zoom.from
    } else {
       frameRate(60)
-      strokeScaleFactor = values.scale.from
+      strokeScaleFactor = values.zoom.from
    }
    rectMode(CORNERS)
 
@@ -224,6 +225,12 @@ function createGUI () {
       altM = altMToggle.checked
       writeValuesToURL()
    })
+   const altNHToggle = document.getElementById('checkbox-altNH')
+   altNHToggle.checked = altNH
+   altNHToggle.addEventListener('click', () => {
+      altNH = altNHToggle.checked
+      writeValuesToURL()
+   })
 
    const clamp = (num, min, max) => Math.min(Math.max(num, min), max)
 
@@ -306,7 +313,7 @@ function loadValuesFromURL () {
 
       if (valString.match("[0-9_-]+") && valArray.length === 10) {
          print("Loaded with parameters", valArray)
-         values.scale.from = parseInt(valArray[0])
+         values.zoom.from = parseInt(valArray[0])
          values.size.from = parseInt(valArray[1])
          values.rings.from = parseInt(valArray[2])
          values.spacing.from = parseInt(valArray[3])
@@ -351,7 +358,7 @@ function writeValuesToURL (noReload) {
          }
       }
       let valueArr = []
-      valueArr.push(""+getValue("scale"))
+      valueArr.push(""+getValue("zoom"))
       valueArr.push(""+getValue("size"))
       valueArr.push(""+getValue("rings"))
       valueArr.push(""+getValue("spacing"))
@@ -558,20 +565,21 @@ function draw () {
       }
    }
 
-   typeSize = lerpValues(values.size)
-   typeRings = lerpValues(values.rings)
-   typeSpacing = lerpValues(values.spacing)
-   typeOffsetX = lerpValues(values.offsetX)
-   typeOffsetY = lerpValues(values.offsetY)
-   typeStretchX = lerpValues(values.stretchX)
-   typeStretchY = lerpValues(values.stretchY)
-   typeWeight = lerpValues(values.weight)
-   typeAscenders = lerpValues(values.ascenders)
-   themeDark = lerpValues(values.hueDark, "dark")
-   themeLight = lerpValues(values.hueLight, "light")
+   animSize = lerpValues(values.size)
+   animRings = lerpValues(values.rings)
+   animSpacing = lerpValues(values.spacing)
+   animOffsetX = lerpValues(values.offsetX)
+   animOffsetY = lerpValues(values.offsetY)
+   animStretchX = lerpValues(values.stretchX)
+   animStretchY = lerpValues(values.stretchY)
+   animWeight = lerpValues(values.weight)
+   animAscenders = lerpValues(values.ascenders)
+   animColorDark = lerpValues(values.hueDark, "dark")
+   animColorLight = lerpValues(values.hueLight, "light")
+   animZoom = lerpValues(values.zoom)
 
-   const lightColor = (monochromeTheme || xrayMode) ? color("white") : themeLight
-   const darkColor = (monochromeTheme || xrayMode) ? color("black") : themeDark
+   const lightColor = (monochromeTheme || xrayMode) ? color("white") : animColorLight
+   const darkColor = (monochromeTheme || xrayMode) ? color("black") : animColorDark
 
    bgColor = lightColor
    lineColor = darkColor
@@ -602,10 +610,9 @@ function draw () {
    // resize canvas to fit text better if in svg mode
    const hMargin = 3
    const vMargin = 3
-   const vGap = (typeSpacingY !== undefined) ? typeSpacingY : 0 
    const newWidth = Math.max(...totalWidth) + hMargin*2
-   const newHeight = (linesArray.length) * Math.max(...totalHeight) + (linesArray.length-1)*vGap + vMargin*2
-   resizeCanvas(newWidth*values.scale.from, newHeight*values.scale.from)
+   const newHeight = (linesArray.length) * Math.max(...totalHeight) + vMargin*2
+   resizeCanvas(newWidth*values.zoom.from, newHeight*values.zoom.from)
    cnv.style('display', 'block')
    cnv.style('margin', '15px')
 
@@ -622,22 +629,22 @@ function draw () {
 function drawElements() {
    push()
    if (webglMode) translate(-width/2, -height/2)
-   scale(values.scale.from)
+   scale(animZoom)
    translate(3, 3)
 
-   translate(0, max(typeAscenders, 1))
+   translate(0, max(animAscenders, 1))
 
-   strokeWeight((typeWeight/10)*strokeScaleFactor)
+   strokeWeight((animWeight/10)*strokeScaleFactor)
    lineColor.setAlpha(255)
 
    startOffsetY = 0
 
-   if (typeOffsetY < 0) {
-      startOffsetY -= typeOffsetY
+   if (animOffsetY < 0) {
+      startOffsetY -= animOffsetY
    }
 
    push()
-   translate(0,0.5*typeSize)
+   translate(0,0.5*animSize)
 
    for (let i = 0; i < linesArray.length; i++) {
       drawStyle(i)
@@ -649,7 +656,7 @@ function drawElements() {
 function getInnerSize (size, rings) {
    let innerSize = min(size - (rings-1) * 2, size)
 
-   if (typeSize % 2 === 0) {
+   if (animSize % 2 === 0) {
       return max(2, innerSize)
    }
    return max(1, innerSize)
@@ -701,7 +708,6 @@ function drawStyle (lineNum) {
    }
 
    // variables that grow until the end of the line
-   let charsWidth = 0 //total width
    let verticalOffset = 0 // which side of letters is offset up/down
 
    // fadeout in wavemode
@@ -712,70 +718,86 @@ function drawStyle (lineNum) {
       return min(size, inner + i*2)
    }
 
+   function lineWidthUntil (lineText, charIndex) {
+      let total = 0
+      //add to total letter per letter until index is reached
+      for (let c = 0; c < charIndex; c++) {
+         // get characters
+         const char = lineText[c]
+         const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
+         const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
+         // WIP not writing this twice lol
+         let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
+         let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
+         letterInner = waveInner(c, letterInner, letterOuter)
+
+         const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+         total += addSpacingBetween(prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset).width
+      }
+      return total
+   }
+
+   function offsetUntil (lineText, charIndex) {
+      let total = 0
+      for (let c = 0; c < charIndex; c++) {
+         // get characters
+         const char = lineText[c]
+         const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
+         const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
+         // WIP not writing this twice lol
+         let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
+         let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
+         letterInner = waveInner(c, letterInner, letterOuter)
+
+         const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+         total += addSpacingBetween(prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset).offset
+      }
+      return total;
+   }
+
    // go through the letters once to get total spacing
-   totalWidth[lineNum] = Math.abs(typeOffsetX)
-   for (let i = 0; i < lineText.length; i++) {
-      // get characters
-      const char = lineText[i]
-      const nextchar = (lineText[i+1] !== undefined) ? lineText[i+1] : " "
-      const prevchar = (lineText[i-1] !== undefined) ? lineText[i-1] : " "
-      // WIP not writing this twice lol
-      let letterInner = getInnerSize(typeSize, typeRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
-      let letterOuter = typeSize //+ [2,4,3,-2,0,2,4,5][i % 8]
-      letterInner = waveInner(i, letterInner, letterOuter)
+   totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
 
-      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (typeStretchX-(typeStretchX%2))*0.5
-      totalWidth[lineNum] += addSpacingBetween(prevchar, char, nextchar, typeSpacing, letterInner, letterOuter, extendOffset).width
-   }
 
-   //translate to center if toggled
+   //translate to account for x offset
    push()
-   if (typeOffsetX < 0) {
-      translate(-typeOffsetX,0)
+   if (animOffsetX < 0) {
+      translate(-animOffsetX,0)
    }
 
-   // grid
+   // draw line below everything
    if (gridType !== "") {
       drawGrid(gridType)
    }
 
    // go through all the letters, but this time to actually draw them
-
-   for (let i = 0; i < lineText.length; i++) {
-      // get characters
-      const char = lineText[i]
-      const nextchar = (lineText[i+1] !== undefined) ? lineText[i+1] : " "
-      const prevchar = (lineText[i-1] !== undefined) ? lineText[i-1] : " "
-
-      // ring sizes for this character
-      let letterInner = getInnerSize(typeSize, typeRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
-      let letterOuter = typeSize //+ [2,4,3,-2,0,2,4,5][i % 8]
-
-      // change depending on the character index (i) if wave mode is on
-      letterInner = waveInner(i, letterInner, letterOuter)
-
-      // array with all ring sizes for that letter
-      let ringSizes = []
-      for (let b = letterOuter; b >= letterInner-2; b-=2) {
-         // smallest ring is animated
-         let size = (b < letterInner) ? letterInner : b
-         ringSizes.push(size)
+   // go in a weird order so that lower letters go first
+   let prevOverlapCharCount = 0
+   for (let c = 0; c < lineText.length; c++) {
+      const char = lineText[c]
+      if ("sjzx".includes(char)) {
+         prevOverlapCharCount++
       }
+   }
 
-      // convenient values
-      // per letter
-      const ascenders = max(Math.floor(typeAscenders)+((letterOuter%2===0)?0:0), 1)
-      const descenders = max(Math.floor(typeAscenders)+((letterOuter%2===0)?0:0), 1)
-      const weight = (letterOuter-letterInner)*0.5
-      const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
-      const topOffset = (letterOuter < 0) ? -typeOffsetX : 0
-      const wideOffset = 0.5*letterOuter + 0.5*letterInner
-      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (typeStretchX-(typeStretchX%2))*0.5
+   //fox ... count from 0, give x letter, give pos 2
+   let layerArray = []
+   let prevOverlapCharUntil = 0
+   let regularCharUntil = 0
+   for (let c = 0; c < lineText.length; c++) {
+      const char = lineText[c]
+      if ("sjzx".includes(char)) {
+         prevOverlapCharUntil++
+         layerArray.push(-prevOverlapCharUntil + prevOverlapCharCount)
+      } else {
+         layerArray.push(regularCharUntil + prevOverlapCharCount)
+         regularCharUntil++
+      }
+   }
+   //if (frameCount % 120 === 0) print("arr",layerArray, lineText)
 
-      // determine spacing to the right of character based on both
-      const spacingResult = addSpacingBetween(prevchar, char, nextchar, typeSpacing, letterInner, letterOuter, extendOffset)
-      const nextSpacing = spacingResult.width
 
+   for (let layerPos = 0; layerPos < lineText.length; layerPos++) {
 
       function drawCornerFill (shape, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
          if (weight === 0 || !drawFills) {
@@ -796,15 +818,15 @@ function drawStyle (lineNum) {
          //}
 
          // base position
-         let xpos = topOffset + charsWidth + (letterOuter/2)
+         let xpos = topOffset + letterPositionFromLeft + (letterOuter/2)
          let ypos = startOffsetY
          // offset based on quarter and prev vertical offset
          let offx = (offQ === 3 || offQ === 4) ? 1:0
          let offy = (offQ === 2 || offQ === 3) ? 1:0
-         xpos += (offx > 0) ? typeOffsetX : 0
-         ypos += (verticalOffset+offy) % 2==0 ? typeOffsetY : 0
-         xpos += (offy > 0) ? typeStretchX : 0
-         ypos += (offx > 0) ? typeStretchY : 0
+         xpos += (offx > 0) ? animOffsetX : 0
+         ypos += (verticalOffset+offy) % 2==0 ? animOffsetY : 0
+         xpos += (offy > 0) ? animStretchX : 0
+         ypos += (offx > 0) ? animStretchY : 0
 
          if (shape === "round") {
             // angles
@@ -832,7 +854,7 @@ function drawStyle (lineNum) {
             endShape()
          }
 
-         if (typeStretchX > 0 && !noStretchX) {
+         if (animStretchX > 0 && !noStretchX) {
             stroke((xrayMode)? color("#831"): bgColor)
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
             let stretchXPos = xpos
@@ -842,16 +864,16 @@ function drawStyle (lineNum) {
             // the offset can be in between the regular lines vertically if it would staircase nicely
             let offsetShift = 0
             let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-            if (Math.abs(typeOffsetY) >2 && Math.abs(typeOffsetY) <4) {
-               offsetShift = (typeOffsetY/3)*stairDir
-            } else if (Math.abs(typeOffsetY) >1 && Math.abs(typeOffsetY)<3) {
-               offsetShift = (typeOffsetY/2)*stairDir
+            if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
+               offsetShift = (animOffsetY/3)*stairDir
+            } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
+               offsetShift = (animOffsetY/2)*stairDir
             }
 
            lineType(stretchXPos, stretchYPos+offsetShift,
-               stretchXPos + dirX*0.5*typeStretchX, stretchYPos+offsetShift)
+               stretchXPos + dirX*0.5*animStretchX, stretchYPos+offsetShift)
          }
-         if (typeStretchY > 0 && !noStretchY) {
+         if (animStretchY > 0 && !noStretchY) {
             stroke((xrayMode)? color("#17B"): bgColor)
             const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
             let stretchXPos = xpos + size*toSideY*0.5
@@ -860,14 +882,14 @@ function drawStyle (lineNum) {
 
             // the offset can be in between the regular lines horizontally if it would staircase nicely
             let offsetShift = 0
-            if (Math.abs(typeOffsetX) >2 && Math.abs(typeOffsetX) <4) {
-               offsetShift = typeOffsetX/3*dirY
-            } else if (Math.abs(typeOffsetX) >1 && Math.abs(typeOffsetX)<3) {
-               offsetShift = typeOffsetX/2*dirY
+            if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
+               offsetShift = animOffsetX/3*dirY
+            } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
+               offsetShift = animOffsetX/2*dirY
             }
 
            lineType(stretchXPos+offsetShift, stretchYPos,
-               stretchXPos+offsetShift, stretchYPos + dirY*0.5*typeStretchY)
+               stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
          }
          pop()
       }
@@ -897,7 +919,7 @@ function drawStyle (lineNum) {
          //    draw()
          // }
 
-         strokeWeight((typeWeight/10)*strokeScaleFactor)
+         strokeWeight((animWeight/10)*strokeScaleFactor)
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
@@ -1009,7 +1031,7 @@ function drawStyle (lineNum) {
                }
 
                const cutX = (arcQ % 2 === 0) === (cutSide === "start")
-               if (typeStretchX > 0 && !noStretchX) {
+               if (animStretchX > 0 && !noStretchX) {
                   // check if not cut off
                   if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
                      const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
@@ -1020,17 +1042,17 @@ function drawStyle (lineNum) {
                      // the offset can be in between the regular lines vertically if it would staircase nicely
                      let offsetShift = 0
                      let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-                     if (Math.abs(typeOffsetY) >2 && Math.abs(typeOffsetY) <4) {
-                        offsetShift = (typeOffsetY/3)*stairDir
-                     } else if (Math.abs(typeOffsetY) >1 && Math.abs(typeOffsetY)<3) {
-                        offsetShift = (typeOffsetY/2)*stairDir
+                     if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
+                        offsetShift = (animOffsetY/3)*stairDir
+                     } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
+                        offsetShift = (animOffsetY/2)*stairDir
                      }
 
                     lineType(stretchXPos, stretchYPos+offsetShift,
-                        stretchXPos + dirX*0.5*typeStretchX, stretchYPos+offsetShift)
+                        stretchXPos + dirX*0.5*animStretchX, stretchYPos+offsetShift)
                   }
                }
-               if (typeStretchY > 0 && !noStretchY) {
+               if (animStretchY > 0 && !noStretchY) {
                   // check if not cut off
                   if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
                      const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
@@ -1047,17 +1069,17 @@ function drawStyle (lineNum) {
 
                      // the offset can be in between the regular lines horizontally if it would staircase nicely
                      let offsetShift = 0
-                     if (Math.abs(typeOffsetX) >2 && Math.abs(typeOffsetX) <4) {
-                        offsetShift = typeOffsetX/3*dirY
-                     } else if (Math.abs(typeOffsetX) >1 && Math.abs(typeOffsetX)<3) {
-                        offsetShift = typeOffsetX/2*dirY
+                     if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
+                        offsetShift = animOffsetX/3*dirY
+                     } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
+                        offsetShift = animOffsetX/2*dirY
                      }
 
                     lineType(stretchXPos+offsetShift, stretchYPos,
-                        stretchXPos+offsetShift, stretchYPos + dirY*0.5*typeStretchY)
+                        stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
                   }
                }
-               const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (typeStretchX-(typeStretchX%2))*0.5
+               const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
                if (cutMode === "extend" && extendamount > 0) {
                   const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
                   let extendXPos = xpos
@@ -1093,7 +1115,7 @@ function drawStyle (lineNum) {
          //   draw()
          //}
 
-         strokeWeight((typeWeight/10)*strokeScaleFactor)
+         strokeWeight((animWeight/10)*strokeScaleFactor)
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
@@ -1132,16 +1154,16 @@ function drawStyle (lineNum) {
                   if (dirY*(y2-y1)>=0) {
                     lineType(x1, y1, x2, y2)
                   }
-                  if (typeStretchY !== 0 && innerPosV === 0) {
+                  if (animStretchY !== 0 && innerPosV === 0) {
                      //stretch
                      // the offset can be in between the regular lines horizontally if it would staircase nicely
                      let offsetShift = 0
-                     if (Math.abs(typeOffsetX) >2 && Math.abs(typeOffsetX) <4) {
-                        offsetShift = typeOffsetX/3*dirY
-                     } else if (Math.abs(typeOffsetX) >1 && Math.abs(typeOffsetX)<3) {
-                        offsetShift = typeOffsetX/2*dirY
+                     if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
+                        offsetShift = animOffsetX/3*dirY
+                     } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
+                        offsetShift = animOffsetX/2*dirY
                      }
-                    lineType(x1-offsetShift, y1-typeStretchY*0.5*dirY, x2-offsetShift, y1)
+                    lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
                   }
                } else if (axis === "h") {
                   const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
@@ -1154,17 +1176,17 @@ function drawStyle (lineNum) {
                   if (dirX*(x2-x1)>=0) {
                     lineType(x1, y1, x2, y2)
                   }
-                  if (typeStretchX !== 0 && innerPosH === 0) {
+                  if (animStretchX !== 0 && innerPosH === 0) {
                      //stretch
                      // the offset can be in between the regular lines vertically if it would staircase nicely
                      let offsetShift = 0
                      let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-                     if (Math.abs(typeOffsetY) >2 && Math.abs(typeOffsetY) <4) {
-                        offsetShift = (typeOffsetY/3)*stairDir
-                     } else if (Math.abs(typeOffsetY) >1 && Math.abs(typeOffsetY)<3) {
-                        offsetShift = (typeOffsetY/2)*stairDir
+                     if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
+                        offsetShift = (animOffsetY/3)*stairDir
+                     } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
+                        offsetShift = (animOffsetY/2)*stairDir
                      }
-                    lineType(x1-typeStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+                    lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
                   }
                }
             });
@@ -1185,12 +1207,13 @@ function drawStyle (lineNum) {
          strokeWeight(weight*strokeScaleFactor)
          strokeCap(SQUARE)
 
+         //for entire line
          const size = strokeSizes[0]
          const smallest = strokeSizes[strokeSizes.length-1]
          const biggest = strokeSizes[0]
 
-         // to make the rectangles a little longer at the end
-         let strokeWeightReference = (typeWeight/10)
+         // to make the rectangles a little shorter at the end (?)
+         let strokeWeightReference = (animWeight/10)
          if (xrayMode) {
             strokeWeightReference = 0.2*strokeScaleFactor
          }
@@ -1220,18 +1243,18 @@ function drawStyle (lineNum) {
             if (dirY*(y2-y1)>0.1) {
               lineType(x1, y1, x2, y2)
             }
-            if (typeStretchY !== 0 && innerPosV === 0) {
+            if (animStretchY !== 0 && innerPosV === 0) {
                //stretch
                // the offset can be in between the regular lines horizontally if it would staircase nicely
                let offsetShift = 0
-               if (Math.abs(typeOffsetX) >2 && Math.abs(typeOffsetX) <4) {
-                  offsetShift = typeOffsetX/3*dirY
-               } else if (Math.abs(typeOffsetX) >1 && Math.abs(typeOffsetX)<3) {
-                  offsetShift = typeOffsetX/2*dirY
+               if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
+                  offsetShift = animOffsetX/3*dirY
+               } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
+                  offsetShift = animOffsetX/2*dirY
                }
 
                stroke((xrayMode)? color("#367"): bgColor)
-              lineType(x1-offsetShift, y1-typeStretchY*0.5*dirY, x2-offsetShift, y1)
+              lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
             }
          } else if (axis === "h") {
             const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
@@ -1244,20 +1267,20 @@ function drawStyle (lineNum) {
             if (dirX*(x2-x1)>0.1) {
               lineType(x1, y1, x2, y2)
             }
-            if (typeStretchX !== 0 && innerPosH === 0) {
+            if (animStretchX !== 0 && innerPosH === 0) {
                //stretch
 
                // the offset can be in between the regular lines vertically if it would staircase nicely
                let offsetShift = 0
                let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-               if (Math.abs(typeOffsetY) >2 && Math.abs(typeOffsetY) <4) {
-                  offsetShift = (typeOffsetY/3)*stairDir
-               } else if (Math.abs(typeOffsetY) >1 && Math.abs(typeOffsetY)<3) {
-                  offsetShift = (typeOffsetY/2)*stairDir
+               if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
+                  offsetShift = (animOffsetY/3)*stairDir
+               } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
+                  offsetShift = (animOffsetY/2)*stairDir
                }
 
                stroke((xrayMode)? color("#891"): bgColor)
-              lineType(x1-typeStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+              lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
             }
          }
          pop()
@@ -1266,9 +1289,9 @@ function drawStyle (lineNum) {
       function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
          //strokeweight
          if (strokeGradient && !xrayMode) {
-            strokeWeight((typeWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
+            strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
             if ((arcQ !== offQ) !== (flipped === "flipped")) {
-               strokeWeight((typeWeight/10)*strokeScaleFactor*map(size,smallest,biggest,1,10.3))
+               strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,1,10.3))
             }
          }
 
@@ -1286,105 +1309,66 @@ function drawStyle (lineNum) {
 
       function getQuarterPos(offx, offy, biggest) {
          // base position
-         let xpos = topOffset + charsWidth + (biggest/2)
+         let xpos = topOffset + letterPositionFromLeft + (biggest/2)
          let ypos = startOffsetY
          // offset based on quarter and prev vertical offset
-         xpos += (offx > 0) ? typeOffsetX : 0
-         ypos += (verticalOffset+offy) % 2==0 ? typeOffsetY : 0
-         xpos += (offy > 0) ? typeStretchX : 0
-         ypos += (offx > 0) ? typeStretchY : 0
+         xpos += (offx > 0) ? animOffsetX : 0
+         ypos += (verticalOffset+offy) % 2==0 ? animOffsetY : 0
+         xpos += (offy > 0) ? animStretchX : 0
+         ypos += (offx > 0) ? animStretchY : 0
          return {x: xpos, y:ypos}
       }
 
+      // VALUES -----------------------------------------------------------------------------
+
+      // get characters
+      //(WIP)
+      const letter = lineText[layerArray.indexOf(layerPos)]
+      const nextLetter = (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " "
+      const prevLetter = (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " "
+
+      // ring sizes for this character
+      let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
+      let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
+
+      // change depending on the character index (i) if wave mode is on
+      letterInner = waveInner(layerArray.indexOf(layerPos), letterInner, letterOuter)
+
+      // array with all ring sizes for that letter
+      let ringSizes = []
+      for (let b = letterOuter; b >= letterInner-2; b-=2) {
+         // smallest ring is animated
+         let size = (b < letterInner) ? letterInner : b
+         ringSizes.push(size)
+      }
+
+      //position and offset after going through all letters in the line until this point
+      const letterPositionFromLeft = lineWidthUntil(lineText, layerArray.indexOf(layerPos))
+      const verticalOffset = offsetUntil(lineText, layerArray.indexOf(layerPos))
+
+      // convenient values
+      // per letter
+      const ascenders = max(Math.floor(animAscenders)+((letterOuter%2===0)?0:0), 1)
+      const descenders = max(Math.floor(animAscenders)+((letterOuter%2===0)?0:0), 1)
+      const weight = (letterOuter-letterInner)*0.5
+      const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
+      const topOffset = (letterOuter < 0) ? -animOffsetX : 0
+      const wideOffset = 0.5*letterOuter + 0.5*letterInner
+      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
 
-      drawLetter()
+      ;(function drawLetter () {
 
-      function drawLetter () {
-         
-         // draw start of certain next letters early so that the current letter can overlap it
-         //"ktlcrfs"
+         const isFlipped = ("cktfe".includes(letter)) ? "" : "flipped"
+         // const nextVerticalOffset = offsetUntil(lineText, i+1)
+         // const underlapChar = (nextchar !== " ") ? nextchar : overnextchar
+         // switch(underlapChar) {
 
-         const isFlipped = ("cktfe".includes(char)) ? "" : "flipped"
-         const nextOffset = addSpacingBetween(char, nextchar, "", typeSpacing, letterInner, letterOuter, extendOffset).offset
-         switch(nextchar) {
-            case "s":
-               if (!altS) {
-                  verticalOffset += nextOffset
-                  if (char === "s") {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end", isFlipped)
-                  } else if (char === "r") {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "linecut", "end", isFlipped)
-                  } else if (!isin(char,["gap", "dr"]) && !"fk".includes(char)) {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end", isFlipped)
-                  }
-                  verticalOffset -= nextOffset
-               } else {
-                  //alt S
-                  verticalOffset += nextOffset
-                  if (isin(char,["dr"])) {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "linecut", "end")
-                  } else if (char !== "t") {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end")
-                  }
-                  verticalOffset -= nextOffset
-               }
-               break;
-            case "x":
-               push()
-               if (isin(char,["gap","ur"]) && isin(char,["gap","dr"])) {
-                  translate(-weight-1,0)
-               }
-               // top connection
-               verticalOffset += nextOffset
-               if (!isin(char,["gap"]) && char !== "x") {
-                  if (isin(char,["ur"]) || "l".includes(char)) {
-                     drawCorner("round",ringSizes, 1, 1, nextSpacing, 0, "linecut", "start")
-                  } else if (char !== "t"){
-                     drawCorner("round",ringSizes, 1, 1, nextSpacing, 0, "roundcut", "start")
-                  }
-               }
-               // bottom connection
-               if (!"xef".includes(char) && !isin(char,["gap"])) {
-                  if (char === "s" && !altS) {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end", isFlipped)
-                  } else if (char === "r" || isin(char,["dr"])) {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "linecut", "end", isFlipped)
-                  } else {
-                     drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end", isFlipped)
-                  }
-               }
-               pop()
-               verticalOffset -= nextOffset
-               break;
-            case "z":
-               verticalOffset += nextOffset
-               if (isin(char,["ur"])) {
-                  drawCorner("round",ringSizes, 1, 2, nextSpacing, 0, "linecut", "start", "flipped")
-               } else if (!isin(char,["gap"])) {
-                  drawCorner("round",ringSizes, 1, 2, nextSpacing, 0, "roundcut", "start", "flipped")
-               } else {
-                  //can't be reached, do below instead
-                  //drawCorner("round",ringSizes, 1, 1, nextSpacing, 0)
-               }
-               verticalOffset -= nextOffset
-               break;
-            case "j":
-               verticalOffset += nextOffset
-               if (isin(char,["dr"]) || "r".includes(char)) {
-                  drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "linecut", "end")
-               } else if (!"tk".includes(char)) {
-                  drawCorner("round",ringSizes, 4, 4, nextSpacing, 0, "roundcut", "end")
-               }
-               if (!isin(char,["tr", "gap"]) && !"ckrsx".includes(char)) {
-                  drawLine(ringSizes, 1, 1, nextSpacing, 0, "h", -weight-1)
-               }
-               verticalOffset -= nextOffset
-               break;
-         }
+         // }
 
          // draw chars
-         switch(char) {
+         switch(letter) {
             case "o":
             case "ö":
             case "d":
@@ -1398,17 +1382,17 @@ function drawStyle (lineNum) {
                drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
-               if (char === "d") {
+               if (letter === "d") {
                   drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders)
                }
-               else if (char === "b") {
+               else if (letter === "b") {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
                }
-               else if (char === "q") {
+               else if (letter === "q") {
                   drawLine(ringSizes, 3, 3, 0, 0, "v", descenders)
-               } else if (char === "p") {
+               } else if (letter === "p") {
                   drawLine(ringSizes, 4, 4, 0, 0, "v", descenders)
-               } else if (char === "ö") {
+               } else if (letter === "ö") {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                   drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
@@ -1431,12 +1415,12 @@ function drawStyle (lineNum) {
                break;
             case "c":
                drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               if (isin(nextchar, ["ul", "gap"])) {
+               if (isin(nextLetter, ["ul", "gap"])) {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end", undefined, false)
                }
-               if (isin(nextchar, ["dl", "gap"])) {
+               if (isin(nextLetter, ["dl", "gap"])) {
                   drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "start", undefined, true)
                } else {
                   drawCorner("round",ringSizes, 3, 3, 0, 0, "roundcut", "start", undefined, false)
@@ -1454,19 +1438,19 @@ function drawStyle (lineNum) {
                drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
-               if ("s".includes(nextchar)) {
+               if ("s".includes(nextLetter)) {
                   drawLine(ringSizes, 3, 3, 0, 0, "h", 1)
-               } else if (isin(nextchar,["gap"]) || "gz".includes(nextchar)) {
+               } else if (isin(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
                   drawLine(ringSizes, 3, 3, 0, 0, "h", 0)
-               } else if (!isin(nextchar,["dl", "gap"]) && letterInner <= 2) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + typeStretchX)
-               } else if ("x".includes(nextchar)) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + typeStretchX-weight)
-               } else if (!isin(nextchar,["dl"])) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(typeSpacing, -weight))
-               } else if (typeSpacing < 0) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(typeSpacing, -weight))
-               } else if (typeSpacing > 0){
+               } else if (!isin(nextLetter,["dl", "gap"]) && letterInner <= 2) {
+                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
+               } else if ("x".includes(nextLetter)) {
+                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-weight)
+               } else if (!isin(nextLetter,["dl"])) {
+                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -weight))
+               } else if (animSpacing < 0) {
+                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -weight))
+               } else if (animSpacing > 0){
                   drawLine(ringSizes, 3, 3, 0, 0, "h", 0)
                } else {
                   drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset)
@@ -1486,14 +1470,19 @@ function drawStyle (lineNum) {
                // SECOND LAYER
                drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
 
-               if (char === "ä") {
+               if (letter === "ä") {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                   drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
                break;
             case "n":
-               drawCorner("square",ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               if (altNH) {
+                  drawCorner("square",ringSizes, 1, 1, 0, 0, "", "")
+                  drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               } else {
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
+                  drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+               }
                drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                break;
@@ -1504,81 +1493,118 @@ function drawStyle (lineNum) {
                   drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
                   drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                   // SECOND LAYER
-                  drawCorner("square",ringSizes, 2, 1, wideOffset + typeStretchX*2, 0, "", "", "flipped")
+                  drawCorner("square",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
                   drawCorner("square",ringSizes, 1, 2, wideOffset, 0, "branch", "start", "flipped")
                   drawLine(ringSizes, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(ringSizes, 3, 4, wideOffset + typeStretchX*2, 0, "v", 0, undefined, "flipped")
+                  drawLine(ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                } else {
                   drawCorner("diagonal",ringSizes, 1, 1, 0, 0, "", "")
                   drawCorner("diagonal",ringSizes, 2, 2, 0, 0, "", "")
                   drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
                   drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                   // SECOND LAYER
-                  drawCorner("diagonal",ringSizes, 2, 1, wideOffset + typeStretchX*2, 0, "", "", "flipped")
+                  drawCorner("diagonal",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
                   drawCorner("diagonal",ringSizes, 1, 2, wideOffset, 0, "", "", "flipped")
                   drawLine(ringSizes, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(ringSizes, 3, 4, wideOffset + typeStretchX*2, 0, "v", 0, undefined, "flipped")
+                  drawLine(ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                }
               
                break;
             case "s":
                if (!altS) {
                   push()
-                  const isFlipped = ("cktfe".includes(prevchar)) ? "" : "flipped"
+
+                  //LEFT OVERLAP
+                  if (prevLetter === "s") {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                  } else if (prevLetter === "r") {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", isFlipped)
+                  } else if (!isin(prevLetter,["gap", "dr"]) && !"fk".includes(prevLetter)) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                  }
+
                   //start further left if not connecting left
-                  if (isin(prevchar,["gap", "dr"])) {
-                     translate(-letterOuter*0.5 + extendOffset -typeStretchX,0)
+                  if (isin(prevLetter,["gap", "dr"])) {
+                     translate(-letterOuter*0.5 + extendOffset -animStretchX,0)
                      drawCorner("round",ringSizes, 3, 3, 0, 0, "extend", "end", isFlipped)
                   } else {
                      drawCorner("round",ringSizes, 3, 3, 0, 0, "", "", isFlipped)
                   }
-                  if (!isin(nextchar,["gap", "ul"]) && !"zxj".includes(nextchar) || nextchar === "s") {
+                  if (!isin(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
                      drawCorner("round",ringSizes, 1, 2, wideOffset, 0, "", "", isFlipped)
-                     drawCorner("round",ringSizes, 2, 1, wideOffset + typeStretchX*2, 0, "roundcut", "end", isFlipped)
+                     drawCorner("round",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "roundcut", "end", isFlipped)
                   } else {
                      drawCorner("round",ringSizes, 1, 2, wideOffset, 0, "extend", "end", isFlipped)
                   }
                   pop()
                } else {
                   // alternative cursive s
+
+                  //LEFT OVERLAP
+                  if (isin(prevchar,["dr"])) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+                  } else if (prevLetter !== "t") {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end")
+                  }
+
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
                   drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
-                  if (isin(prevchar,["gap"])) {
+                  if (isin(prevLetter,["gap"])) {
                      drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
                   }
                }
                break;
             case "x":
                push()
-               if (isin(prevchar,["gap","ur"]) && isin(prevchar,["gap","dr"])) {
+               if (isin(prevLetter,["gap","ur"]) && isin(prevLetter,["gap","dr"])) {
                   translate(-weight-1,0)
                }
 
-               if (isin(prevchar, ["gap"])) {
+               //LEFT OVERLAP
+               // top connection
+               if (!isin(prevLetter,["gap"]) && prevLetter !== "x") {
+                  if (isin(prevLetter,["ur"]) || "l".includes(prevLetter)) {
+                     drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
+                  } else if (prevLetter !== "t"){
+                     drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start")
+                  }
+               }
+               // bottom connection
+               if (!"xef".includes(prevLetter) && !isin(prevLetter,["gap"])) {
+                  if (prevLetter === "s" && !altS) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                  } else if (prevLetter === "r" || isin(prevLetter,["dr"])) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", isFlipped)
+                  } else {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                  }
+               }
+
+               if (isin(prevLetter, ["gap"])) {
                   drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start", undefined, true)
                }
                drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
                drawCorner("round",ringSizes, 4, 3, wideOffset, 0, "", "")
 
-               if (nextchar !== "x") {
-                  if (!isin(nextchar,["dl", "gap"])) {
-                     drawCorner("round",ringSizes, 3, 4, wideOffset + typeStretchX*2, 0, "roundcut", "start")
+               if (nextLetter !== "x") {
+                  if (!isin(nextLetter,["dl", "gap"])) {
+                     drawCorner("round",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
                   } else {
-                     drawCorner("round",ringSizes, 3, 4, wideOffset + typeStretchX*2, 0, "linecut", "start", undefined, true)
+                     drawCorner("round",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
                   }
                }
 
                // SECOND LAYER
                drawCorner("diagonal",ringSizes, 1, 2, wideOffset, 0, "", "", "flipped")
-               if (nextchar !== "x") {
-                  if (!isin(nextchar,["gap", "ul"])) {
-                     drawCorner("round",ringSizes, 2, 1, wideOffset+ typeStretchX*2, 0, "roundcut", "end", "flipped")
+               if (nextLetter !== "x") {
+                  if (!isin(nextLetter,["gap", "ul"])) {
+                     drawCorner("round",ringSizes, 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
                   } else {
-                     drawCorner("round",ringSizes, 2, 1, wideOffset+ typeStretchX*2, 0, "linecut", "end", "flipped", true)
+                     drawCorner("round",ringSizes, 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
                   }
                }
                drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "", "flipped")
-               if (isin(prevchar,["gap"])) {
+               if (isin(prevLetter,["gap"])) {
                   drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", "flipped", true)
                }
                pop()
@@ -1592,9 +1618,9 @@ function drawStyle (lineNum) {
                drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
-               if (char === "y") {
+               if (letter === "y") {
                   drawLine(ringSizes, 3, 3, 0, 0, "v", descenders)
-               } else if (char === "ü") {
+               } else if (letter === "ü") {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                   drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
@@ -1605,14 +1631,14 @@ function drawStyle (lineNum) {
                drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "")
                drawCorner("diagonal",ringSizes, 4, 4, 0, 0, "", "")
 
-               drawLine(ringSizes, 2, 1, wideOffset + typeStretchX*2, 0, "v", 0, undefined, "flipped")
+               drawLine(ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                drawLine(ringSizes, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
                drawCorner("diagonal",ringSizes, 4, 3, wideOffset, 0, "", "", "flipped")
-               drawCorner("diagonal",ringSizes, 3, 4, wideOffset + typeStretchX*2, 0, "", "", "flipped")
+               drawCorner("diagonal",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
                break;
             case "r":
                drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               if (isin(nextchar,["ul", "gap"])) {
+               if (isin(nextLetter,["ul", "gap"])) {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end")
@@ -1622,11 +1648,11 @@ function drawStyle (lineNum) {
             case "l":
             case "t":
 
-               if (char === "t") {
+               if (letter === "t") {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
                   drawCorner("square",ringSizes, 1, 1, 0, 0, "branch", "end")
-                  if (!"zx".includes(nextchar)) {
-                     if (isin(nextchar,["ul", "gap"]) || letterInner > 2) {
+                  if (!"zx".includes(nextLetter)) {
+                     if (isin(nextLetter,["ul", "gap"]) || letterInner > 2) {
                         drawLine(ringSizes, 2, 2, 0, 0, "h", -weight-1 + ((letterInner<2) ? 1 : 0))
                      } else {
                         drawLine(ringSizes, 2, 2, 0, 0, "h", letterOuter*0.5-weight)
@@ -1637,7 +1663,7 @@ function drawStyle (lineNum) {
                }
 
                drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
-               if (isin(nextchar,["dl", "gap"])) {
+               if (isin(nextLetter,["dl", "gap"])) {
                   drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "start", undefined, true)
                } else {
                   drawCorner("round",ringSizes, 3, 3, 0, 0, "roundcut", "start", undefined, false)
@@ -1645,7 +1671,7 @@ function drawStyle (lineNum) {
                break;
             case "f":
                drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               if (isin(nextchar,["ul", "gap"])) {
+               if (isin(nextLetter,["ul", "gap"])) {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
                   drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end", undefined, false)
@@ -1654,8 +1680,8 @@ function drawStyle (lineNum) {
                drawCorner("square", ringSizes, 4, 4, 0, 0, "branch", "start")
 
                // SECOND LAYER
-               if (!"sx".includes(nextchar)) {
-                  if (isin(nextchar,["dl", "gap"]) || letterInner > 2) {
+               if (!"sx".includes(nextLetter)) {
+                  if (isin(nextLetter,["dl", "gap"]) || letterInner > 2) {
                      drawLine(ringSizes, 3, 3, 0, 0, "h", -weight-1 + ((letterInner<2) ? 1 : 0))
                   } else {
                      drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5-weight)
@@ -1667,11 +1693,11 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                drawCorner("diagonal",ringSizes, 1, 1, weight, 0, "", "")
                drawCorner("diagonal",ringSizes, 4, 4, weight, 0, "", "")
-               if (!"x".includes(nextchar)) {
+               if (!"x".includes(nextLetter)) {
                   drawLine(ringSizes, 2, 2, weight, 0, "h", -oneoffset-weight)
                }
-               if (!"sx".includes(nextchar)) {
-                  if (!(isin(nextchar,["dl", "gap"]))) {
+               if (!"sx".includes(nextLetter)) {
+                  if (!(isin(nextLetter,["dl", "gap"]))) {
                      drawCorner("round",ringSizes, 3, 3, weight, 0, "roundcut", "start")
                   } else {
                      drawLine(ringSizes, 3, 3, weight, 0, "h", -oneoffset-weight)
@@ -1682,8 +1708,13 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, 0)
 
                // SECOND LAYER
-               drawCorner("square",ringSizes, 1, 1, 0, 0, "branch", "end")
-               drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               if (altNH) {
+                  drawCorner("square",ringSizes, 1, 1, 0, 0, "branch", "end")
+                  drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               } else {
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
+                  drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+               }
                drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                break;
@@ -1724,18 +1755,42 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                break;
             case "j":
+
+               // LEFT OVERLAP
+               if (prevLetter !== undefined) {
+                  if (isin(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+                  } else if (!"tk".includes(prevLetter)) {
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end")
+                  }
+                  if (!isin(prevLetter,["tr"]) && !"ckrsx".includes(prevLetter)) {
+                     drawLine(ringSizes, 1, 1, 0, 0, "h", -weight-1)
+                  }
+               }
+               
                drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                drawCorner("square", ringSizes, 2, 2, 0, 0, "", "")
                drawCorner("round", ringSizes, 3, 3, 0, 0, "", "")
-               if (isin(prevchar, ["gap"])) {
-                  drawLine(ringSizes, 1, 1, 0, 0, "h", 0)
-                  drawCorner("round", ringSizes, 4, 4, 0, 0, "", "")
+               if (prevLetter === undefined) {
+                  drawLine(ringSizes, 1, 1, 0, 0, "h", -weight-1)
+                  drawCorner("round", ringSizes, 4, 4, 0, 0, "linecut", "end")
                }
                break;
             case "z":
                push()
+
+               // LEFT OVERLAP
+               if (isin(prevLetter,["ur"])) {
+                  drawCorner("round",ringSizes, 1, 2, 0, 0, "linecut", "start", "flipped")
+               } else if (!isin(prevLetter,["gap"])) {
+                  drawCorner("round",ringSizes, 1, 2, 0, 0, "roundcut", "start", "flipped")
+               } else {
+                  //can't be reached, do below instead
+                  //drawCorner("round",ringSizes, 1, 1, 0, 0)
+               }
+
                //1st line oben
-               if (isin(prevchar, ["gap"])) {
+               if (isin(prevLetter, ["gap"])) {
                   drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
                }
 
@@ -1744,9 +1799,9 @@ function drawStyle (lineNum) {
 
                translate(weight+1,0)
 
-               if (isin(nextchar,["dl"])) {
+               if (isin(nextLetter,["dl"])) {
                   drawCorner("round",ringSizes, 3, 4, 1, 0, "linecut", "start")
-               } else if (!isin(nextchar,["gap"])) {
+               } else if (!isin(nextLetter,["gap"])) {
                   drawCorner("round",ringSizes, 3, 4, 1, 0, "roundcut", "start")
                } else {
                   drawCorner("round",ringSizes, 3, 4, 1, 0, "", "")
@@ -1773,58 +1828,37 @@ function drawStyle (lineNum) {
                drawCorner("square",[letterOuter], 4, 4, 0, 0, "", "")
                break;
          }
-      }
-
-      verticalOffset += spacingResult.offset
-      charsWidth += nextSpacing
+      })()
 
       if (writingMode) {
          let totalChars = 0
          let caretPos = writeArea.selectionStart
 
          for (let l = 0; l < linesArray.length; l++) {
-            const line = linesArray[l];
+            const line = linesArray[l]
             //found current line
             if (l === lineNum) {
-               if (frameCount % 40 > 20 && totalChars+i+1 === caretPos) {
-                  drawLine([letterOuter], 1, 1, 1, 0, "v", typeAscenders+1)
-                  drawLine([letterOuter], 4, 4, 1, 0, "v", typeAscenders+1)
+               if (frameCount % 40 > 20 && totalChars+layerArray.indexOf(layerPos)+1 === caretPos) {
+                  drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders+1)
+                  drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders+1)
                }
             } else {
                totalChars += line.length + 1
             }
             
          }
-
-         // linesArray.forEach(line => {
-         //    print(line.length, lineNum)
-         //    if (line+1 === lineNum && caretPos > totalLength && caretPos <= totalLength + line.length + 1) {
-         //       //print(caretPos, totalLength+i+1, i)
-         //       if ( totalLength+i+1 === caretPos && frameCount%40 > 20){
-               
-         //          drawLine([letterOuter], 1, 1, 1, 0, "v", typeAscenders)
-         //          drawLine([letterOuter], 4, 4, 1, 0, "v", typeAscenders)
-         //       }
-         //    }
-         //    totalLength += line.length
-         // })
       }
    }
 
    // after the entire line is drawn
    lineColor = oldLineColor
 
-   const height = typeSize + Math.abs(typeOffsetY) + typeStretchY
-   const asc = max(Math.floor(typeAscenders)+((typeSize%2===0)?0:0), 1)
-   const desc = asc
+   const height = animSize + Math.abs(animOffsetY) + animStretchY
+   const asc = max(Math.floor(animAscenders)+((animSize%2===0)?0:0), 1)
 
-   if (typeSpacingY !== undefined) {
-      startOffsetY += height+typeSpacingY
-      totalHeight[lineNum] = height +typeSpacingY
-   } else {
-      startOffsetY += height + asc + 1
-      totalHeight[lineNum] = height + asc + 1
-   }
+   //(wip)
+   startOffsetY += height + asc + 1
+   totalHeight[lineNum] = height + asc + 1
 
    if (xrayMode) {
       drawGrid("debug")
@@ -1833,25 +1867,25 @@ function drawStyle (lineNum) {
    function drawGrid (type) {
       push()
       if (webglMode) translate(0,0,-1)
-      const height = typeSize + Math.abs(typeOffsetY) + typeStretchY
-      const asc = max(Math.floor(typeAscenders)+((typeSize%2===0)?0:0), 1)
+      const height = animSize + Math.abs(animOffsetY) + animStretchY
+      const asc = max(Math.floor(animAscenders)+((animSize%2===0)?0:0), 1)
 
       if (type === "debug") {
          lineColor.setAlpha(40)
          stroke(lineColor)
          strokeWeight(0.2*strokeScaleFactor)
    
-         const i = lineNum * totalHeight[lineNum] - typeSize/2
-         if (typeOffsetX<0) {
-            translate(typeOffsetX,0)
+         const i = lineNum * totalHeight[lineNum] - animSize/2
+         if (animOffsetX<0) {
+            translate(animOffsetX,0)
          }
 
          //vertical gridlines
         lineType(0, i, totalWidth[lineNum], i)
         lineType(0, i+height, totalWidth[lineNum], i+height)
         lineType(0, i-asc, totalWidth[lineNum], i-asc)
-        lineType(0, i+height/2-typeOffsetY*0.5, totalWidth[lineNum], i+height/2-typeOffsetY*0.5)
-        lineType(0, i+height/2+typeOffsetY*0.5, totalWidth[lineNum], i+height/2+typeOffsetY*0.5)
+        lineType(0, i+height/2-animOffsetY*0.5, totalWidth[lineNum], i+height/2-animOffsetY*0.5)
+        lineType(0, i+height/2+animOffsetY*0.5, totalWidth[lineNum], i+height/2+animOffsetY*0.5)
         lineType(0, i+height+asc, totalWidth[lineNum], i+height+asc)
    
          //horizontal gridlines
@@ -1863,12 +1897,12 @@ function drawStyle (lineNum) {
          pop()
       } else if (!xrayMode){
          stroke(lineColor)
-         strokeWeight((typeWeight/10)*1*strokeScaleFactor)
-         const i = lineNum * totalHeight[lineNum] - typeSize/2
+         strokeWeight((animWeight/10)*1*strokeScaleFactor)
+         const i = lineNum * totalHeight[lineNum] - animSize/2
          push()
          translate(0,i+height*0.5)
-         if (typeOffsetX<0) {
-            translate(typeOffsetX,0)
+         if (animOffsetX<0) {
+            translate(animOffsetX,0)
          }
          if (type === "vertical" || type === "grid") {
             for (let j = 0; j <= totalWidth[lineNum]; j++) {
@@ -1876,7 +1910,7 @@ function drawStyle (lineNum) {
             }
          }
          if (type === "horizontal" || type === "grid") {
-            let middleLine = ((typeSize + typeStretchY + typeOffsetY) % 2 === 0) ? 0 : 0.5
+            let middleLine = ((animSize + animStretchY + animOffsetY) % 2 === 0) ? 0 : 0.5
             for (let k = middleLine; k <= totalHeight[lineNum]/2; k++) {
               lineType(0, k, totalWidth[lineNum], k)
               lineType(0, -k, totalWidth[lineNum], -k)
@@ -1888,6 +1922,7 @@ function drawStyle (lineNum) {
       lineColor.setAlpha(255)
       pop()
    }
+   pop()
 }
 
 
@@ -1904,7 +1939,7 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
 
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
-   if (typeRings > 1) {
+   if (animRings > 1) {
       if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
          ("dgi".includes(char) && "i".includes(nextchar))) {
       spacing = max(spacing, 1)
@@ -1946,7 +1981,7 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
          charWidth = 2 + outer
          break;
       case " ":
-         charWidth = max([2, typeSpacing*2, ceil(inner*0.5)])
+         charWidth = max([2, animSpacing*2, ceil(inner*0.5)])
          break;
       case "i":
       case ".":
@@ -2082,10 +2117,8 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
             break;
          case "z":
          case "j":
-            if (!isin(char, ["gap"])) {
-               spaceBefore = -weight
-               beforeConnect = true
-            }
+            spaceBefore = -weight
+            beforeConnect = true
          case ",":
          case ".":
          case "!":
@@ -2097,19 +2130,19 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
 
    //extra special combinations
    if ("ktlcrfsx".includes(char) && nextchar === "s") {
-      spaceBefore = -inner-weight-typeStretchX
+      spaceBefore = -inner-weight-animStretchX
       beforeConnect = true
    }
    if ("ktlcrfsx".includes(char) && nextchar === "x") {
-      spaceBefore = -inner-weight-typeStretchX
+      spaceBefore = -inner-weight-animStretchX
       beforeConnect = true
    }
    if ("ktlcrfsx".includes(char) && nextchar === "j") {
-      spaceBefore = -inner-weight-typeStretchX
+      spaceBefore = -inner-weight-animStretchX
       beforeConnect = true
    }
    if ("s".includes(char) && nextchar === "z") {
-      spaceBefore = -inner-weight-typeStretchX
+      spaceBefore = -inner-weight-animStretchX
       beforeConnect = true
    }
 
@@ -2163,18 +2196,18 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
                if (isin(prevchar,["gap", "dr"])) {
                   stretchWidth += extendOffset
                } else {
-                  stretchWidth += typeStretchX
+                  stretchWidth += animStretchX
                   offsetSegments -=1
                }
                if (isin(nextchar,["gap", "ul"])) {
                   stretchWidth += extendOffset
                } else {
-                  stretchWidth += typeStretchX
+                  stretchWidth += animStretchX
                   offsetSegments -=1
                }
             }
          } else {
-            stretchWidth += typeStretchX * 2
+            stretchWidth += animStretchX * 2
          }
          break;
       case "i":
@@ -2183,14 +2216,14 @@ function addSpacingBetween(prevchar, char, nextchar, spacing, inner, outer, exte
       case "!":
       case " ":
          offsetSegments = 0
-         stretchWidth += typeStretchX * 0
+         stretchWidth += animStretchX * 0
          break;
       case "z":
          offsetSegments = 2
          break;
       default:
          offsetSegments = 1
-         stretchWidth += typeStretchX * 1
+         stretchWidth += animStretchX * 1
          break;
    }
 
@@ -2257,7 +2290,7 @@ function lineType (x1, y1, x2, y2) {
       for (let i = 0; i < 11; i++) {
          push()
          translate(x1+(x2-x1)*0.1*i, y1+(y2-y1)*0.1*i)
-         sphere(typeWeight/10,6, 6)
+         sphere(animWeight/10,6, 6)
          pop()
       }
       //translate((x1+x2)/2, (y1+y2)/2)
@@ -2289,7 +2322,7 @@ function arcType (x, y, w, h, start, stop) {
          const angle = start + (stop-start)*0.1*i
          translate(x, y)
          translate(cos(angle)*(w/2), sin(angle)*(w/2))
-         sphere(typeWeight/10,6, 6)
+         sphere(animWeight/10,6, 6)
          pop()
       }
       
