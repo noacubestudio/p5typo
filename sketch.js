@@ -8,6 +8,7 @@ let startOffsetY
 //gui
 let writeArea
 let writingMode = false
+let offsetLabel
 
 let bgColor
 let lineColor
@@ -265,15 +266,22 @@ function createGUI () {
    })
 
    const offsetToggle = document.getElementById('toggle-offsetDirection')
+   offsetLabel = document.getElementById('label-offset')
    offsetToggle.addEventListener('click', () => {
       if (offsetDirection === "h") {
+         if (values.offsetX.from === 0) values.offsetY.to = 1
          offsetDirection = "v"
+         offsetLabel.innerHTML = "offset&nbsp;&nbsp;v"
       } else {
+         if (values.offsetY.from === 0) values.offsetX.to = 1
          offsetDirection = "h"
+         offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
       }
-      values.offsetX.to = values.offsetY.from
-      values.offsetY.to = values.offsetX.from
+      if (values.offsetX.to === undefined) values.offsetX.to = values.offsetY.from
+      if (values.offsetY.to === undefined) values.offsetY.to = values.offsetX.from
+
       writeValuesToURL()
+      writeValuesToGUI()
    })
 }
 
@@ -457,14 +465,21 @@ function writeValuesToGUI () {
    } else {
       potentialOffsetY = values.offsetY.from
    }
-   if (potentialOffsetX === 0) {
-      numberOffset.value = potentialOffsetY
-      offsetDirection = "v"
-   } else {
-      numberOffset.value = potentialOffsetX
+   if (potentialOffsetX === 0 && potentialOffsetY === 0) {
+      //both empty, default to horizontal
       offsetDirection = "h"
+      offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
+   } else {
+      if (potentialOffsetX === 0) {
+         numberOffset.value = potentialOffsetY
+         offsetDirection = "v"
+         offsetLabel.innerHTML = "offset&nbsp;&nbsp;v"
+      } else {
+         numberOffset.value = potentialOffsetX
+         offsetDirection = "h"
+         offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
+      }
    }
-   
 }
 
 function keyTyped() {
@@ -499,6 +514,7 @@ function randomizeValues () {
       values.offsetX.to = floor(random(-2, 2))
    } else if (offsetType === "v") {
       values.offsetY.to = floor(random(-1, 2))
+      //if (values.offsetY.to === 0) offsetDirection = "h" //horizontal is preference
    }
 
    if (random() >= 0.8) {
@@ -713,7 +729,7 @@ function drawStyle (lineNum) {
    let lineText = linesArray[lineNum].toLowerCase()
 
    // include caret into line so that it can be rendered
-   if (writingMode && (writeArea.selectionStart === writeArea.selectionEnd)) {
+   if (writingMode && !xrayMode && !svgMode && (writeArea.selectionStart === writeArea.selectionEnd)) {
       let totalChars = 0
       for (let l = 0; l < linesArray.length; l++) {
          //found current line
@@ -1436,7 +1452,6 @@ function drawStyle (lineNum) {
                   drawCorner("square", ringSizes, 3, 3, 0, descenders-1, "", "")
                   drawLine(ringSizes, 4, 4, 0, descenders-1, "h", -1)
                }
-               
 
                drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
                drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
@@ -1786,11 +1801,15 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                break;
             case "j":
+               push()
+               if (charInSet(prevLetter,["gap"])) {
+                  translate(-weight-1,0)
+               }
 
                // LEFT OVERLAP
                if (prevLetter !== undefined) {
                   if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", undefined, true)
                   } else if (!"tk".includes(prevLetter)) {
                      drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end")
                   }
@@ -1806,6 +1825,7 @@ function drawStyle (lineNum) {
                   drawLine(ringSizes, 1, 1, 0, 0, "h", -weight-1)
                   drawCorner("round", ringSizes, 4, 4, 0, 0, "linecut", "end")
                }
+               pop()
                break;
             case "z":
                push()
@@ -1831,11 +1851,11 @@ function drawStyle (lineNum) {
                translate(weight+1,0)
 
                if (charInSet(nextLetter,["dl"])) {
-                  drawCorner("round",ringSizes, 3, 4, 1, 0, "linecut", "start")
+                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "linecut", "start")
                } else if (!charInSet(nextLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 3, 4, 1, 0, "roundcut", "start")
+                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "roundcut", "start")
                } else {
-                  drawCorner("round",ringSizes, 3, 4, 1, 0, "", "")
+                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "", "")
                }
 
                drawCorner("diagonal", ringSizes, 3, 3, -letterOuter*0.5, 0, "", "", "flipped")
@@ -1982,6 +2002,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             charWidth = weight*1 + inner*2 -1
          }
          break;
+      case "j":
+         if (charInSet(prevchar,["gap"])) {
+            charWidth = weight*1 + inner -1
+         }
+         break;
       case "s":
          if (!altS) {
             charWidth = weight*3 + inner*2
@@ -2030,8 +2055,8 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
    if ("ktlcrfsx-".includes(char) && charInSet(nextchar,["gap"])) {
       charWidth -= 1
    }
-   // 1 less space in front of xsj
-   if ("xsj-".includes(nextchar) && charInSet(char,["gap"])) {
+   // 1 less space in front of xs-
+   if ("xs-".includes(nextchar) && charInSet(char,["gap"])) {
       charWidth -= 1
    }
 
@@ -2139,8 +2164,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
                break;
             case "z":
             case "j":
-               spaceBefore = -weight
-               beforeConnect = true
+               if (!(charInSet(char,["gap"]))) {
+                  spaceBefore = -weight
+                  beforeConnect = true
+               }
+               break;
             case ",":
             case ".":
             case "!":
