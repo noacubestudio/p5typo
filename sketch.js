@@ -19,6 +19,7 @@ let darkMode = true
 let monochromeTheme = false
 let xrayMode = false
 let gradientMode = false
+let vCondenseMode = true
 
 let drawFills = true
 let strokeGradient = false
@@ -216,6 +217,12 @@ function createGUI () {
    gradientToggle.checked = gradientMode
    gradientToggle.addEventListener('click', () => {
       gradientMode = gradientToggle.checked
+      writeValuesToURL()
+   })
+   const vCondenseToggle = document.getElementById('checkbox-condense')
+   vCondenseToggle.checked = vCondenseMode
+   vCondenseToggle.addEventListener('click', () => {
+      vCondenseMode = vCondenseToggle.checked
       writeValuesToURL()
    })
    const altMToggle = document.getElementById('checkbox-altM')
@@ -798,6 +805,11 @@ function drawStyle (lineNum) {
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
 
+   // get the vconnection spots 
+   let vConnectionSpots = new Array(Math.floor(totalWidth[lineNum])).fill(0);
+   //vConnectionSpots[4] = 1
+   //vConnectionSpots[totalWidth[lineNum]] = 1
+
 
    //translate to account for x offset
    push()
@@ -834,7 +846,6 @@ function drawStyle (lineNum) {
          regularCharUntil++
       }
    }
-   //if (frameCount % 120 === 0) print("arr",layerArray, lineText)
 
 
    for (let layerPos = 0; layerPos < lineText.length; layerPos++) {
@@ -1116,8 +1127,11 @@ function drawStyle (lineNum) {
                         offsetShift = animOffsetX/2*dirY
                      }
 
-                    lineType(stretchXPos+offsetShift, stretchYPos,
+                     if (!vCondenseMode) lineType(stretchXPos+offsetShift, stretchYPos,
                         stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
+
+                     // if vertical line goes down, set those connection spots in the array
+                     if (dirY === 1 && vCondenseMode) vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
                   }
                }
                const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
@@ -1204,7 +1218,10 @@ function drawStyle (lineNum) {
                      } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
                         offsetShift = animOffsetX/2*dirY
                      }
-                    lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+                     if (!vCondenseMode) lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+                     
+                     // if vertical line goes down, set those connection spots in the array
+                     if (dirY === -1 && vCondenseMode) vConnectionSpots[Math.floor(x1 + tx)] = 1
                   }
                } else if (axis === "h") {
                   const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
@@ -1215,7 +1232,7 @@ function drawStyle (lineNum) {
                   x2 += (letterOuter*0.5 + extension) * dirX
                   //only draw the non-stretch part if it is long enough to be visible
                   if (dirX*(x2-x1)>=0) {
-                    lineType(x1, y1, x2, y2)
+                     lineType(x1, y1, x2, y2)
                   }
                   if (animStretchX !== 0 && innerPosH === 0) {
                      //stretch
@@ -1227,7 +1244,7 @@ function drawStyle (lineNum) {
                      } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
                         offsetShift = (animOffsetY/2)*stairDir
                      }
-                    lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+                     lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
                   }
                }
             });
@@ -1556,8 +1573,6 @@ function drawStyle (lineNum) {
                break;
             case "s":
                if (!altS) {
-                  push()
-
                   //LEFT OVERLAP
                   if (prevLetter === "s") {
                      drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
@@ -1566,21 +1581,20 @@ function drawStyle (lineNum) {
                   } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fk".includes(prevLetter)) {
                      drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   }
-
+                  let xOffset = 0
                   //start further left if not connecting left
                   if (charInSet(prevLetter,["gap", "dr"])) {
-                     translate(-letterOuter*0.5 + extendOffset -animStretchX,0)
-                     drawCorner("round",ringSizes, 3, 3, 0, 0, "extend", "end", isFlipped)
+                     xOffset = -letterOuter*0.5 + extendOffset -animStretchX
+                     drawCorner("round",ringSizes, 3, 3, xOffset, 0, "extend", "end", isFlipped)
                   } else {
-                     drawCorner("round",ringSizes, 3, 3, 0, 0, "", "", isFlipped)
+                     drawCorner("round",ringSizes, 3, 3, xOffset, 0, "", "", isFlipped)
                   }
                   if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
-                     drawCorner("round",ringSizes, 1, 2, wideOffset, 0, "", "", isFlipped)
-                     drawCorner("round",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "roundcut", "end", isFlipped)
+                     drawCorner("round",ringSizes, 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
+                     drawCorner("round",ringSizes, 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
                   } else {
-                     drawCorner("round",ringSizes, 1, 2, wideOffset, 0, "extend", "end", isFlipped)
+                     drawCorner("round",ringSizes, 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
                   }
-                  pop()
                } else {
                   // alternative cursive s
 
@@ -1799,35 +1813,32 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
                break;
             case "j":
-               push()
+               let leftOffset = 0
                if (charInSet(prevLetter,["gap"])) {
-                  translate(-weight-1,0)
+                  leftOffset = -weight-1
                }
 
                // LEFT OVERLAP
                if (prevLetter !== undefined) {
                   if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", undefined, true)
+                     drawCorner("round",ringSizes, 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
                   } else if (!"tk".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end")
+                     drawCorner("round",ringSizes, 4, 4, leftOffset, 0, "roundcut", "end")
                   }
                   if (!charInSet(prevLetter,["tr"]) && !"ckrsx".includes(prevLetter)) {
-                     drawLine(ringSizes, 1, 1, 0, 0, "h", -weight-1)
+                     drawLine(ringSizes, 1, 1, leftOffset, 0, "h", -weight-1)
                   }
                }
                
-               drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               drawCorner("square", ringSizes, 2, 2, 0, 0, "", "")
-               drawCorner("round", ringSizes, 3, 3, 0, 0, "", "")
+               drawLine(ringSizes, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
+               drawCorner("square", ringSizes, 2, 2, leftOffset, 0, "", "")
+               drawCorner("round", ringSizes, 3, 3, leftOffset, 0, "", "")
                if (prevLetter === undefined) {
-                  drawLine(ringSizes, 1, 1, 0, 0, "h", -weight-1)
-                  drawCorner("round", ringSizes, 4, 4, 0, 0, "linecut", "end")
+                  drawLine(ringSizes, 1, 1, leftOffset, 0, "h", -weight-1)
+                  drawCorner("round", ringSizes, 4, 4, leftOffset, 0, "linecut", "end")
                }
-               pop()
                break;
             case "z":
-               push()
-
                // LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
                   drawCorner("round",ringSizes, 1, 2, 0, 0, "linecut", "start", "flipped")
@@ -1846,19 +1857,16 @@ function drawStyle (lineNum) {
                drawLine(ringSizes, 2, 2, 0, 0, "h", 1)
                drawCorner("diagonal", ringSizes, 1, 2, letterOuter*0.5 + 1, 0, "", "", "flipped")
 
-               translate(weight+1,0)
-
                if (charInSet(nextLetter,["dl"])) {
-                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "linecut", "start")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "linecut", "start")
                } else if (!charInSet(nextLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "roundcut", "start")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "roundcut", "start")
                } else {
-                  drawCorner("round",ringSizes, 3, 4, 1+animStretchX*2, 0, "", "")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "", "")
                }
 
-               drawCorner("diagonal", ringSizes, 3, 3, -letterOuter*0.5, 0, "", "", "flipped")
-               drawLine(ringSizes, 4, 3, 1, 0, "h", 1)
-               pop()
+               drawCorner("diagonal", ringSizes, 3, 3, weight+1-letterOuter*0.5, 0, "", "", "flipped")
+               drawLine(ringSizes, 4, 3, weight+2, 0, "h", 1)
                break;
             case "-":
                drawLine([letterOuter], 1, 1, 0, +letterOuter*0.5, "h", -1)
@@ -1898,6 +1906,10 @@ function drawStyle (lineNum) {
       drawGrid("debug")
    }
 
+   if (vCondenseMode) {
+      drawVConnections()
+   }
+
    function drawGrid (type) {
       push()
       if (webglMode) translate(0,0,-1)
@@ -1927,7 +1939,7 @@ function drawStyle (lineNum) {
          push()
          translate(0,i+height*0.5)
          for (let j = 0; j <= width; j++) {
-           lineType(j, -height/2-asc, j, height/2+asc)
+            lineType(j, -height/2-asc, j, height/2+asc)
          }
          pop()
       } else if (!xrayMode){
@@ -1957,8 +1969,35 @@ function drawStyle (lineNum) {
       lineColor.setAlpha(255)
       pop()
    }
+
+   function drawVConnections () {
+      push()
+         stroke(lineColor)
+         noFill()
+         strokeWeight((animWeight/10)*1*strokeScaleFactor)
+         const i = lineNum * totalHeight[lineNum] - animSize/2
+         translate(0,height*0.5+i)
+         let vCondensedTotal = 0
+         for (let j = 0; j <= totalWidth[lineNum]; j++) {
+            if (vConnectionSpots[j] === 1) {
+               vCondensedTotal++
+            }
+         }
+         let vCondensedOffset = (totalWidth[lineNum] - vCondensedTotal)*0.5
+         let vCondensedCount = vCondensedOffset
+         for (let j = 0; j <= totalWidth[lineNum]; j++) {
+            if (vConnectionSpots[j] === 1) {
+               bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, vCondensedCount, -animStretchY*0.25, vCondensedCount, 0)
+               bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, +animStretchY*0.25, vCondensedCount + animOffsetX, +animStretchY*0.25, vCondensedCount + animOffsetX, 0)
+               vCondensedCount++
+            }
+         }
+      pop()
+   }
    pop()
 }
+
+
 
 
 

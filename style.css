@@ -16,9 +16,9 @@ html, body {
   font-size: 14pt;
 }
 
-canvas {
-  /* display: block; */
-}
+/* canvas {
+  display: block;
+} */
 
 #sketch-holder {
   overflow: hidden;
