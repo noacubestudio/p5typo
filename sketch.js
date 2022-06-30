@@ -1884,16 +1884,10 @@ function drawStyle (lineNum) {
             case "z":
                // LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
-                  drawCorner("round",ringSizes, 1, 2, 0, 0, "linecut", "start", "flipped")
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start", "flipped")
                } else if (!charInSet(prevLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 1, 2, 0, 0, "roundcut", "start", "flipped")
-               } else {
-                  //can't be reached, do below instead
-                  //drawCorner("round",ringSizes, 1, 1, 0, 0)
-               }
-
-               //1st line oben
-               if (charInSet(prevLetter, ["gap"])) {
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start", "flipped")
+               } else if (charInSet(prevLetter, ["gap"])) {
                   drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
                }
 
@@ -2118,14 +2112,14 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       case "t":
       case "l":
          if (charInSet(nextchar,["gap", "dl"])) {
-            charWidth += -weight
+            charWidth = outer-weight
          }
          break;
       case "f":
       case "c":
       case "r":
          if (charInSet(nextchar,["gap", "ul"])) {
-            charWidth += -weight
+            charWidth = outer-weight
          }
          break;
       case "?":
@@ -2333,7 +2327,8 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       case "m":
       case "w":
       case "x":
-         stretchWidth += animStretchX * 2
+      case "z":
+         stretchWidth = animStretchX * 2
          break;
       case "i":
       case ".":
@@ -2341,6 +2336,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       case "!":
       case " ":
          stretchWidth = 0
+         break;
       default:
          stretchWidth = animStretchX
    }
