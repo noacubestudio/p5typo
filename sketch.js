@@ -19,7 +19,7 @@ let darkMode = true
 let monochromeTheme = false
 let xrayMode = false
 let gradientMode = false
-let vCondenseMode = true
+let vCondenseMode = false
 
 let drawFills = true
 let strokeGradient = false
@@ -223,6 +223,11 @@ function createGUI () {
    vCondenseToggle.checked = vCondenseMode
    vCondenseToggle.addEventListener('click', () => {
       vCondenseMode = vCondenseToggle.checked
+      if (vCondenseMode) {
+         //wip
+         values.stretchY.to = min(values.size.from * 2, values.stretchY.from)
+         writeValuesToGUI()
+      }
       writeValuesToURL()
    })
    const altMToggle = document.getElementById('checkbox-altM')
@@ -330,6 +335,10 @@ function loadValuesFromURL () {
       strokeGradient = true
       print("Loaded with URL Mode: Stroke Gradient")
    }
+   if (params.condense === "true" || params.condense === "1") {
+      vCondenseMode = true
+      print("Loaded with URL Mode: Condensed vertical stretch")
+   }
    if (params.lines !== null && params.lines.length > 0) {
       linesArray = String(params.lines).split("\\")
       print("Loaded with URL Text", linesArray)
@@ -424,6 +433,9 @@ function writeValuesToURL (noReload) {
    }
    if (gradientMode) {
       newParams.append("gradient", true)
+   }
+   if (vCondenseMode) {
+      newParams.append("condense", true)
    }
    if (!drawFills) {
       newParams.append("solid",false)
