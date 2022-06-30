@@ -2,7 +2,6 @@
 
 let cnv
 let svgMode = false
-let webglMode = false
 let startOffsetY
 
 //gui
@@ -18,11 +17,14 @@ let lerpLength = 6
 let darkMode = true
 let monochromeTheme = false
 let xrayMode = false
-let gradientMode = false
-let vCondenseMode = false
+//let gradientMode = false
+//let vCondenseMode = false
+let effect = "none"
+let stretchEffects = ["compress", "spread", "shuffle"]
+let webglEffects = ["spheres"]
 
 let drawFills = true
-let strokeGradient = false
+//let weightGradient = false
 let initialDraw = true
 let gridType = ""
 let waveMode = false
@@ -94,9 +96,9 @@ function setup () {
    loadValuesFromURL()
    createGUI()
 
-   cnv = createCanvas(windowWidth-30, windowHeight-200,(webglMode)?WEBGL:(svgMode)?SVG:"")
+   cnv = createCanvas(windowWidth-30, windowHeight-200,(webglEffects.includes(effect))?WEBGL:(svgMode)?SVG:"")
    cnv.parent('sketch-holder')
-   if (!webglMode) {
+   if (!webglEffects.includes(effect)) {
       strokeCap(ROUND)
       textFont("Courier Mono")
       frameRate(60)
@@ -114,6 +116,8 @@ function setup () {
 }
 
 function createGUI () {
+
+   createDropDown()
 
    // create textarea for line input
    writeArea = document.getElementById('textarea-lines')
@@ -201,35 +205,35 @@ function createGUI () {
          location.reload()
       }
    })
-   const webglToggle = document.getElementById('checkbox-webgl')
-   webglToggle.checked = webglMode
-   webglToggle.addEventListener('click', () => {
-      webglMode = webglToggle.checked
-      if (!webglMode.checked) {
-         noLoop()
-      }
-      writeValuesToURL()
-      if (!webglMode.checked) {
-         location.reload()
-      }
-   })
-   const gradientToggle = document.getElementById('checkbox-gradient')
-   gradientToggle.checked = gradientMode
-   gradientToggle.addEventListener('click', () => {
-      gradientMode = gradientToggle.checked
-      writeValuesToURL()
-   })
-   const vCondenseToggle = document.getElementById('checkbox-condense')
-   vCondenseToggle.checked = vCondenseMode
-   vCondenseToggle.addEventListener('click', () => {
-      vCondenseMode = vCondenseToggle.checked
-      if (vCondenseMode) {
-         //wip
-         values.stretchY.to = min(values.size.from * 2, values.stretchY.from)
-         writeValuesToGUI()
-      }
-      writeValuesToURL()
-   })
+   //const webglToggle = document.getElementById('checkbox-webgl')
+   //webglToggle.checked = webglMode
+   //webglToggle.addEventListener('click', () => {
+   //   webglMode = webglToggle.checked
+   //   if (!webglMode.checked) {
+   //      noLoop()
+   //   }
+   //   writeValuesToURL()
+   //   if (!webglMode.checked) {
+   //      location.reload()
+   //   }
+   //})
+   // const gradientToggle = document.getElementById('checkbox-gradient')
+   // gradientToggle.checked = gradientMode
+   // gradientToggle.addEventListener('click', () => {
+   //    gradientMode = gradientToggle.checked
+   //    writeValuesToURL()
+   // })
+   // const vCondenseToggle = document.getElementById('checkbox-condense')
+   // vCondenseToggle.checked = vCondenseMode
+   // vCondenseToggle.addEventListener('click', () => {
+   //    vCondenseMode = vCondenseToggle.checked
+   //    if (vCondenseMode) {
+   //       //wip
+   //       values.stretchY.to = min(values.size.from * 2, values.stretchY.from)
+   //       writeValuesToGUI()
+   //    }
+   //    writeValuesToURL()
+   // })
    const altMToggle = document.getElementById('checkbox-altM')
    altMToggle.checked = altM
    altMToggle.addEventListener('click', () => {
@@ -303,10 +307,6 @@ function loadValuesFromURL () {
       svgMode = true
       print("Loaded with URL Mode: SVG")
    }
-   if (params.webgl === "true" || params.webgl === "1") {
-      webglMode = true
-      print("Loaded with URL Mode: WEBGL")
-   }
    if (params.wave === "true" || params.wave === "1") {
       waveMode = true
       print("Loaded with URL Mode: Wave")
@@ -327,17 +327,35 @@ function loadValuesFromURL () {
       monochromeTheme = true
       print("Loaded with URL Mode: Mono")
    }
-   if (params.gradient === "true" || params.gradient ===  "1") {
-      gradientMode = true
-      print("Loaded with URL Mode: Gradient Fill")
-   }
-   if (params.strokegradient === "true" || params.strokegradient === "1") {
-      strokeGradient = true
-      print("Loaded with URL Mode: Stroke Gradient")
-   }
-   if (params.condense === "true" || params.condense === "1") {
-      vCondenseMode = true
-      print("Loaded with URL Mode: Condensed vertical stretch")
+   if (params.effect !== undefined) {
+      switch (params.effect) {
+         case "gradient":
+            effect = "gradient"
+            print("Loaded with URL Mode: Gradient Effect")
+            break;
+         case "weightgradient":
+            effect = "weightgradient"
+            print("Loaded with URL Mode: Weight Gradient Effect")
+            break;
+         case "compress":
+            effect = "compress"
+            print("Loaded with URL Mode: Compress V Effect")
+            break;
+         case "shuffle":
+            effect = "shuffle"
+            print("Loaded with URL Mode: Shuffle V Effect")
+            break;
+         case "spread":
+            effect = "spread"
+            print("Loaded with URL Mode: Spread V Effect")
+            break;
+         case "spheres":
+            effect = "spheres"
+            print("Loaded with URL Mode: Webgl 3D Spheres")
+         default:
+            print("Could not load effect")
+            break;
+      }
    }
    if (params.lines !== null && params.lines.length > 0) {
       linesArray = String(params.lines).split("\\")
@@ -416,9 +434,6 @@ function writeValuesToURL (noReload) {
    if (svgMode) {
       newParams.append("svg",true)
    }
-   if (webglMode) {
-      newParams.append("webgl",true)
-   }
    if (!darkMode) {
       newParams.append("invert",true)
    }
@@ -431,17 +446,34 @@ function writeValuesToURL (noReload) {
    if (waveMode) {
       newParams.append("wave",true)
    }
-   if (gradientMode) {
-      newParams.append("gradient", true)
-   }
-   if (vCondenseMode) {
-      newParams.append("condense", true)
+   if (effect !== undefined) {
+      let value = "none"
+      switch (effect) {
+         case "gradient":
+            value = "gradient"
+            break;
+         case "weightgradient":
+            value = "weightgradient"
+            break;
+         case "compress":
+            value = "compress"
+            break;
+         case "spread":
+            value = "spread"
+            break;
+         case "shuffle":
+            value = "shuffle"
+            break;
+         case "spheres":
+            value = "spheres"
+            break;
+      }
+      if (value !== "none") {
+         newParams.append("effect", value)
+      }
    }
    if (!drawFills) {
       newParams.append("solid",false)
-   }
-   if (strokeGradient) {
-      newParams.append("strokegradient",true)
    }
    if (gridType !== "") {
       let gridTypeString = ""
@@ -640,7 +672,7 @@ function draw () {
    document.documentElement.style.setProperty('--bg-color', rgbValues(bgColor))
 
    background(bgColor)
-   if (webglMode) {
+   if (webglEffects.includes(effect)) {
       orbitControl()
       ambientLight(60, 60, 60);
       pointLight(255, 255, 255, 0, 0, 100);
@@ -675,7 +707,7 @@ function draw () {
 
 function drawElements() {
    push()
-   if (webglMode) translate(-width/2, -height/2)
+   if (webglEffects.includes(effect)) translate(-width/2, -height/2)
    scale(animZoom)
    translate(3, 3)
 
@@ -963,7 +995,7 @@ function drawStyle (lineNum) {
          const smallest = strokeSizes[strokeSizes.length-1]
          const biggest = strokeSizes[0]
 
-         if (!webglMode && strokeSizes.length > 1) {
+         if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
             // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
             if (cutMode === "" || cutMode === "branch") {
                drawCornerFill(shape,arcQ,offQ,tx,ty,noSmol,noStretchX,noStretchY)
@@ -987,14 +1019,14 @@ function drawStyle (lineNum) {
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
-         innerColor = (xrayMode)? color("orange") : lerpColor(lineColor,bgColor,(gradientMode) ? 0.5 : 0)
+         innerColor = (xrayMode)? color("orange") : lerpColor(lineColor,bgColor,(effect==="gradient") ? 0.5 : 0)
          outerColor = lineColor
          draw()
 
          function draw() {
             strokeSizes.forEach((size) => {
                // gradient from inside to outside - color or weight
-               strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
+               ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
 
                const offx = (offQ === 3 || offQ === 4) ? 1:0
                const offy = (offQ === 2 || offQ === 3) ? 1:0
@@ -1139,11 +1171,11 @@ function drawStyle (lineNum) {
                         offsetShift = animOffsetX/2*dirY
                      }
 
-                     if (!vCondenseMode) lineType(stretchXPos+offsetShift, stretchYPos,
+                     if (!stretchEffects.includes(effect)) lineType(stretchXPos+offsetShift, stretchYPos,
                         stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
 
                      // if vertical line goes down, set those connection spots in the array
-                     if (dirY === 1 && vCondenseMode) vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
+                     if (dirY === 1 && stretchEffects.includes(effect)) vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
                   }
                }
                const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
@@ -1162,7 +1194,7 @@ function drawStyle (lineNum) {
 
       function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped) {
          //first, draw the fill
-         if (!webglMode && strokeSizes.length > 1) {
+         if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
             drawLineFill(strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom)
          }
 
@@ -1186,14 +1218,14 @@ function drawStyle (lineNum) {
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
-         innerColor = (xrayMode)? color("lime") : lerpColor(lineColor,bgColor,(gradientMode) ? 0.5 : 0)
+         innerColor = (xrayMode)? color("lime") : lerpColor(lineColor,bgColor,(effect==="gradient") ? 0.5 : 0)
          outerColor = lineColor
          draw()
 
          function draw() {
             strokeSizes.forEach((size) => {
                // gradient from inside to outside - color or weight
-               strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
+               ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
 
                const outerExt = 0
 
@@ -1230,10 +1262,10 @@ function drawStyle (lineNum) {
                      } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
                         offsetShift = animOffsetX/2*dirY
                      }
-                     if (!vCondenseMode) lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+                     if (!stretchEffects.includes(effect)) lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
                      
                      // if vertical line goes down, set those connection spots in the array
-                     if (dirY === -1 && vCondenseMode) vConnectionSpots[Math.floor(x1 + tx)] = 1
+                     if (dirY === -1 && stretchEffects.includes(effect)) vConnectionSpots[Math.floor(x1 + tx)] = 1
                   }
                } else if (axis === "h") {
                   const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
@@ -1356,12 +1388,12 @@ function drawStyle (lineNum) {
          pop()
       }
 
-      function strokeStyleForRing(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
+      function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
          //strokeweight
-         if (strokeGradient && !xrayMode) {
+         if ((effect==="weightgradient") && !xrayMode) {
             strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
             if ((arcQ !== offQ) !== (flipped === "flipped")) {
-               strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,1,10.3))
+               strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
             }
          }
 
@@ -1581,7 +1613,6 @@ function drawStyle (lineNum) {
                   drawLine(ringSizes, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
                   drawLine(ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                }
-              
                break;
             case "s":
                if (!altS) {
@@ -1918,13 +1949,13 @@ function drawStyle (lineNum) {
       drawGrid("debug")
    }
 
-   if (vCondenseMode) {
-      drawVConnections()
+   if (stretchEffects.includes(effect)) {
+      drawStretchEffect()
    }
 
    function drawGrid (type) {
       push()
-      if (webglMode) translate(0,0,-1)
+      if (webglEffects.includes(effect)) translate(0,0,-1)
       const height = animSize + Math.abs(animOffsetY) + animStretchY
       const width = totalWidth[lineNum] + Math.abs(animOffsetX)
       const asc = animAscenders
@@ -1982,7 +2013,7 @@ function drawStyle (lineNum) {
       pop()
    }
 
-   function drawVConnections () {
+   function drawStretchEffect () {
       push()
          stroke(lineColor)
          noFill()
@@ -1995,13 +2026,20 @@ function drawStyle (lineNum) {
                vCondensedTotal++
             }
          }
-         let vCondensedOffset = (totalWidth[lineNum] - vCondensedTotal)*0.5
-         let vCondensedCount = vCondensedOffset
+         let vCondensedOffset = 0
+
          for (let j = 0; j <= totalWidth[lineNum]; j++) {
             if (vConnectionSpots[j] === 1) {
-               bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, vCondensedCount, -animStretchY*0.25, vCondensedCount, 0)
-               bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, +animStretchY*0.25, vCondensedCount + animOffsetX, +animStretchY*0.25, vCondensedCount + animOffsetX, 0)
-               vCondensedCount++
+               if (effect === "spread") {
+                  const midX = map(vCondensedOffset, 0, vCondensedTotal-1, 0, totalWidth[lineNum]) + animOffsetX*0.5
+                  bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
+                  bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX, animStretchY*0.25, midX, 0)
+               } else if (effect === "compress") {
+                  const midX = (totalWidth[lineNum] - vCondensedTotal)*0.5 + vCondensedOffset
+                  bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
+                  bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX + animOffsetX, animStretchY*0.25, midX + animOffsetX, 0)
+               }
+               vCondensedOffset++
             }
          }
       pop()
@@ -2396,7 +2434,7 @@ function addLeadingChar (input, count) {
 
 
 function lineType (x1, y1, x2, y2) {
-   if (webglMode) {
+   if (webglEffects.includes(effect)) {
       push()
       //translate(0, 0, random())
 
@@ -2427,7 +2465,7 @@ function lineType (x1, y1, x2, y2) {
 }
 
 function arcType (x, y, w, h, start, stop) {
-   if (webglMode) {
+   if (webglEffects.includes(effect)) {
       push()
       //translate(0, 0, random())
       
@@ -2465,4 +2503,133 @@ function arcType (x, y, w, h, start, stop) {
 
 function rgbValues (color) {
    return color._getRed() + ", " + color._getGreen() + ", " + color._getBlue()
+}
+
+function createDropDown () {
+   let x, i, j, l, ll, selElmnt, a, b, c;
+   /* Look for any elements with the class "custom-select": */
+   x = document.getElementsByClassName("custom-select");
+   l = x.length;
+   for (i = 0; i < l; i++) {
+     selElmnt = x[i].getElementsByTagName("select")[0];
+     ll = selElmnt.length;
+     /* For each element, create a new DIV that will act as the selected item: */
+     a = document.createElement("DIV");
+     a.setAttribute("class", "select-selected");
+     a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+     x[i].appendChild(a);
+     /* For each element, create a new DIV that will contain the option list: */
+     b = document.createElement("DIV");
+     b.setAttribute("class", "select-items select-hide");
+     for (j = 1; j < ll; j++) {
+       /* For each option in the original select element,
+       create a new DIV that will act as an option item: */
+       c = document.createElement("DIV");
+       c.innerHTML = selElmnt.options[j].innerHTML;
+       c.addEventListener("click", function(e) {
+           /* When an item is clicked, update the original select box,
+           and the selected item: */
+           var y, i, k, s, h, sl, yl;
+           s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+           sl = s.length;
+           h = this.parentNode.previousSibling;
+           for (i = 0; i < sl; i++) {
+             if (s.options[i].innerHTML == this.innerHTML) {
+               s.selectedIndex = i;
+               h.innerHTML = this.innerHTML;
+               y = this.parentNode.getElementsByClassName("same-as-selected");
+               yl = y.length;
+               for (k = 0; k < yl; k++) {
+                 y[k].removeAttribute("class");
+               }
+               this.setAttribute("class", "same-as-selected");
+               break;
+             }
+           }
+           const selectedOptionText = s.options[s.selectedIndex].text
+           dropdownTextToEffect(selectedOptionText)
+           h.click();
+       });
+       b.appendChild(c);
+     }
+     x[i].appendChild(b);
+     a.addEventListener("click", function(e) {
+       /* When the select box is clicked, close any other select boxes,
+       and open/close the current select box: */
+       e.stopPropagation();
+       closeAllSelect(this);
+       this.nextSibling.classList.toggle("select-hide");
+       this.classList.toggle("select-arrow-active");
+     });
+   }
+   
+   function closeAllSelect(elmnt) {
+      /* A function that will close all select boxes in the document,
+      except the current select box: */
+      let x, y, i, xl, yl, arrNo = [];
+      x = document.getElementsByClassName("select-items");
+      y = document.getElementsByClassName("select-selected");
+      xl = x.length;
+      yl = y.length;
+      for (i = 0; i < yl; i++) {
+        if (elmnt == y[i]) {
+          arrNo.push(i)
+        } else {
+          y[i].classList.remove("select-arrow-active");
+        }
+      }
+      for (i = 0; i < xl; i++) {
+        if (arrNo.indexOf(i)) {
+          x[i].classList.add("select-hide");
+        }
+      }
+    }
+    
+    /* If the user clicks anywhere outside the select box,
+    then close all select boxes: */
+    document.addEventListener("click", closeAllSelect); 
+}
+
+function dropdownTextToEffect (text) {
+
+   //check previous effect
+   const wasWebgl = webglEffects.includes(effect)
+
+   switch (text) {
+      case "weight gradient":
+         effect = "weightgradient"
+         break;
+      case "color gradient":
+         effect = "gradient"
+         break;
+      case "compress v":
+         effect = "compress"
+         break;
+      case "spread v":
+         effect = "spread"
+         break;
+      case "shuffle v":
+         effect = "shuffle"
+         break;
+      case "spheres (test)":
+         effect = "spheres"
+         break;
+      default:
+         effect = "none"
+   }
+
+   writeValuesToURL()
+
+   //check current effect
+   const isWebgl = webglEffects.includes(effect)
+   if (wasWebgl && !isWebgl) {
+      cnv = undefined
+      noLoop()
+      location.reload()
+   }
+   if (!wasWebgl && isWebgl) {
+      cnv = undefined
+      noLoop()
+      location.reload()
+   }
 }
