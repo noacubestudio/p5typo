@@ -20,7 +20,7 @@ let xrayMode = false
 //let gradientMode = false
 //let vCondenseMode = false
 let effect = "none"
-let stretchEffects = ["compress", "spread", "shuffle"]
+let stretchEffects = ["compress", "spread", "twist", "split", "lean"]
 let webglEffects = ["spheres"]
 
 let drawFills = true
@@ -341,9 +341,17 @@ function loadValuesFromURL () {
             effect = "compress"
             print("Loaded with URL Mode: Compress V Effect")
             break;
-         case "shuffle":
-            effect = "shuffle"
-            print("Loaded with URL Mode: Shuffle V Effect")
+         case "twist":
+            effect = "twist"
+            print("Loaded with URL Mode: Twist V Effect")
+            break;
+         case "split":
+            effect = "split"
+            print("Loaded with URL Mode: Split V Effect")
+            break;
+         case "lean":
+            effect = "lean"
+            print("Loaded with URL Mode: Lean V Effect")
             break;
          case "spread":
             effect = "spread"
@@ -461,8 +469,14 @@ function writeValuesToURL (noReload) {
          case "spread":
             value = "spread"
             break;
-         case "shuffle":
-            value = "shuffle"
+         case "split":
+            value = "split"
+            break;
+         case "lean":
+            value = "lean"
+            break;
+         case "twist":
+            value = "twist"
             break;
          case "spheres":
             value = "spheres"
@@ -1508,7 +1522,7 @@ function drawStyle (lineNum) {
                   drawLine(ringSizes, 1, 4, 0, letterOuter + lineOffset, "h", 0)
                } else {
                   drawLine(ringSizes, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                  drawCorner("square", ringSizes, 3, 3, 0, descenders-1, "", "")
+                  drawCorner("square", ringSizes, 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
                   drawLine(ringSizes, 4, 4, 0, descenders-1, "h", -1)
                }
 
@@ -1884,9 +1898,9 @@ function drawStyle (lineNum) {
             case "z":
                // LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start", "flipped")
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
                } else if (!charInSet(prevLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start", "flipped")
+                  drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start")
                } else if (charInSet(prevLetter, ["gap"])) {
                   drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
                }
@@ -2014,31 +2028,68 @@ function drawStyle (lineNum) {
          strokeWeight((animWeight/10)*1*strokeScaleFactor)
          const i = lineNum * totalHeight[lineNum] - animSize/2
          translate(0,height*0.5+i)
-         let vCondensedTotal = 0
+         let connectTotal = 0
          for (let j = 0; j <= totalWidth[lineNum]; j++) {
             if (vConnectionSpots[j] === 1) {
-               vCondensedTotal++
+               connectTotal++
             }
          }
-         let vCondensedOffset = 0
 
+         let connectCounter = 0
+         let lastPos = undefined
          for (let j = 0; j <= totalWidth[lineNum]; j++) {
             if (vConnectionSpots[j] === 1) {
                if (effect === "spread") {
-                  const midX = map(vCondensedOffset, 0, vCondensedTotal-1, 0, totalWidth[lineNum]) + animOffsetX*0.5
-                  bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
-                  bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX, animStretchY*0.25, midX, 0)
+                  const midX = map(connectCounter, 0, connectTotal-1, 0, totalWidth[lineNum]) + animOffsetX*0.5
+                  rowLines("bezier", [j, midX, j+animOffsetX], animStretchY)
+                  //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
+                  //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX, animStretchY*0.25, midX, 0)
                } else if (effect === "compress") {
-                  const midX = (totalWidth[lineNum] - vCondensedTotal)*0.5 + vCondensedOffset
-                  bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
-                  bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX + animOffsetX, animStretchY*0.25, midX + animOffsetX, 0)
+                  const midX = (totalWidth[lineNum] - connectTotal)*0.5 + connectCounter
+                  rowLines("bezier", [j, midX, j+animOffsetX], animStretchY)
+                  //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
+                  //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX + animOffsetX, animStretchY*0.25, midX + animOffsetX, 0)
+               } else if (effect === "split") {
+                  if (connectCounter > 0) {
+                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, j+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "twist") {
+                  if (connectCounter % 2 ==1) {
+                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, j+animOffsetX], animStretchY)
+                  } else if (connectCounter === connectTotal-1) {
+                     rowLines("bezier", [j, j+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "lean") {
+                  if (connectCounter > 0) {
+                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
+                  }
                }
-               vCondensedOffset++
+               lastPos = j
+               connectCounter++
             }
          }
       pop()
    }
    pop()
+}
+
+function rowLines (type, xValues, height) {
+   let lastPos = undefined
+   for (let c = 0; c < xValues.length; c++) {
+      const pos = {x: xValues[c], y:-height*0.5 + map(c,0,xValues.length-1,0,height)}
+      if (lastPos !== undefined) {
+         if (type === "line") {
+            lineType(lastPos.x, lastPos.y, pos.x, pos.y)
+         } else if (type === "bezier") {
+            const h1pos = lastPos.y + (pos.y-lastPos.y)*0.5
+            const h2pos = lastPos.y + (pos.y-lastPos.y)*0.5
+            bezier(lastPos.x, lastPos.y, lastPos.x, h1pos, pos.x, h2pos, pos.x, pos.y)
+         }
+      }
+      lastPos = pos
+   }
 }
 
 
@@ -2604,8 +2655,14 @@ function dropdownTextToEffect (text) {
       case "spread v":
          effect = "spread"
          break;
-      case "shuffle v":
-         effect = "shuffle"
+      case "lean v":
+         effect = "lean"
+         break;
+      case "twist v":
+         effect = "twist"
+         break;
+      case "split v":
+         effect = "split"
          break;
       case "spheres (test)":
          effect = "spheres"
