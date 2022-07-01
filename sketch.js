@@ -1480,7 +1480,7 @@ function drawStyle (lineNum) {
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
       const topOffset = (letterOuter < 0) ? -animOffsetX : 0
       const wideOffset = 0.5*letterOuter + 0.5*letterInner
-      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+      const extendOffset = ((letterOuter % 2 === 0) ? 0 : 0.5) + (animStretchX-animStretchX%2)*0.5
 
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
 
@@ -1904,7 +1904,8 @@ function drawStyle (lineNum) {
                }
                break;
             case "z":
-               // LEFT OVERLAP
+               let oddOffset = (letterOuter % 2 === 0) ? 0 : 0.5
+               // TOP LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
                   drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
                } else if (!charInSet(prevLetter,["gap"])) {
@@ -1913,19 +1914,20 @@ function drawStyle (lineNum) {
                   drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
                }
 
-               drawLine(ringSizes, 2, 2, 0, 0, "h", 1)
-               drawCorner("diagonal", ringSizes, 1, 2, letterOuter*0.5 + 1, 0, "", "", "flipped")
+               drawLine(ringSizes, 2, 2, 0, 0, "h", 1+oddOffset*2)
+               drawCorner("diagonal", ringSizes, 1, 2, letterOuter*0.5 +1+oddOffset, 0, "", "", "flipped")
 
+               // BOTTOM RIGHT OVERLAP
                if (charInSet(nextLetter,["dl"])) {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "linecut", "start")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "linecut", "start")
                } else if (!charInSet(nextLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "roundcut", "start")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "roundcut", "start")
                } else {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2, 0, "", "")
+                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "", "")
                }
 
-               drawCorner("diagonal", ringSizes, 3, 3, weight+1-letterOuter*0.5, 0, "", "", "flipped")
-               drawLine(ringSizes, 4, 3, weight+2, 0, "h", 1)
+               drawCorner("diagonal", ringSizes, 3, 3, weight+1-letterOuter*0.5+oddOffset, 0, "", "", "flipped")
+               drawLine(ringSizes, 4, 3, weight+2+oddOffset*2, 0, "h", 1+oddOffset*2)
                break;
             case "-":
                drawLine([letterOuter], 1, 1, 0, +letterOuter*0.5, "h", -1)
@@ -2168,7 +2170,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          }
          break;
       case "z":
-         charWidth = 2 + outer
+         charWidth = 2 + outer + ((outer % 2 === 0) ? 0 : 1)
          break;
       case " ":
          charWidth = max([2, spacing*2, ceil(inner*0.5)])
