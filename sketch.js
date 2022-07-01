@@ -77,7 +77,7 @@ const numberInputsObj = {
 let numberOffset
 
 let linesArray = ["hamburgefonstiv"]
-const validLetters = "abcdefghijklmnopqrstuvwxyzäöü,.!?-_ "
+const validLetters = "abcdefghijklmnopqrstuvwxyzäöü,.!?-_|‸ "
 
 // use alt letters?
 let altS = false
@@ -770,23 +770,23 @@ function charInSet (char, sets) {
       if (found === false) {
          if (set === "ul") {
             //up left sharp
-            found = "bhikltuüvwym".includes(char) || (altNH && "n".includes(char))
+            found = "bhikltuüvwym".includes(char) || (altNH && "n".includes(char)) || !validLetters.includes(char)
          }
          else if (set === "dl") {
             //down left sharp
-            found = "hikmnprfv".includes(char)
+            found = "hikmnprfv".includes(char) || !validLetters.includes(char)
          }
          else if (set === "ur") {
             //up right sharp
-            found = "dijuüvwymg".includes(char) || (altNH && "nh".includes(char))
+            found = "dijuüvwymg".includes(char) || (altNH && "nh".includes(char)) || !validLetters.includes(char)
          }
          else if (set === "dr") {
             //down right sharp
-            found = "aähimnqye".includes(char)
+            found = "aähimnqye".includes(char) || !validLetters.includes(char)
          }
          else if (set === "gap") {
             //separating regular letters
-            found = "., :;-_!?‸".includes(char)
+            found = "., :;-_!?‸|".includes(char)
          }
       }
    });
@@ -871,11 +871,9 @@ function drawStyle (lineNum) {
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
 
-   // get the vconnection spots 
-   let vConnectionSpots = new Array(Math.floor(totalWidth[lineNum])).fill(0);
-   //vConnectionSpots[4] = 1
-   //vConnectionSpots[totalWidth[lineNum]] = 1
-
+   // make array that will track every vertical connection spot (rounded to grid)
+   let vConnectionSpots = new Array(Math.floor(totalWidth[lineNum])).fill(0)
+   let vConnectionCaretSpot = undefined
 
    //translate to account for x offset
    push()
@@ -1193,11 +1191,19 @@ function drawStyle (lineNum) {
                         offsetShift = animOffsetX/2*dirY
                      }
 
-                     if (!stretchEffects.includes(effect)) lineType(stretchXPos+offsetShift, stretchYPos,
-                        stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
+                     if (!stretchEffects.includes(effect)) {
+                        lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
+                     }
 
                      // if vertical line goes down, set those connection spots in the array
-                     if (dirY === 1 && stretchEffects.includes(effect)) vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
+                     if (dirY === 1 && stretchEffects.includes(effect)) {
+                        if (letter === "‸") {
+                           //caret counts separately
+                           vConnectionCaretSpot = Math.floor(stretchXPos + tx)
+                        } else {
+                           vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
+                        }
+                     }
                   }
                }
                const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
@@ -1284,10 +1290,19 @@ function drawStyle (lineNum) {
                      } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
                         offsetShift = animOffsetX/2*dirY
                      }
-                     if (!stretchEffects.includes(effect)) lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+                     if (!stretchEffects.includes(effect)) {
+                        lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+                     }
                      
                      // if vertical line goes down, set those connection spots in the array
-                     if (dirY === -1 && stretchEffects.includes(effect)) vConnectionSpots[Math.floor(x1 + tx)] = 1
+                     if (dirY === -1 && stretchEffects.includes(effect)) {
+                        if (letter === "‸") {
+                           //caret counts separately
+                           vConnectionCaretSpot = Math.floor(x1 + tx)
+                        } else {
+                           vConnectionSpots[Math.floor(x1 + tx)] = 1
+                        }
+                     }
                   }
                } else if (axis === "h") {
                   const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
@@ -1942,8 +1957,12 @@ function drawStyle (lineNum) {
             case "‸":
                //caret symbol
                letterOpacity = 0.5
-               drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders+1, undefined, undefined)
-               drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders+1)
+               drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders, undefined, undefined)
+               drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders)
+               break;
+            case "|":
+               drawLine([letterOuter], 1, 1, 0, 0, "v", animAscenders)
+               drawLine([letterOuter], 4, 4, 0, 0, "v", animAscenders)
                break;
             default:
                drawCorner("square",[letterOuter], 1, 1, 0, 0, "", "")
@@ -2035,30 +2054,46 @@ function drawStyle (lineNum) {
       push()
          stroke(lineColor)
          noFill()
-         strokeWeight((animWeight/10)*1*strokeScaleFactor)
-         const i = lineNum * totalHeight[lineNum] - animSize/2
-         translate(0,height*0.5+i)
+         strokeWeight((animWeight/10)*strokeScaleFactor)
+         if (xrayMode) {
+            strokeWeight(0.2*strokeScaleFactor)
+         }
+
+         translate(0,height*0.5 + lineNum * totalHeight[lineNum] - animSize/2)
+
+         let trimEnd = 0
+         for (let c = lineText.length-1; c >= 0; c--) {
+            // get last char, trim, otherwise break loop
+            if (charInSet(lineText[c],["gap"]) && !"|".includes(lineText[c])) {
+               trimEnd++
+            } else {
+               break;
+            }
+         }
+         let lineWidth = lineWidthUntil(lineText, lineText.length - trimEnd)
+
          let connectTotal = 0
-         for (let j = 0; j <= totalWidth[lineNum]; j++) {
+         for (let j = 0; j < lineWidth; j++) {
             if (vConnectionSpots[j] === 1) {
                connectTotal++
             }
          }
 
+         //style and caret
+         stroke(lerpColor(bgColor, lineColor, 0.5))
+         rowLines("line", [vConnectionCaretSpot, vConnectionCaretSpot], animStretchY)
+         stroke(lineColor)
+
          let connectCounter = 0
          let lastPos = undefined
-         for (let pos = 0; pos <= totalWidth[lineNum]; pos++) {
+         for (let pos = 0; pos <= lineWidth; pos++) {
             if (vConnectionSpots[pos] === 1) {
                if (effect === "spread") {
-                  const midX = map(connectCounter, 0, connectTotal-1, 0, totalWidth[lineNum]) + animOffsetX*0.5
+                  const midX = map(connectCounter, 0, connectTotal, 0, lineWidth) + animOffsetX*0.5
                   rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-                  //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
-                  //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX, animStretchY*0.25, midX, 0)
                } else if (effect === "compress") {
-                  const midX = (totalWidth[lineNum] - connectTotal)*0.5 + connectCounter
+                  const midX = (lineWidth - connectTotal + animOffsetX) *0.5 + connectCounter
                   rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-                  //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
-                  //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX + animOffsetX, animStretchY*0.25, midX + animOffsetX, 0)
                } else if (effect === "split") {
                   if (connectCounter > 0) {
                      rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
@@ -2139,6 +2174,8 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       spacing = max(spacing, 1)
       }
    }
+   if ("|".includes(char)) spacing = max(spacing, 1)
+   if ("|".includes(nextchar)) spacing = max(spacing, 1)
 
    // widths of letters without overlapping
    let charWidth = outer
@@ -2200,14 +2237,17 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       case "‸":
          charWidth = 2
          break;
+      case "|":
+         charWidth = 0
+         break;
    }
 
    // 1 less space after letters with cutoff
-   if ("ktlcrfsx-".includes(char) && charInSet(nextchar,["gap"])) {
+   if ("ktlcrfsx-".includes(char) && charInSet(nextchar,["gap"]) && !"|".includes(nextchar)) {
       charWidth -= 1
    }
    // 1 less space in front of xs-
-   if ("xs-".includes(nextchar) && charInSet(char,["gap"])) {
+   if ("xs-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
       charWidth -= 1
    }
 
