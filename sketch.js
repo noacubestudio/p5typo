@@ -20,7 +20,7 @@ let xrayMode = false
 //let gradientMode = false
 //let vCondenseMode = false
 let effect = "none"
-let stretchEffects = ["compress", "spread", "twist", "split", "lean"]
+let stretchEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
 let webglEffects = ["spheres"]
 
 let drawFills = true
@@ -357,9 +357,14 @@ function loadValuesFromURL () {
             effect = "spread"
             print("Loaded with URL Mode: Spread V Effect")
             break;
+         case "teeth":
+            effect = "teeth"
+            print("Loading with URL Mode: Teeth V Effect")
+            break;
          case "spheres":
             effect = "spheres"
             print("Loaded with URL Mode: Webgl 3D Spheres")
+            break;
          default:
             print("Could not load effect")
             break;
@@ -477,6 +482,9 @@ function writeValuesToURL (noReload) {
             break;
          case "twist":
             value = "twist"
+            break;
+         case "teeth":
+            value = "teeth"
             break;
          case "spheres":
             value = "spheres"
@@ -2037,36 +2045,47 @@ function drawStyle (lineNum) {
 
          let connectCounter = 0
          let lastPos = undefined
-         for (let j = 0; j <= totalWidth[lineNum]; j++) {
-            if (vConnectionSpots[j] === 1) {
+         for (let pos = 0; pos <= totalWidth[lineNum]; pos++) {
+            if (vConnectionSpots[pos] === 1) {
                if (effect === "spread") {
                   const midX = map(connectCounter, 0, connectTotal-1, 0, totalWidth[lineNum]) + animOffsetX*0.5
-                  rowLines("bezier", [j, midX, j+animOffsetX], animStretchY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
                   //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
                   //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX, animStretchY*0.25, midX, 0)
                } else if (effect === "compress") {
                   const midX = (totalWidth[lineNum] - connectTotal)*0.5 + connectCounter
-                  rowLines("bezier", [j, midX, j+animOffsetX], animStretchY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
                   //bezier(j, -animStretchY*0.5, j, -animStretchY*0.25, midX, -animStretchY*0.25, midX, 0)
                   //bezier(j + animOffsetX, +animStretchY*0.5, j + animOffsetX, animStretchY*0.25, midX + animOffsetX, animStretchY*0.25, midX + animOffsetX, 0)
                } else if (effect === "split") {
                   if (connectCounter > 0) {
-                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, j+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                   }
                } else if (effect === "twist") {
                   if (connectCounter % 2 ==1) {
-                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, j+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                   } else if (connectCounter === connectTotal-1) {
-                     rowLines("bezier", [j, j+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
                   }
                } else if (effect === "lean") {
                   if (connectCounter > 0) {
-                     rowLines("bezier", [j, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "teeth") {
+                  if (connectCounter % 2 ==1) {
+                     const x = lastPos + (pos-lastPos)*0.5
+                     const w = pos-lastPos
+                     arc(x, -animStretchY*0.5,w,w, 0, PI)
+                  } else {
+                     //bottom
+                     const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
+                     const w = pos-lastPos
+                     arc(x, animStretchY*0.5,w,w, PI, TWO_PI)
                   }
                }
-               lastPos = j
+               lastPos = pos
                connectCounter++
             }
          }
@@ -2663,6 +2682,9 @@ function dropdownTextToEffect (text) {
          break;
       case "split v":
          effect = "split"
+         break;
+      case "teeth v":
+         effect = "teeth"
          break;
       case "spheres (test)":
          effect = "spheres"
