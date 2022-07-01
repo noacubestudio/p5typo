@@ -24,7 +24,7 @@ html, body {
   overflow: hidden;
   margin: 15px;
   display: block;
-  border-radius: 0.5em;
+  border-radius: 0.8em;
   background-color: rgb(var(--bg-color));
 }
 
@@ -66,11 +66,11 @@ html, body {
 textarea, input {
   background-color: rgb(var(--bg-color));
   color: rgba(var(--fg-color), 0.8);
-  padding: 0.2em 0.5em;
+  padding: 0.3em 0.8em;
   outline: none; /* remove default highlighting */
 
   border: none;
-  border-radius: 0.5em;
+  border-radius: 0.8em;
   resize: none;
 
   -ms-overflow-style: none;  /* IE and Edge */
@@ -95,8 +95,8 @@ textarea::-webkit-scrollbar {
 .checkbox-container {
   display: block;
   position: relative;
-  padding-left: 1.5em;
-  margin-bottom: 0.2em;
+  padding-left: 1.3em;
+  margin-bottom: 0.5em;
   cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -109,6 +109,7 @@ textarea::-webkit-scrollbar {
   grid-template-columns: max-content max-content;
   grid-column-gap: 0.5em;
   grid-row-gap: 0.2em;
+  border-radius: 0.5em;
 }
 
 .numbers-container label, .offset-container label{
@@ -222,11 +223,14 @@ button {
 }
 
 .toggle-button {
-  width: 2.5em;
-  height: 2.5em;
+  width: 2.1em;
+  height: 2.1em;
+  margin: 0.2em;
   padding-bottom: 1em;
   padding-left: 0em;
   padding-right: 0em;
+  padding-top: 0.3em;
+  border-radius: 2em;
 }
 .toggle-button:hover {
   background-color: rgba(var(--fg-color), 0.3);

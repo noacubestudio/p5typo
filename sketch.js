@@ -8,23 +8,20 @@ let startOffsetY
 let writeArea
 let writingMode = false
 let offsetLabel
+let caretBlink = 0
 
-let bgColor
-let lineColor
+const palette = {}
 let randomizeAuto = false
 let lerpLength = 6
 
 let darkMode = true
 let monochromeTheme = false
 let xrayMode = false
-//let gradientMode = false
-//let vCondenseMode = false
 let effect = "none"
 let stretchEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
 let webglEffects = ["spheres"]
 
 let drawFills = true
-//let weightGradient = false
 let initialDraw = true
 let gridType = ""
 let waveMode = false
@@ -125,8 +122,8 @@ function createGUI () {
 
    // textarea events
    writeArea.addEventListener('input', function() {
-      //split and filter out "", undefined
-      linesArray = writeArea.value.split("\n").filter(function(e){ return e === 0 || e });
+      //split
+      linesArray = writeArea.value.split("\n")
       writeValuesToURL()
    }, false)
    writeArea.addEventListener('focusin', () => {
@@ -134,6 +131,15 @@ function createGUI () {
    })
    writeArea.addEventListener('focusout', () => {
       writingMode = false
+
+      // remove spaces and newlines at the end from field and actual array
+      for (let l = 0; l < linesArray.length; l++) {
+         linesArray[l] = linesArray[l].trimEnd();
+      }
+      linesArray = linesArray.filter(function(e){ return e === 0 || e})
+      writeArea.value = linesArray.join("\n")
+      writeValuesToURL()
+      
    })
 
    // toggles and buttles
@@ -558,14 +564,11 @@ function keyTyped() {
 }
 
 function keyPressed() {
-   //if (keyCode === LEFT_ARROW) {
-   //   writeValuesToURL()
-   //   return
-   //}
-   //else if (keyCode === RIGHT_ARROW) {
-   //   writeValuesToURL()
-   //   return
-   //}
+   if (keyCode === LEFT_ARROW) {
+      caretBlink = 0
+   } else if (keyCode === RIGHT_ARROW) {
+      caretBlink = 0
+   }
 }
 
 function randomizeValues () {
@@ -611,6 +614,7 @@ function draw () {
    if (randomizeAuto && frameCount%60 === 0) {
       randomizeValues()
    }
+   caretBlink++ // like frameCount
 
    Object.keys(values).forEach(key => {
       const slider = values[key]
@@ -682,18 +686,32 @@ function draw () {
    const lightColor = (monochromeTheme || xrayMode) ? color("white") : animColorLight
    const darkColor = (monochromeTheme || xrayMode) ? color("black") : animColorDark
 
-   bgColor = lightColor
-   lineColor = darkColor
-
-   if (darkMode) {
-      bgColor = darkColor
-      lineColor = lightColor
+   if (!darkMode) {
+      // light mode
+      palette.bg = lightColor
+      palette.fg = darkColor
+      palette.xrayBg = color("#D9B4FF")
+      palette.xrayBgCorner = color("#BAF174")
+      palette.xrayStretch = color("#FFD2ED")
+      palette.xrayStretchCorner = color("#F4FF7B")
+      palette.xrayFg = color("#4378FF")
+      palette.xrayFgCorner = color("#0BCB58")
+   } else {
+      // dark mode
+      palette.bg = darkColor
+      palette.fg = lightColor
+      palette.xrayBg = color("#6E119A")
+      palette.xrayBgCorner = color("#2B5E03")
+      palette.xrayStretch = color("#3B0F9A")
+      palette.xrayStretchCorner = color("#043F58")
+      palette.xrayFg = color("#FF8514")
+      palette.xrayFgCorner = color("#98EE2B")
    }
 
-   document.documentElement.style.setProperty('--fg-color', rgbValues(lineColor))
-   document.documentElement.style.setProperty('--bg-color', rgbValues(bgColor))
+   document.documentElement.style.setProperty('--fg-color', rgbValues(palette.fg))
+   document.documentElement.style.setProperty('--bg-color', rgbValues(palette.bg))
 
-   background(bgColor)
+   background(palette.bg)
    if (webglEffects.includes(effect)) {
       orbitControl()
       ambientLight(60, 60, 60);
@@ -736,7 +754,7 @@ function drawElements() {
    translate(0, max(animAscenders, 1))
 
    strokeWeight((animWeight/10)*strokeScaleFactor)
-   lineColor.setAlpha(255)
+   palette.fg.setAlpha(255)
 
    startOffsetY = 0
 
@@ -806,7 +824,7 @@ function drawStyle (lineNum) {
          //found current line
          if (l === lineNum) {
             for (let c = 0; c < lineText.length+1; c++) {
-               if (frameCount % 40 > 20 && totalChars+c === writeArea.selectionStart) {
+               if (caretBlink % 40 < 25 && totalChars+c === writeArea.selectionStart) {
                   //insert caret character at position
                   lineText = lineText.slice(0,c) + "‸" + lineText.slice(c)
                   break;
@@ -819,13 +837,6 @@ function drawStyle (lineNum) {
    } 
 
    let letterOpacity = 1.0
-   // if line empty, but visible, put row of darker o's there
-   if (lineText.length === 0) {
-      lineText = "o".repeat(9)
-      if (!xrayMode) {
-         letterOpacity = 0.2
-      }
-   }
 
    // fadeout in wavemode
    function waveInner (i, inner, size) {
@@ -871,6 +882,9 @@ function drawStyle (lineNum) {
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
 
+   // wip test: always fit on screen?
+   //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
+
    // make array that will track every vertical connection spot (rounded to grid)
    let vConnectionSpots = new Array(Math.floor(totalWidth[lineNum])).fill(0)
    let vConnectionCaretSpot = undefined
@@ -914,6 +928,9 @@ function drawStyle (lineNum) {
 
    for (let layerPos = 0; layerPos < lineText.length; layerPos++) {
 
+      // part drawing functions
+      // corners and straight lines
+
       function drawCornerFill (shape, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
          if (weight === 0 || !drawFills) {
             return
@@ -922,7 +939,7 @@ function drawStyle (lineNum) {
          push()
          translate(tx, ty)
          noFill()
-         stroke((xrayMode)? color("#52A"): bgColor)
+         stroke((xrayMode)? palette.xrayBgCorner : palette.bg)
          strokeCap(SQUARE)
          strokeWeight(weight*strokeScaleFactor)
 
@@ -970,7 +987,7 @@ function drawStyle (lineNum) {
          }
 
          if (animStretchX > 0 && !noStretchX) {
-            stroke((xrayMode)? color("#831"): bgColor)
+            stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
             let stretchXPos = xpos
             let stretchYPos = ypos + size*toSideX*0.5
@@ -989,7 +1006,7 @@ function drawStyle (lineNum) {
                stretchXPos + dirX*0.5*animStretchX, stretchYPos+offsetShift)
          }
          if (animStretchY > 0 && !noStretchY) {
-            stroke((xrayMode)? color("#17B"): bgColor)
+            stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
             const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
             let stretchXPos = xpos + size*toSideY*0.5
             let stretchYPos = ypos
@@ -1028,19 +1045,12 @@ function drawStyle (lineNum) {
 
          let innerColor; let outerColor
 
-         // if (true) {
-         //    innerColor = color("green")
-         //    outerColor = color("lime")
-         //    strokeWeight((typeWeight/5)*strokeScaleFactor)
-         //    draw()
-         // }
-
          strokeWeight((animWeight/10)*strokeScaleFactor)
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
-         innerColor = (xrayMode)? color("orange") : lerpColor(lineColor,bgColor,(effect==="gradient") ? 0.5 : 0)
-         outerColor = lineColor
+         innerColor = (xrayMode)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+         outerColor = palette.fg
          draw()
 
          function draw() {
@@ -1246,8 +1256,8 @@ function drawStyle (lineNum) {
          if (xrayMode) {
             strokeWeight(0.2*strokeScaleFactor)
          }
-         innerColor = (xrayMode)? color("lime") : lerpColor(lineColor,bgColor,(effect==="gradient") ? 0.5 : 0)
-         outerColor = lineColor
+         innerColor = (xrayMode)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+         outerColor = palette.fg
          draw()
 
          function draw() {
@@ -1342,7 +1352,7 @@ function drawStyle (lineNum) {
          push()
          translate(tx, ty)
          noFill()
-         stroke((xrayMode)? color("#462"): bgColor)
+         stroke((xrayMode)? palette.xrayBg : palette.bg)
          strokeWeight(weight*strokeScaleFactor)
          strokeCap(SQUARE)
 
@@ -1392,8 +1402,8 @@ function drawStyle (lineNum) {
                   offsetShift = animOffsetX/2*dirY
                }
 
-               stroke((xrayMode)? color("#367"): bgColor)
-              lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
+               stroke((xrayMode)? palette.xrayStretch : palette.bg)
+               lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
             }
          } else if (axis === "h") {
             const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
@@ -1418,8 +1428,8 @@ function drawStyle (lineNum) {
                   offsetShift = (animOffsetY/2)*stairDir
                }
 
-               stroke((xrayMode)? color("#891"): bgColor)
-              lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+               stroke((xrayMode)? palette.xrayStretch : palette.bg)
+               lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
             }
          }
          pop()
@@ -1444,7 +1454,7 @@ function drawStyle (lineNum) {
          if ((arcQ !== offQ) !== (flipped === "flipped")) {
             lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
          }
-         lerpedColor = lerpColor(bgColor, lerpedColor, letterOpacity)
+         lerpedColor = lerpColor(palette.bg, lerpedColor, letterOpacity)
          stroke(lerpedColor)
       }
 
@@ -1998,8 +2008,8 @@ function drawStyle (lineNum) {
       const asc = animAscenders
 
       if (type === "debug") {
-         lineColor.setAlpha(40)
-         stroke(lineColor)
+         palette.fg.setAlpha(40)
+         stroke(palette.fg)
          strokeWeight(0.2*strokeScaleFactor)
    
          const i = lineNum * totalHeight[lineNum] - animSize/2
@@ -2023,7 +2033,7 @@ function drawStyle (lineNum) {
          }
          pop()
       } else if (!xrayMode){
-         stroke(lineColor)
+         stroke(palette.fg)
          strokeWeight((animWeight/10)*1*strokeScaleFactor)
          const i = lineNum * totalHeight[lineNum] - animSize/2
          push()
@@ -2045,14 +2055,14 @@ function drawStyle (lineNum) {
          }
          pop()
       }
-      bgColor.setAlpha(255)
-      lineColor.setAlpha(255)
+      palette.bg.setAlpha(255)
+      palette.fg.setAlpha(255)
       pop()
    }
 
    function drawStretchEffect () {
       push()
-         stroke(lineColor)
+         stroke(palette.fg)
          noFill()
          strokeWeight((animWeight/10)*strokeScaleFactor)
          if (xrayMode) {
@@ -2080,9 +2090,9 @@ function drawStyle (lineNum) {
          }
 
          //style and caret
-         stroke(lerpColor(bgColor, lineColor, 0.5))
-         rowLines("line", [vConnectionCaretSpot, vConnectionCaretSpot], animStretchY)
-         stroke(lineColor)
+         stroke(lerpColor(palette.bg, palette.fg, 0.5))
+         rowLines("bezier", [vConnectionCaretSpot, vConnectionCaretSpot+animOffsetX], animStretchY)
+         stroke(palette.fg)
 
          let connectCounter = 0
          let lastPos = undefined
@@ -2544,13 +2554,10 @@ function addLeadingChar (input, count) {
 function lineType (x1, y1, x2, y2) {
    if (webglEffects.includes(effect)) {
       push()
-      //translate(0, 0, random())
 
-      //line(x1, y1, x2, y2)
-      push()
       noStroke()
-      fill(lineColor)
-      specularMaterial(lineColor);
+      fill(palette.fg)
+      specularMaterial(palette.fg);
       for (let i = 0; i < 11; i++) {
          push()
          translate(x1+(x2-x1)*0.1*i, y1+(y2-y1)*0.1*i)
@@ -2560,13 +2567,6 @@ function lineType (x1, y1, x2, y2) {
       //translate((x1+x2)/2, (y1+y2)/2)
       //cylinder(typeWeight/10, abs(x2-x1)+abs(y2-y1), 6, 1, false, false)
       pop()
-
-     // noStroke()
-     // fill("white")
-     // circle(x1, y1, (typeWeight/10)*1)
-     // circle(x2, y2, (typeWeight/10)*1)
-     // noFill()
-      pop()
       return
    }
    line(x1, y1, x2, y2)
@@ -2575,12 +2575,10 @@ function lineType (x1, y1, x2, y2) {
 function arcType (x, y, w, h, start, stop) {
    if (webglEffects.includes(effect)) {
       push()
-      //translate(0, 0, random())
-      
-      //arc(x, y, w, h, start, stop,undefined,12)
+
       noStroke()
-      fill(lineColor)
-      specularMaterial(lineColor);
+      fill(palette.fg)
+      specularMaterial(palette.fg);
       for (let i = 0; i < 11; i++) {
          push()
          const angle = start + (stop-start)*0.1*i
