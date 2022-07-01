@@ -74,7 +74,7 @@ const numberInputsObj = {
 let numberOffset
 
 let linesArray = ["hamburgefonstiv"]
-const validLetters = "abcdefghijklmnopqrstuvwxyzäöü,.!?-_|‸ "
+const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
 
 // use alt letters?
 let altS = false
@@ -170,6 +170,7 @@ function createGUI () {
          "hamburgefonstiv\nlorem ipsum",
          "lorem ipsum\ndolor sit amet",
          "the quick brown\nfox jumps over\nthe lazy dog.",
+         "Victor jagt zwölf\nBoxkämpfer quer\nüber den großen\nSylter Deich"
       ]
       let foundNewText = false
       while (!foundNewText) {
@@ -1035,7 +1036,7 @@ function drawStyle (lineNum) {
          if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
             // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
             if (cutMode === "" || cutMode === "branch") {
-               drawCornerFill(shape,arcQ,offQ,tx,ty,noSmol,noStretchX,noStretchY)
+               drawCornerFill(shape,arcQ,offQ,tx,ty,noStretchX,noStretchY)
             }
          }
 
@@ -1542,6 +1543,25 @@ function drawStyle (lineNum) {
                   drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
                break;
+            case "ß":
+               drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
+               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+               drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
+               drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+
+               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
+               drawLine(ringSizes, 4, 4, 0, 0, "v", descenders)
+
+               if (ascenders >= weight+letterInner) {
+                  drawCorner("round",ringSizes, 1, 1, 0, -ascenders, "", "")
+                  drawCorner("round",ringSizes, 2, 2, 0, -ascenders, "", "")
+                  drawCorner("round",ringSizes, 3, 3, 0, -weight-letterInner, "roundcut", "end")
+                  drawLine(ringSizes, 3, 2, 0, -ascenders, "v", -letterOuter*0.5+(ascenders-(weight+letterInner)))
+               } else {
+                  drawCorner("square", ringSizes, 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
+                  drawLine(ringSizes, 2, 2, 0, -ascenders, "h", -1)
+               }
+               break;
             case "g":
                drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
                drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "start")
@@ -1553,7 +1573,14 @@ function drawStyle (lineNum) {
 
                   drawLine(ringSizes, 2, 3, 0, letterOuter + lineOffset, "h", 0)
                   drawLine(ringSizes, 1, 4, 0, letterOuter + lineOffset, "h", 0)
+               } else if (letterOuter*0.5 + 1 <= descenders) {
+                  // enough room for a proper g
+                  drawLine(ringSizes, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
+                  drawLine(ringSizes, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
+                  drawCorner("round",ringSizes, 3, 3, 0, descenders, "", "", undefined, false, false, true)
+                  drawCorner("round",ringSizes, 4, 4, 0, descenders, "", "", undefined, false, false, true)
                } else {
+                  // square corner g
                   drawLine(ringSizes, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
                   drawCorner("square", ringSizes, 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
                   drawLine(ringSizes, 4, 4, 0, descenders-1, "h", -1)
@@ -2008,9 +2035,9 @@ function drawStyle (lineNum) {
       const asc = animAscenders
 
       if (type === "debug") {
-         palette.fg.setAlpha(40)
+         palette.fg.setAlpha(50)
          stroke(palette.fg)
-         strokeWeight(0.2*strokeScaleFactor)
+         strokeWeight(0.1*strokeScaleFactor)
    
          const i = lineNum * totalHeight[lineNum] - animSize/2
          if (animOffsetX<0) {
@@ -2018,12 +2045,12 @@ function drawStyle (lineNum) {
          }
 
          //vertical gridlines
-        lineType(0, i, width, i)
-        lineType(0, i+height, width, i+height)
-        lineType(0, i-asc, width, i-asc)
-        lineType(0, i+height/2-animOffsetY*0.5, width, i+height/2-animOffsetY*0.5)
-        lineType(0, i+height/2+animOffsetY*0.5, width, i+height/2+animOffsetY*0.5)
-        lineType(0, i+height+asc, width, i+height+asc)
+         lineType(0, i, width, i)
+         lineType(0, i+height, width, i+height)
+         lineType(0, i-asc, width, i-asc)
+         lineType(0, i+height/2-animOffsetY*0.5, width, i+height/2-animOffsetY*0.5)
+         lineType(0, i+height/2+animOffsetY*0.5, width, i+height/2+animOffsetY*0.5)
+         lineType(0, i+height+asc, width, i+height+asc)
    
          //horizontal gridlines
          push()
@@ -2032,6 +2059,18 @@ function drawStyle (lineNum) {
             lineType(j, -height/2-asc, j, height/2+asc)
          }
          pop()
+
+         // markers for start of each letter
+         push()
+         translate(0,i+height*0.5)
+         noStroke()
+         fill((darkMode) ? "#FFBB00E0" : "#2222FFA0")
+         for (let c = 0; c <= lineText.length; c++) {
+            const xpos = lineWidthUntil(lineText, c)
+            ellipse(xpos, 0, 0.9, 0.9)
+         }
+         pop()
+
       } else if (!xrayMode){
          stroke(palette.fg)
          strokeWeight((animWeight/10)*1*strokeScaleFactor)
