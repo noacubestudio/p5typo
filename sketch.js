@@ -86,7 +86,9 @@ const newLineChar = String.fromCharCode(13, 10)
 
 
 function windowResized() {
-   resizeCanvas(windowWidth-30, windowHeight-200)
+   if (!svgMode) {
+      resizeCanvas(windowWidth-30, windowHeight-200)
+   }
 }
 
 function setup () {
