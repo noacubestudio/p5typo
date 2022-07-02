@@ -1,37 +1,61 @@
 'use strict'
 
-let cnv
-let svgMode = false
-let startOffsetY
+// gui
+let canvasEl
+let writeEl
+let offsetLabelEl
+let numberOffsetEl
 
-//gui
-let writeArea
-let writingMode = false
-let offsetLabel
-let caretBlink = 0
+let writingFocused = false
+let caretTimer = 0
+const newLineChar = String.fromCharCode(13, 10)
+
+const numberInputsObj = {
+   zoom: {element: document.getElementById('number-scale'), min: 1, max:50},
+   weight: {element: document.getElementById('number-weight'), min: 1, max: 9},
+   spacing: {element: document.getElementById('number-spacing'), min: -2, max:2},
+   size: {element: document.getElementById('number-size'), min: 1, max:50},
+   rings: {element: document.getElementById('number-rings'), min: 1, max:30},
+   ascenders: {element: document.getElementById('number-asc'), min: 1, max:30},
+   stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
+   stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
+}
+let linesArray = ["the quick brown\nfox jumps over\nthe lazy dog."]
+const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
+
+
+// setup
 
 const palette = {}
 let randomizeAuto = false
 let lerpLength = 6
 
-let darkMode = true
-let monochromeTheme = false
-let xrayMode = false
 let effect = "none"
-let stretchEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
+let midlineEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
 let webglEffects = ["spheres"]
 
-let drawFills = true
 let initialDraw = true
 let gridType = ""
-let waveMode = false
+
+const mode = {
+   // visual
+   svg: false,
+   dark: true,
+   mono: false,
+   xray: false,
+   drawFills: true,
+   wave: false,
+   // use alt letters?
+   altS: false,
+   altM: false,
+   altNH: true,
+}
 
 let strokeScaleFactor = 1
 const totalWidth = [0, 0, 0, 0]
 const totalHeight = [0, 0, 0, 0]
 
 let offsetDirection = "h"
-
 let values = {
    hueDark: {from: undefined, to: undefined, lerp: 0},
    hueLight: {from: undefined, to: undefined, lerp: 0},
@@ -46,47 +70,14 @@ let values = {
    ascenders: {from: 2, to: undefined, lerp: 0},
    zoom: {from: 10, to: undefined, lerp: 0},
 }
-
 // calculated every frame based on current lerps
-let animSize
-let animRings
-let animSpacing
-let animOffsetX
-let animOffsetY
-let animStretchX
-let animStretchY
-let animWeight
-let animAscenders
-let animZoom
-let animColorDark
-let animColorLight
-
-const numberInputsObj = {
-   zoom: {element: document.getElementById('number-scale'), min: 1, max:50},
-   weight: {element: document.getElementById('number-weight'), min: 1, max: 9},
-   spacing: {element: document.getElementById('number-spacing'), min: -2, max:2},
-   size: {element: document.getElementById('number-size'), min: 1, max:50},
-   rings: {element: document.getElementById('number-rings'), min: 1, max:30},
-   ascenders: {element: document.getElementById('number-asc'), min: 1, max:30},
-   stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
-   stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
-}
-let numberOffset
-
-let linesArray = ["the quick brown\nfox jumps over\nthe lazy dog."]
-const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
-
-// use alt letters?
-let altS = false
-let altM = false
-let altNH = true
-
-// helpful
-const newLineChar = String.fromCharCode(13, 10)
+let animSize, animRings, animSpacing, animWeight, animAscenders, animZoom
+let animOffsetX, animOffsetY, animStretchX, animStretchY
+let animColorDark, animColorLight
 
 
 function windowResized() {
-   if (!svgMode) {
+   if (!mode.svg) {
       resizeCanvas(windowWidth-30, windowHeight-200)
    }
 }
@@ -95,13 +86,13 @@ function setup () {
    loadValuesFromURL()
    createGUI()
 
-   cnv = createCanvas(windowWidth-30, windowHeight-200,(webglEffects.includes(effect))?WEBGL:(svgMode)?SVG:"")
-   cnv.parent('sketch-holder')
+   canvasEl = createCanvas(windowWidth-30, windowHeight-200,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
+   canvasEl.parent('sketch-holder')
    if (!webglEffects.includes(effect)) {
       strokeCap(ROUND)
       textFont("Courier Mono")
       frameRate(60)
-      if (svgMode) strokeScaleFactor = values.zoom.from
+      if (mode.svg) strokeScaleFactor = values.zoom.from
    } else {
       frameRate(60)
       strokeScaleFactor = values.zoom.from
@@ -119,27 +110,27 @@ function createGUI () {
    createDropDown()
 
    // create textarea for line input
-   writeArea = document.getElementById('textarea-lines')
-   writeArea.innerHTML = linesArray.join(newLineChar)
+   writeEl = document.getElementById('textarea-lines')
+   writeEl.innerHTML = linesArray.join(newLineChar)
 
    // textarea events
-   writeArea.addEventListener('input', function() {
+   writeEl.addEventListener('input', function() {
       //split
-      linesArray = writeArea.value.split("\n")
+      linesArray = writeEl.value.split("\n")
       writeValuesToURL()
    }, false)
-   writeArea.addEventListener('focusin', () => {
-      writingMode = true
+   writeEl.addEventListener('focusin', () => {
+      writingFocused = true
    })
-   writeArea.addEventListener('focusout', () => {
-      writingMode = false
+   writeEl.addEventListener('focusout', () => {
+      writingFocused = false
 
       // remove spaces and newlines at the end from field and actual array
       for (let l = 0; l < linesArray.length; l++) {
          linesArray[l] = linesArray[l].trimEnd();
       }
       linesArray = linesArray.filter(function(e){ return e === 0 || e})
-      writeArea.value = linesArray.join("\n")
+      writeEl.value = linesArray.join("\n")
       writeValuesToURL()
       
    })
@@ -171,7 +162,8 @@ function createGUI () {
       const textOptions = [
          "lorem ipsum\ndolor sit amet",
          "the quick brown\nfox jumps over\nthe lazy dog.",
-         "Victor jagt zwölf\nBoxkämpfer quer\nüber den großen\nSylter Deich"
+         "Victor jagt zwölf\nBoxkämpfer quer\nüber den großen\nSylter Deich",
+         "abcdefghijklm\nnopqrstuvwxy\nzäöüß_-|.,!?",
       ]
       let foundNewText = false
       while (!foundNewText) {
@@ -187,71 +179,42 @@ function createGUI () {
    })
 
    const darkmodeToggle = document.getElementById('checkbox-darkmode')
-   darkmodeToggle.checked = darkMode
+   darkmodeToggle.checked = mode.dark
    darkmodeToggle.addEventListener('click', () => {
-      darkMode = darkmodeToggle.checked
+      mode.dark = darkmodeToggle.checked
       writeValuesToURL()
    })
    const monochromeToggle = document.getElementById('checkbox-monochrome')
-   monochromeToggle.checked = monochromeTheme
+   monochromeToggle.checked = mode.mono
    monochromeToggle.addEventListener('click', () => {
-      monochromeTheme = monochromeToggle.checked
+      mode.mono = monochromeToggle.checked
       writeValuesToURL()
    })
    const xrayToggle = document.getElementById('checkbox-xray')
-   xrayToggle.checked = xrayMode
+   xrayToggle.checked = mode.xray
    xrayToggle.addEventListener('click', () => {
-      xrayMode = xrayToggle.checked
+      mode.xray = xrayToggle.checked
       writeValuesToURL()
    })
    const svgToggle = document.getElementById('checkbox-svg')
-   svgToggle.checked = svgMode
+   svgToggle.checked = mode.svg
    svgToggle.addEventListener('click', () => {
-      svgMode = svgToggle.checked
+      mode.svg = svgToggle.checked
       writeValuesToURL()
       if (!svgToggle.checked) {
          location.reload()
       }
    })
-   //const webglToggle = document.getElementById('checkbox-webgl')
-   //webglToggle.checked = webglMode
-   //webglToggle.addEventListener('click', () => {
-   //   webglMode = webglToggle.checked
-   //   if (!webglMode.checked) {
-   //      noLoop()
-   //   }
-   //   writeValuesToURL()
-   //   if (!webglMode.checked) {
-   //      location.reload()
-   //   }
-   //})
-   // const gradientToggle = document.getElementById('checkbox-gradient')
-   // gradientToggle.checked = gradientMode
-   // gradientToggle.addEventListener('click', () => {
-   //    gradientMode = gradientToggle.checked
-   //    writeValuesToURL()
-   // })
-   // const vCondenseToggle = document.getElementById('checkbox-condense')
-   // vCondenseToggle.checked = vCondenseMode
-   // vCondenseToggle.addEventListener('click', () => {
-   //    vCondenseMode = vCondenseToggle.checked
-   //    if (vCondenseMode) {
-   //       //wip
-   //       values.stretchY.to = min(values.size.from * 2, values.stretchY.from)
-   //       writeValuesToGUI()
-   //    }
-   //    writeValuesToURL()
-   // })
    const altMToggle = document.getElementById('checkbox-altM')
-   altMToggle.checked = altM
+   altMToggle.checked = mode.altM
    altMToggle.addEventListener('click', () => {
-      altM = altMToggle.checked
+      mode.altM = altMToggle.checked
       writeValuesToURL()
    })
    const altNHToggle = document.getElementById('checkbox-altNH')
-   altNHToggle.checked = altNH
+   altNHToggle.checked = mode.altNH
    altNHToggle.addEventListener('click', () => {
-      altNH = altNHToggle.checked
+      mode.altNH = altNHToggle.checked
       writeValuesToURL()
    })
 
@@ -272,32 +235,32 @@ function createGUI () {
       })
    }
 
-   numberOffset = document.getElementById('number-offset')
-   numberOffset.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
-   numberOffset.addEventListener('input', () => {
-      if (numberOffset.value !== "") {
-         values[(offsetDirection === "h") ? "offsetX" : "offsetY"].to = clamp(numberOffset.value, -10, 10)
+   numberOffsetEl = document.getElementById('number-offset')
+   numberOffsetEl.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
+   numberOffsetEl.addEventListener('input', () => {
+      if (numberOffsetEl.value !== "") {
+         values[(offsetDirection === "h") ? "offsetX" : "offsetY"].to = clamp(numberOffsetEl.value, -10, 10)
          values[(offsetDirection !== "h") ? "offsetX" : "offsetY"].to = 0
          writeValuesToURL()
       }
    })
-   numberOffset.addEventListener("focusout", () => {
-      if (numberOffset.value === "") {
-         numberOffset.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
+   numberOffsetEl.addEventListener("focusout", () => {
+      if (numberOffsetEl.value === "") {
+         numberOffsetEl.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
       }
    })
 
    const offsetToggle = document.getElementById('toggle-offsetDirection')
-   offsetLabel = document.getElementById('label-offset')
+   offsetLabelEl = document.getElementById('label-offset')
    offsetToggle.addEventListener('click', () => {
       if (offsetDirection === "h") {
          if (values.offsetX.from === 0) values.offsetY.to = 1
          offsetDirection = "v"
-         offsetLabel.innerHTML = "offset&nbsp;&nbsp;v"
+         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;v"
       } else {
          if (values.offsetY.from === 0) values.offsetX.to = 1
          offsetDirection = "h"
-         offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
+         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
       }
       if (values.offsetX.to === undefined) values.offsetX.to = values.offsetY.from
       if (values.offsetY.to === undefined) values.offsetY.to = values.offsetX.from
@@ -312,27 +275,27 @@ function loadValuesFromURL () {
       get: (searchParams, prop) => searchParams.get(prop),
     });
    if (params.svg === "true" || params.svg === "1") {
-      svgMode = true
+      mode.svg = true
       print("Loaded with URL Mode: SVG")
    }
    if (params.wave === "true" || params.wave === "1") {
-      waveMode = true
+      mode.wave = true
       print("Loaded with URL Mode: Wave")
    }
    if (params.xray === "true" || params.xray === "1") {
-      xrayMode = true
+      mode.xray = true
       print("Loaded with URL Mode: XRAY")
    }
    if (params.solid === "false" || params.solid === "0") {
-      drawFills = false
+      mode.drawFills = false
       print("Loaded with URL Mode: Transparent overlaps")
    }
    if (params.invert === "true" || params.invert === "1") {
-      darkMode = false
+      mode.dark = false
       print("Loaded with URL Mode: Inverted")
    }
    if (params.mono === "true" || params.mono === "1") {
-      monochromeTheme = true
+      mode.mono = true
       print("Loaded with URL Mode: Mono")
    }
    if (params.effect !== undefined) {
@@ -452,19 +415,19 @@ function writeValuesToURL (noReload) {
    }
 
    // add other parameters afterwards
-   if (svgMode) {
+   if (mode.svg) {
       newParams.append("svg",true)
    }
-   if (!darkMode) {
+   if (!mode.dark) {
       newParams.append("invert",true)
    }
-   if (monochromeTheme) {
+   if (mode.mono) {
       newParams.append("mono",true)
    }
-   if (xrayMode) {
+   if (mode.xray) {
       newParams.append("xray",true)
    }
-   if (waveMode) {
+   if (mode.wave) {
       newParams.append("wave",true)
    }
    if (effect !== undefined) {
@@ -502,7 +465,7 @@ function writeValuesToURL (noReload) {
          newParams.append("effect", value)
       }
    }
-   if (!drawFills) {
+   if (!mode.drawFills) {
       newParams.append("solid",false)
    }
    if (gridType !== "") {
@@ -518,7 +481,7 @@ function writeValuesToURL (noReload) {
    }
    window.history.replaceState("", "", URL)
 
-   if ((svgMode) && noReload === undefined) {
+   if ((mode.svg) && noReload === undefined) {
       location.reload()
    }
 }
@@ -531,7 +494,7 @@ function writeValuesToGUI () {
          numberInput.element.value = values[property].from
       }
    }
-   writeArea.value = linesArray.join("\n")
+   writeEl.value = linesArray.join("\n")
 
    let potentialOffsetX; let potentialOffsetY
    if (values.offsetX.to !== undefined) {
@@ -547,16 +510,16 @@ function writeValuesToGUI () {
    if (potentialOffsetX === 0 && potentialOffsetY === 0) {
       //both empty, default to horizontal
       offsetDirection = "h"
-      offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
+      offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
    } else {
       if (potentialOffsetX === 0) {
-         numberOffset.value = potentialOffsetY
+         numberOffsetEl.value = potentialOffsetY
          offsetDirection = "v"
-         offsetLabel.innerHTML = "offset&nbsp;&nbsp;v"
+         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;v"
       } else {
-         numberOffset.value = potentialOffsetX
+         numberOffsetEl.value = potentialOffsetX
          offsetDirection = "h"
-         offsetLabel.innerHTML = "offset&nbsp;&nbsp;h"
+         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
       }
    }
 }
@@ -567,9 +530,9 @@ function keyTyped() {
 
 function keyPressed() {
    if (keyCode === LEFT_ARROW) {
-      caretBlink = 0
+      caretTimer = 0
    } else if (keyCode === RIGHT_ARROW) {
-      caretBlink = 0
+      caretTimer = 0
    }
 }
 
@@ -616,7 +579,7 @@ function draw () {
    if (randomizeAuto && frameCount%60 === 0) {
       randomizeValues()
    }
-   caretBlink++ // like frameCount
+   caretTimer++ // like frameCount
 
    Object.keys(values).forEach(key => {
       const slider = values[key]
@@ -630,7 +593,7 @@ function draw () {
          } else {
             //increment towards destination
             slider.lerp++
-            if (svgMode) {
+            if (mode.svg) {
                slider.lerp = lerpLength
             }
          }
@@ -642,7 +605,7 @@ function draw () {
       if (col !== undefined) {
          let saturation; let lightness;
          if (col === "dark") {
-            if (darkMode) {
+            if (mode.dark) {
                saturation = 100
                lightness = 6
             } else {
@@ -650,7 +613,7 @@ function draw () {
                lightness = 20
             }
          } else if (col === "light") {
-            if (darkMode) {
+            if (mode.dark) {
                saturation = 100
                lightness = 90
             } else {
@@ -685,10 +648,10 @@ function draw () {
    animColorLight = lerpValues(values.hueLight, "light")
    animZoom = lerpValues(values.zoom)
 
-   const lightColor = (monochromeTheme || xrayMode) ? color("white") : animColorLight
-   const darkColor = (monochromeTheme || xrayMode) ? color("black") : animColorDark
+   const lightColor = (mode.mono || mode.xray) ? color("white") : animColorLight
+   const darkColor = (mode.mono || mode.xray) ? color("black") : animColorDark
 
-   if (!darkMode) {
+   if (!mode.dark) {
       // light mode
       palette.bg = lightColor
       palette.fg = darkColor
@@ -723,7 +686,7 @@ function draw () {
 
    drawElements()
 
-   if (!svgMode) {
+   if (!mode.svg) {
       loop()
       return;
    }
@@ -758,12 +721,6 @@ function drawElements() {
    strokeWeight((animWeight/10)*strokeScaleFactor)
    palette.fg.setAlpha(255)
 
-   startOffsetY = 0
-
-   if (animOffsetY < 0) {
-      startOffsetY -= animOffsetY
-   }
-
    push()
    translate(0,0.5*animSize)
 
@@ -790,7 +747,7 @@ function charInSet (char, sets) {
       if (found === false) {
          if (set === "ul") {
             //up left sharp
-            found = "bhikltuüvwym".includes(char) || (altNH && "n".includes(char)) || !validLetters.includes(char)
+            found = "bhikltuüvwym".includes(char) || (mode.altNH && "n".includes(char)) || !validLetters.includes(char)
          }
          else if (set === "dl") {
             //down left sharp
@@ -798,7 +755,7 @@ function charInSet (char, sets) {
          }
          else if (set === "ur") {
             //up right sharp
-            found = "dijuüvwymg".includes(char) || (altNH && "nh".includes(char)) || !validLetters.includes(char)
+            found = "dijuüvwymg".includes(char) || (mode.altNH && "nh".includes(char)) || !validLetters.includes(char)
          }
          else if (set === "dr") {
             //down right sharp
@@ -820,13 +777,13 @@ function drawTextAt (lineNum) {
    let lineText = linesArray[lineNum].toLowerCase()
 
    // include caret into line so that it can be rendered
-   if (writingMode && !xrayMode && !svgMode && (writeArea.selectionStart === writeArea.selectionEnd)) {
+   if (writingFocused && !mode.xray && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
       let totalChars = 0
       for (let l = 0; l < linesArray.length; l++) {
          //found current line
          if (l === lineNum) {
             for (let c = 0; c < lineText.length+1; c++) {
-               if (caretBlink % 40 < 25 && totalChars+c === writeArea.selectionStart) {
+               if (caretTimer % 40 < 25 && totalChars+c === writeEl.selectionStart) {
                   //insert caret character at position
                   lineText = lineText.slice(0,c) + "‸" + lineText.slice(c)
                   break;
@@ -836,13 +793,11 @@ function drawTextAt (lineNum) {
             totalChars += linesArray[l].length + 1
          }
       }
-   } 
-
-   let letterOpacity = 1.0
+   }
 
    // fadeout in wavemode
    function waveInner (i, inner, size) {
-      if (!waveMode) {
+      if (!mode.wave) {
          return inner
       }
       return min(size, inner + i*2)
@@ -883,13 +838,11 @@ function drawTextAt (lineNum) {
 
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
+   // total height
+   totalHeight[lineNum] = animSize + Math.abs(animOffsetY) + animStretchY + animAscenders + 1
 
    // wip test: always fit on screen?
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
-
-   // make array that will track every vertical connection spot (rounded to grid)
-   const vConnectionSpots = []
-   let vConnectionCaretSpot = undefined
 
    //translate to account for x offset
    push()
@@ -928,547 +881,14 @@ function drawTextAt (lineNum) {
    }
 
 
+   // make array that will track every vertical connection spot (rounded to grid)
+   const lineStyle = {
+      midlineSpots: [],
+      caretSpots: [],
+   }
+
+
    for (let layerPos = 0; layerPos < lineText.length; layerPos++) {
-
-      // part drawing functions
-      // corners and straight lines
-
-      function drawCornerFill (shape, strokeSizes, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
-         if (weight === 0 || !drawFills) {
-            return
-         }
-
-         push()
-         translate(tx, ty)
-         noFill()
-         stroke((xrayMode)? palette.xrayBgCorner : palette.bg)
-         strokeCap(SQUARE)
-         strokeWeight(weight*strokeScaleFactor)
-
-         //for entire line
-         const size = strokeSizes[0]
-         const smallest = strokeSizes[strokeSizes.length-1]
-         const fillsize = smallest+weight
-
-         // base position
-         let xpos = topOffset + letterPositionFromLeft + (letterOuter/2)
-         let ypos = startOffsetY
-         // offset based on quarter and prev vertical offset
-         let offx = (offQ === 3 || offQ === 4) ? 1:0
-         let offy = (offQ === 2 || offQ === 3) ? 1:0
-         xpos += (offx > 0) ? animOffsetX : 0
-         ypos += (verticalOffset+offy) % 2==0 ? animOffsetY : 0
-         xpos += (offy > 0) ? animStretchX : 0
-         ypos += (offx > 0) ? animStretchY : 0
-
-         if (shape === "round") {
-            // angles
-            let startAngle = PI + (arcQ-1)*HALF_PI
-            let endAngle = startAngle + HALF_PI
-            arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
-         } else if (shape === "square") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-            beginShape()
-            vertex(xpos+dirX*fillsize/2, ypos)
-            vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
-            vertex(xpos, ypos+dirY*fillsize/2)
-            endShape()
-         } else if (shape === "diagonal") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-            const step = (fillsize-smallest)/2 + 1
-            const stepslope = step*tan(HALF_PI/4)
-            beginShape()
-            vertex(xpos+dirX*fillsize/2, ypos)
-            vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
-            vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
-            vertex(xpos, ypos+dirY*fillsize/2)
-            endShape()
-         }
-
-         if (animStretchX > 0 && !noStretchX) {
-            stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
-            const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            let stretchXPos = xpos
-            let stretchYPos = ypos + fillsize*toSideX*0.5
-            const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-
-            // the offset can be in between the regular lines vertically if it would staircase nicely
-            let offsetShift = 0
-            let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-            if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
-               offsetShift = (animOffsetY/3)*stairDir
-            } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
-               offsetShift = (animOffsetY/2)*stairDir
-            }
-
-           lineType(stretchXPos, stretchYPos+offsetShift,
-               stretchXPos + dirX*0.5*animStretchX, stretchYPos+offsetShift)
-         }
-         if (animStretchY > 0 && !noStretchY) {
-            stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
-            const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-            let stretchXPos = xpos + fillsize*toSideY*0.5
-            let stretchYPos = ypos
-            const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
-
-            // the offset can be in between the regular lines horizontally if it would staircase nicely
-            let offsetShift = 0
-            if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
-               offsetShift = animOffsetX/3*dirY
-            } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
-               offsetShift = animOffsetX/2*dirY
-            }
-
-           lineType(stretchXPos+offsetShift, stretchYPos,
-               stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
-         }
-         pop()
-      }
-
-      function drawCorner (shape, strokeSizes, arcQ, offQ, tx, ty, cutMode, cutSide, flipped, noSmol, noStretchX, noStretchY) {
-         //draw fills
-         // only if corner can be drawn at all
-         const smallest = strokeSizes[strokeSizes.length-1]
-         const biggest = strokeSizes[0]
-
-         if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
-            // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
-            if (cutMode === "" || cutMode === "branch") {
-               drawCornerFill(shape, strokeSizes, arcQ, offQ, tx, ty, noStretchX, noStretchY)
-            }
-         }
-
-         push()
-         translate(tx, ty)
-         noFill()
-
-         let innerColor; let outerColor
-
-         strokeWeight((animWeight/10)*strokeScaleFactor)
-         if (xrayMode) {
-            strokeWeight(0.2*strokeScaleFactor)
-         }
-         innerColor = (xrayMode)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-         outerColor = palette.fg
-         draw()
-
-         function draw() {
-            strokeSizes.forEach((size) => {
-               // gradient from inside to outside - color or weight
-               ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
-
-               const offx = (offQ === 3 || offQ === 4) ? 1:0
-               const offy = (offQ === 2 || offQ === 3) ? 1:0
-               const basePos = getQuarterPos(offx, offy, letterOuter)
-               let xpos = basePos.x
-               let ypos = basePos.y
-
-               if (shape === "round") {
-                  // angles
-                  let startAngle = PI + (arcQ-1)*HALF_PI
-                  let endAngle = startAngle + HALF_PI
-
-                  let cutDifference = 0
-                  let drawCurve = true
-
-                  if (cutMode === "linecut") {
-                     if (smallest-2 <= 0 && noSmol) {
-                        drawCurve = false
-                     }
-                     cutDifference = HALF_PI-arcUntil(size, smallest-2, HALF_PI)
-                  }
-                  else if (cutMode === "roundcut") {
-                     if ((smallest <= 2 || letterOuter+2 <= 2) && noSmol) {
-                        drawCurve = false
-                     }
-                     if (smallest > 2) {
-                        cutDifference = HALF_PI-arcUntilArc(size, letterOuter+2, smallest+weight, HALF_PI)
-                     } else {
-                        cutDifference = 0
-                     }
-                  }
-
-                  if (cutSide === "start") {
-                     startAngle += cutDifference
-                  } else if (cutSide === "end") {
-                     endAngle -= cutDifference
-                  }
-
-                  // random animation idea, maybe try more with this later
-                  //endAngle = startAngle + (endAngle-startAngle) * Math.abs(((frameCount % 60) /30)-1)
-
-                  if (drawCurve) {
-                     arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
-                  } else {
-                     // draw 0.5 long lines instead
-                     // wip
-                  }
-               } else if (shape === "square") {
-                  const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-                  const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-                  if (cutMode === "branch") {
-                     let branchLength = size
-                     let revSize = (biggest+smallest)-size
-                     if (size > (biggest+smallest)/2) branchLength = biggest-(size-smallest)
-                    lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
-                    lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
-                     if ((arcQ % 2 === 1) === (cutSide === "start")) {
-                       lineType(xpos+dirX*biggest/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
-                     } else {
-                       lineType(xpos+dirX*size/2, ypos+dirY*biggest/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
-                     }
-                  } else {
-                    lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*size/2)
-                    lineType(xpos, ypos+dirY*size/2, xpos+dirX*size/2, ypos+dirY*size/2)
-                  }
-               } else if (shape === "diagonal") {
-                  const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-                  const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-                  const step = (size-smallest)/2 + 1
-                  const stepslope = step*tan(HALF_PI/4)
-                  let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
-                  let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
-
-                  if (cutMode === "linecut" && ((biggest-smallest)/2+1)*tan(HALF_PI/4) < smallest/2-2) {
-                     let changeAxis = ""
-                     if (cutSide === "start") {
-                        changeAxis = (arcQ === 1 || arcQ === 3) ? "x" : "y"
-                     } else if (cutSide === "end") {
-                        changeAxis = (arcQ === 1 || arcQ === 3) ? "y" : "x"
-                     }
-                     if (changeAxis === "x") {
-                        xPoint.x = xpos+dirX*(biggest/2 -weight -1)
-                        xPoint.y = yPoint.y - (biggest/2 - weight -1) + dirY*stepslope
-                       lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
-                     } else if (changeAxis === "y") {
-                        yPoint.y = ypos+dirY*(biggest/2 -weight -1)
-                        yPoint.x = xPoint.x - (biggest/2 - weight -1) + dirX*stepslope
-                       lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
-                     }
-                    lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
-                  } else {
-                    lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
-                     if (step > 0) {
-                       lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
-                       lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
-                     }
-                  }
-               }
-
-               const cutX = (arcQ % 2 === 0) === (cutSide === "start")
-               if (animStretchX > 0 && !noStretchX) {
-                  // check if not cut off
-                  if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
-                     const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-                     let stretchXPos = xpos
-                     let stretchYPos = ypos + size*toSideX*0.5
-                     const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-
-                     // the offset can be in between the regular lines vertically if it would staircase nicely
-                     let offsetShift = 0
-                     let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-                     if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
-                        offsetShift = (animOffsetY/3)*stairDir
-                     } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
-                        offsetShift = (animOffsetY/2)*stairDir
-                     }
-
-                    lineType(stretchXPos, stretchYPos+offsetShift,
-                        stretchXPos + dirX*0.5*animStretchX, stretchYPos+offsetShift)
-                  }
-               }
-               if (animStretchY > 0 && !noStretchY) {
-                  // check if not cut off
-                  if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
-                     const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-                     let stretchXPos = xpos + size*toSideY*0.5
-                     let stretchYPos = ypos
-                     const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
-
-                     //if (curveMode) {
-                     //   curve(stretchXPos, stretchYPos-dirY*typeStretchY*3,
-                     //      stretchXPos, stretchYPos,
-                     //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY,
-                     //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY)
-                     //}
-
-                     // the offset can be in between the regular lines horizontally if it would staircase nicely
-                     let offsetShift = 0
-                     if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
-                        offsetShift = animOffsetX/3*dirY
-                     } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
-                        offsetShift = animOffsetX/2*dirY
-                     }
-
-                     if (!stretchEffects.includes(effect)) {
-                        lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
-                     }
-
-                     // if vertical line goes down, set those connection spots in the array
-                     if (dirY === 1 && stretchEffects.includes(effect)) {
-                        if (letter === "‸") {
-                           //caret counts separately
-                           vConnectionCaretSpot = Math.floor(stretchXPos + tx)
-                        } else {
-                           sortIntoArray(vConnectionSpots, stretchXPos + tx)
-                        }
-                     }
-                  }
-               }
-               const extendamount = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
-               if (cutMode === "extend" && extendamount > 0) {
-                  const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-                  let extendXPos = xpos
-                  let extendYPos = ypos + size*toSideX*0.5
-                  const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-                 lineType(extendXPos, extendYPos, extendXPos + dirX*extendamount, extendYPos)
-               }
-            });
-         }
-
-         pop()
-      }
-
-      function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, noStretch) {
-         //first, draw the fill
-         if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
-            drawLineFill(strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, noStretch)
-         }
-
-         push()
-         translate(tx, ty)
-         noFill()
-
-         const smallest = strokeSizes[strokeSizes.length-1]
-         const biggest = strokeSizes[0]
-
-         let innerColor; let outerColor
-
-         //if (true) {
-         //   innerColor = color("green")
-         //   outerColor = color("lime")
-         //   strokeWeight((typeWeight/5)*strokeScaleFactor)
-         //   draw()
-         //}
-
-         strokeWeight((animWeight/10)*strokeScaleFactor)
-         if (xrayMode) {
-            strokeWeight(0.2*strokeScaleFactor)
-         }
-         innerColor = (xrayMode)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-         outerColor = palette.fg
-         draw()
-
-         function draw() {
-            strokeSizes.forEach((size) => {
-               // gradient from inside to outside - color or weight
-               ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ)
-
-               const outerExt = 0
-
-               // base position
-               const offx = (offQ === 3 || offQ === 4) ? 1:0
-               const offy = (offQ === 2 || offQ === 3) ? 1:0
-               const basePos = getQuarterPos(offx, offy, letterOuter)
-
-               let x1 = basePos.x
-               let x2 = basePos.x
-               let y1 = basePos.y
-               let y2 = basePos.y
-
-               const innerPosV = (startFrom !== undefined) ? startFrom : 0
-               const innerPosH = (startFrom !== undefined) ? startFrom : 0
-
-               if (axis === "v") {
-                  const toSideX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-                  x1 += size*toSideX*0.5
-                  x2 += size*toSideX*0.5
-                  const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-                  y1 += innerPosV * dirY
-                  y2 += (letterOuter*0.5 + extension + outerExt) * dirY
-                  //only draw the non-stretch part if it is long enough to be visible
-                  if (dirY*(y2-y1)>=0) {
-                    lineType(x1, y1, x2, y2)
-                  }
-                  if (animStretchY !== 0 && innerPosV === 0 && !noStretch) {
-                     //stretch
-                     // the offset can be in between the regular lines horizontally if it would staircase nicely
-                     let offsetShift = 0
-                     if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
-                        offsetShift = animOffsetX/3*dirY
-                     } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
-                        offsetShift = animOffsetX/2*dirY
-                     }
-                     if (!stretchEffects.includes(effect)) {
-                        lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
-                     }
-                     
-                     // if vertical line goes down, set those connection spots in the array
-                     if (dirY === -1 && stretchEffects.includes(effect)) {
-                        if (letter === "‸") {
-                           //caret counts separately
-                           vConnectionCaretSpot = Math.floor(x1 + tx)
-                        } else {
-                           sortIntoArray(vConnectionSpots, x1 + tx)
-                        }
-                     }
-                  }
-               } else if (axis === "h") {
-                  const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-                  y1 += size*toSideY*0.5
-                  y2 += size*toSideY*0.5
-                  const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-                  x1 += innerPosH * dirX
-                  x2 += (letterOuter*0.5 + extension) * dirX
-                  //only draw the non-stretch part if it is long enough to be visible
-                  if (dirX*(x2-x1)>=0) {
-                     lineType(x1, y1, x2, y2)
-                  }
-                  if (animStretchX !== 0 && innerPosH === 0  && !noStretch) {
-                     //stretch
-                     // the offset can be in between the regular lines vertically if it would staircase nicely
-                     let offsetShift = 0
-                     let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-                     if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
-                        offsetShift = (animOffsetY/3)*stairDir
-                     } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
-                        offsetShift = (animOffsetY/2)*stairDir
-                     }
-                     lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
-                  }
-               }
-            });
-         }
-
-         pop()
-      }
-
-      function drawLineFill (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom) {
-         if (weight === 0 || !drawFills) {
-            return
-         }
-
-         push()
-         translate(tx, ty)
-         noFill()
-         stroke((xrayMode)? palette.xrayBg : palette.bg)
-         strokeWeight(weight*strokeScaleFactor)
-         strokeCap(SQUARE)
-
-         //for entire line
-         const size = strokeSizes[0]
-         const smallest = strokeSizes[strokeSizes.length-1]
-
-         // to make the rectangles a little shorter at the end (?)
-         let strokeWeightReference = (animWeight/10)
-         if (xrayMode) {
-            strokeWeightReference = 0.2*strokeScaleFactor
-         }
-         const outerExt = strokeWeightReference*-0.5
-
-         // base position
-         const offx = (offQ === 3 || offQ === 4) ? 1:0
-         const offy = (offQ === 2 || offQ === 3) ? 1:0
-         const basePos = getQuarterPos(offx, offy, size)
-
-         let x1 = basePos.x
-         let x2 = basePos.x
-         let y1 = basePos.y
-         let y2 = basePos.y
-
-         const innerPosV = (startFrom !== undefined) ? startFrom - outerExt: 0
-         const innerPosH = (startFrom !== undefined) ? startFrom - outerExt: 0
-
-         if (axis === "v") {
-            const toSideX = (arcQ === 1 || arcQ === 4) ? -0.5 : 0.5
-            x1 += (smallest+weight)*toSideX
-            x2 += (smallest+weight)*toSideX
-            const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            y1 += innerPosV * dirY
-            y2 += (letterOuter*0.5 + extension + outerExt) * dirY
-            //only draw the non-stretch part if it is long enough to be visible
-            if (dirY*(y2-y1)>0.1) {
-              lineType(x1, y1, x2, y2)
-            }
-            if (animStretchY !== 0 && innerPosV === 0) {
-               //stretch
-               // the offset can be in between the regular lines horizontally if it would staircase nicely
-               let offsetShift = 0
-               if (Math.abs(animOffsetX) >2 && Math.abs(animOffsetX) <4) {
-                  offsetShift = animOffsetX/3*dirY
-               } else if (Math.abs(animOffsetX) >1 && Math.abs(animOffsetX)<3) {
-                  offsetShift = animOffsetX/2*dirY
-               }
-
-               stroke((xrayMode)? palette.xrayStretch : palette.bg)
-               lineType(x1-offsetShift, y1-animStretchY*0.5*dirY, x2-offsetShift, y1)
-            }
-         } else if (axis === "h") {
-            const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
-            y1 += (smallest+weight)*toSideY
-            y2 += (smallest+weight)*toSideY
-            const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-            x1 += innerPosH * dirX
-            x2 += (letterOuter*0.5 + extension + outerExt) * dirX
-            //only draw the non-stretch part if it is long enough to be visible
-            if (dirX*(x2-x1)>0.1) {
-              lineType(x1, y1, x2, y2)
-            }
-            if (animStretchX !== 0 && innerPosH === 0) {
-               //stretch
-
-               // the offset can be in between the regular lines vertically if it would staircase nicely
-               let offsetShift = 0
-               let stairDir = (verticalOffset+offy) % 2===0 ? -1 : 1
-               if (Math.abs(animOffsetY) >2 && Math.abs(animOffsetY) <4) {
-                  offsetShift = (animOffsetY/3)*stairDir
-               } else if (Math.abs(animOffsetY) >1 && Math.abs(animOffsetY)<3) {
-                  offsetShift = (animOffsetY/2)*stairDir
-               }
-
-               stroke((xrayMode)? palette.xrayStretch : palette.bg)
-               lineType(x1-animStretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
-            }
-         }
-         pop()
-      }
-
-      function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ) {
-         //strokeweight
-         if ((effect==="weightgradient") && !xrayMode) {
-            strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
-            if ((arcQ !== offQ) !== (flipped === "flipped")) {
-               strokeWeight((animWeight/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
-            }
-         }
-
-         //color
-         let innerEdgeReference = smallest
-         //1-2 rings
-         if ((biggest-smallest) <1) {
-            innerEdgeReference = biggest-2
-         }
-         let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
-         if ((arcQ !== offQ) !== (flipped === "flipped")) {
-            lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
-         }
-         lerpedColor = lerpColor(palette.bg, lerpedColor, letterOpacity)
-         stroke(lerpedColor)
-      }
-
-      function getQuarterPos(offx, offy, biggest) {
-         // base position
-         let xpos = topOffset + letterPositionFromLeft + (biggest/2)
-         let ypos = startOffsetY
-         // offset based on quarter and prev vertical offset
-         xpos += (offx > 0) ? animOffsetX : 0
-         ypos += (verticalOffset+offy) % 2==0 ? animOffsetY : 0
-         xpos += (offy > 0) ? animStretchX : 0
-         ypos += (offx > 0) ? animStretchY : 0
-         return {x: xpos, y:ypos}
-      }
 
       // VALUES -----------------------------------------------------------------------------
 
@@ -1493,19 +913,33 @@ function drawTextAt (lineNum) {
          ringSizes.push(size)
       }
 
-      //position and offset after going through all letters in the line until this point
-      const letterPositionFromLeft = lineWidthUntil(lineText, layerArray.indexOf(layerPos))
-      const verticalOffset = offsetUntil(lineText, layerArray.indexOf(layerPos))
-
-      // convenient values
-      // per letter
-      const ascenders = max(animAscenders+((letterOuter%2===0)?0:0), 1)
-      const descenders = max(animAscenders+((letterOuter%2===0)?0:0), 1)
-      const weight = (letterOuter-letterInner)*0.5
+      const ascenders = animAscenders
+      const descenders = animAscenders
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
-      const topOffset = (letterOuter < 0) ? -animOffsetX : 0
       const wideOffset = 0.5*letterOuter + 0.5*letterInner
       const extendOffset = ((letterOuter % 2 === 0) ? 0 : 0.5) + (animStretchX-animStretchX%2)*0.5
+
+      // style per letter, modify during drawing when needed
+      const style = {
+         //for entire line, but need while drawing
+         midlineSpots: lineStyle.midlineSpots,
+         caretSpots: lineStyle.caretSpots,
+         // position and offset after going through all letters in the line until this point
+         posFromLeft: lineWidthUntil(lineText, layerArray.indexOf(layerPos)),
+         posFromTop: ((animOffsetY<0) ? -animOffsetY:0) + lineNum*totalHeight[lineNum],
+         vOffset: offsetUntil(lineText, layerArray.indexOf(layerPos)),
+         // basics
+         sizes: ringSizes,
+         opacity: 1,
+         stroke: animWeight,
+         offsetX: animOffsetX,
+         offsetY: animOffsetY,
+         stretchX: animStretchX,
+         stretchY: animStretchY,
+         letter: letter,
+         // convenient values
+         weight: (letterOuter-letterInner)*0.5,
+      }
 
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
 
@@ -1521,513 +955,511 @@ function drawTextAt (lineNum) {
             case "p":
             case "q":
                // circle
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
-               drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 3, 3, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
                if (letter === "d") {
-                  drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders)
+                  drawLine(style, 2, 2, 0, 0, "v", ascenders)
                }
                else if (letter === "b") {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
                }
                else if (letter === "q") {
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", descenders)
+                  drawLine(style, 3, 3, 0, 0, "v", descenders)
                } else if (letter === "p") {
-                  drawLine(ringSizes, 4, 4, 0, 0, "v", descenders)
+                  drawLine(style, 4, 4, 0, 0, "v", descenders)
                } else if (letter === "ö") {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
                break;
             case "ß":
-               const smallRingSizes = []
-               for (let s = 0; s < ringSizes.length; s++) {
-                  smallRingSizes.push(ringSizes[s]-1)
-               }
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
-               drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 3, 3, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
+               drawLine(style, 4, 4, 0, 0, "v", 0)
 
-               if (ascenders >= weight+letterInner-1) {
-                  drawLine(ringSizes, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
-                  drawCorner("round",smallRingSizes, 1, 1, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner("round",smallRingSizes, 2, 2, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner("round",smallRingSizes, 3, 2, -0.5, -weight-letterInner +0.5, "", "", undefined, false, false, true)
-                  drawLine(ringSizes, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(weight+letterInner))+1, 0, false, true)
+               if (ascenders >= style.weight+letterInner-1) {
+                  const modifiedStyle = {...style}
+                  modifiedStyle.sizes = []
+                  for (let s = 0; s < style.sizes.length; s++) {
+                     modifiedStyle.sizes.push(style.sizes[s]-1)
+                  }
+                  drawLine(style, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
+                  drawCorner(modifiedStyle, "round", 1, 1, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner(modifiedStyle, "round", 2, 2, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner(modifiedStyle, "round", 3, 2, -0.5, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
+                  drawLine(style, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, false, true)
                } else {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
-                  drawCorner("square", ringSizes, 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
-                  drawLine(ringSizes, 2, 2, 0, -ascenders, "h", -1)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
+                  drawCorner(style, "square", 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
+                  drawLine(style, 2, 2, 0, -ascenders, "h", -1)
                }
                break;
             case "g":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "start")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "linecut", "start")
 
-               if (descenders <= weight + 1) {
+               if (descenders <= style.weight + 1) {
                   // if only one ring, move line down so there is a gap
                   const extragap = (letterOuter > letterInner) ? 0:1
-                  const lineOffset = (extragap+weight > descenders) ? -(weight-descenders) : extragap
+                  const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
 
-                  drawLine(ringSizes, 2, 3, 0, letterOuter + lineOffset, "h", 0)
-                  drawLine(ringSizes, 1, 4, 0, letterOuter + lineOffset, "h", 0)
+                  drawLine(style, 2, 3, 0, letterOuter + lineOffset, "h", 0)
+                  drawLine(style, 1, 4, 0, letterOuter + lineOffset, "h", 0)
                } else if (letterOuter*0.5 + 1 <= descenders) {
                   // enough room for a proper g
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                  drawLine(ringSizes, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
-                  drawCorner("round",ringSizes, 3, 3, 0, descenders, "", "", undefined, false, false, true)
-                  drawCorner("round",ringSizes, 4, 4, 0, descenders, "", "", undefined, false, false, true)
+                  drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
+                  drawLine(style, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
+                  drawCorner(style, "round", 3, 3, 0, descenders, "", "", undefined, false, false, true)
+                  drawCorner(style, "round", 4, 4, 0, descenders, "", "", undefined, false, false, true)
                } else {
                   // square corner g
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                  drawCorner("square", ringSizes, 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
-                  drawLine(ringSizes, 4, 4, 0, descenders-1, "h", -1)
+                  drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
+                  drawCorner(style, "square", 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
+                  drawLine(style, 4, 4, 0, descenders-1, "h", -1)
                }
 
-               drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 3, 3, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
 
-               drawLine(ringSizes, 2, 2, 0, 0, "h", 0)
-               //drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
+               drawLine(style, 2, 2, 0, 0, "h", 0)
+               //drawLine(style, 3, 3, 0, 0, "v", 0)
                break;
             case "c":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
                if (charInSet(nextLetter, ["ul", "gap"])) {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
                }
                if (charInSet(nextLetter, ["dl", "gap"])) {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
                } else {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                  drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
                }
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
                break;
             case "e":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
                if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                  drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "linecut", "end")
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "end")
                } else {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "end", undefined, true)
+                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", undefined, true)
                }
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
                if ("s".includes(nextLetter)) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", 1)
+                  drawLine(style, 3, 3, 0, 0, "h", 1)
                } else if (charInSet(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", 0)
+                  drawLine(style, 3, 3, 0, 0, "h", 0)
                } else if (!charInSet(nextLetter,["dl", "gap"]) && letterInner <= 2) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
+                  drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
                } else if ("x".includes(nextLetter)) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-weight)
+                  drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-style.weight)
                } else if (!charInSet(nextLetter,["dl"])) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -weight))
+                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
                } else if (animSpacing < 0) {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -weight))
+                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
                } else if (animSpacing > 0){
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", 0)
+                  drawLine(style, 3, 3, 0, 0, "h", 0)
                } else {
-                  drawLine(ringSizes, 3, 3, 0, 0, "h", -oneoffset)
+                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset)
                }
                break;
             case "a":
             case "ä":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
                if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                  drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "linecut", "start")
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "start")
                } else {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
                }
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
-               drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
+               drawLine(style, 3, 3, 0, 0, "v", 0)
 
                if (letter === "ä") {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
                break;
             case "n":
-               if (altNH) {
-                  drawCorner("square",ringSizes, 1, 1, 0, 0, "", "")
-                  drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               if (mode.altNH) {
+                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
                } else {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
                }
-               drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               drawLine(style, 3, 3, 0, 0, "v", 0)
+               drawLine(style, 4, 4, 0, 0, "v", 0)
                break;
             case "m":
-               if (altM) {
-                  drawCorner("square",ringSizes, 1, 1, 0, 0, "", "")
-                  drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
-                  drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               if (mode.altM) {
+                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
                   // SECOND LAYER
-                  drawCorner("square",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                  drawCorner("square",ringSizes, 1, 2, wideOffset, 0, "branch", "start", "flipped")
-                  drawLine(ringSizes, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                  drawCorner(style, "square", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
+                  drawCorner(style, "square", 1, 2, wideOffset, 0, "branch", "start", "flipped")
+                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                } else {
-                  drawCorner("diagonal",ringSizes, 1, 1, 0, 0, "", "")
-                  drawCorner("diagonal",ringSizes, 2, 2, 0, 0, "", "")
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
-                  drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+                  drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
+                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
                   // SECOND LAYER
-                  drawCorner("diagonal",ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                  drawCorner("diagonal",ringSizes, 1, 2, wideOffset, 0, "", "", "flipped")
-                  drawLine(ringSizes, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                  drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
+                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
+                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                }
                break;
             case "s":
-               if (!altS) {
+               if (!mode.altS) {
                   //LEFT OVERLAP
                   if (prevLetter === "s") {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   } else if (prevLetter === "r") {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", isFlipped)
+                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
                   } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fk".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   }
                   let xOffset = 0
                   //start further left if not connecting left
                   if (charInSet(prevLetter,["gap", "dr"])) {
                      xOffset = -letterOuter*0.5 + extendOffset -animStretchX
-                     drawCorner("round",ringSizes, 3, 3, xOffset, 0, "extend", "end", isFlipped)
+                     drawCorner(style, "round", 3, 3, xOffset, 0, "extend", "end", isFlipped)
                   } else {
-                     drawCorner("round",ringSizes, 3, 3, xOffset, 0, "", "", isFlipped)
+                     drawCorner(style, "round", 3, 3, xOffset, 0, "", "", isFlipped)
                   }
                   if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
-                     drawCorner("round",ringSizes, 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
-                     drawCorner("round",ringSizes, 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
+                     drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
+                     drawCorner(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
                   } else {
-                     drawCorner("round",ringSizes, 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
+                     drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
                   }
                } else {
                   // alternative cursive s
 
                   //LEFT OVERLAP
                   if (charInSet(prevchar,["dr"])) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
                   } else if (prevLetter !== "t") {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end")
+                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
                   }
 
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   if (charInSet(prevLetter,["gap"])) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+                     drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   }
                }
                break;
             case "x":
                push()
                if (charInSet(prevLetter,["gap","ur"]) && charInSet(prevLetter,["gap","dr"])) {
-                  translate(-weight-1,0)
+                  translate(-style.weight-1,0)
                }
 
                //LEFT OVERLAP
                // top connection
                if (!charInSet(prevLetter,["gap"]) && prevLetter !== "x") {
                   if (charInSet(prevLetter,["ur"]) || "l".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
+                     drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
                   } else if (prevLetter !== "t"){
-                     drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start")
+                     drawCorner(style, "round", 1, 1, 0, 0, "roundcut", "start")
                   }
                }
                // bottom connection
                if (!"xef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
-                  if (prevLetter === "s" && !altS) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                  if (prevLetter === "s" && !mode.altS) {
+                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", isFlipped)
+                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
                   } else {
-                     drawCorner("round",ringSizes, 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   }
                }
 
                if (charInSet(prevLetter, ["gap"])) {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start", undefined, true)
+                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start", undefined, true)
                }
-               drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
-               drawCorner("round",ringSizes, 4, 3, wideOffset, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 4, 3, wideOffset, 0, "", "")
 
                if (nextLetter !== "x") {
                   if (!charInSet(nextLetter,["dl", "gap"])) {
-                     drawCorner("round",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
+                     drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
                   } else {
-                     drawCorner("round",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
+                     drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
                   }
                }
 
                // SECOND LAYER
-               drawCorner("diagonal",ringSizes, 1, 2, wideOffset, 0, "", "", "flipped")
+               drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
                if (nextLetter !== "x") {
                   if (!charInSet(nextLetter,["gap", "ul"])) {
-                     drawCorner("round",ringSizes, 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
+                     drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
                   } else {
-                     drawCorner("round",ringSizes, 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
+                     drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
                   }
                }
-               drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "", "flipped")
+               drawCorner(style, "diagonal", 3, 3, 0, 0, "", "", "flipped")
                if (charInSet(prevLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end", "flipped", true)
+                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", "flipped", true)
                }
                pop()
                break;
             case "u":
             case "ü":
             case "y":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", 0)
-               drawLine(ringSizes, 2, 2, 0, 0, "v", 0)
-               drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawLine(style, 1, 1, 0, 0, "v", 0)
+               drawLine(style, 2, 2, 0, 0, "v", 0)
+               drawCorner(style, "round", 3, 3, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
 
                // SECOND LAYER
                if (letter === "y") {
-                  drawLine(ringSizes, 3, 3, 0, 0, "v", descenders)
+                  drawLine(style, 3, 3, 0, 0, "v", descenders)
                } else if (letter === "ü") {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(ringSizes, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
                }
                break;
             case "w":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", 0)
-               drawLine(ringSizes, 2, 2, 0, 0, "v", 0)
-               drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("diagonal",ringSizes, 4, 4, 0, 0, "", "")
+               drawLine(style, 1, 1, 0, 0, "v", 0)
+               drawLine(style, 2, 2, 0, 0, "v", 0)
+               drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+               drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
 
-               drawLine(ringSizes, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-               drawLine(ringSizes, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
-               drawCorner("diagonal",ringSizes, 4, 3, wideOffset, 0, "", "", "flipped")
-               drawCorner("diagonal",ringSizes, 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
+               drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+               drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
+               drawCorner(style, "diagonal", 4, 3, wideOffset, 0, "", "", "flipped")
+               drawCorner(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
                break;
             case "r":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
                if (charInSet(nextLetter,["ul", "gap"])) {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end")
+                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
                }
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               drawLine(style, 4, 4, 0, 0, "v", 0)
                break;
             case "l":
             case "t":
 
                if (letter === "t") {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
-                  drawCorner("square",ringSizes, 1, 1, 0, 0, "branch", "end")
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                  drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                   if (!"zx".includes(nextLetter)) {
                      if (charInSet(nextLetter,["ul", "gap"]) || letterInner > 2) {
-                        drawLine(ringSizes, 2, 2, 0, 0, "h", -weight-1 + ((letterInner<2) ? 1 : 0))
+                        drawLine(style, 2, 2, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
                      } else {
-                        drawLine(ringSizes, 2, 2, 0, 0, "h", letterOuter*0.5-weight)
+                        drawLine(style, 2, 2, 0, 0, "h", letterOuter*0.5-style.weight)
                      }
                   }
                } else {
-                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
                }
 
-               drawCorner("round",ringSizes, 4, 4, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "", "")
                if (charInSet(nextLetter,["dl", "gap"])) {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
                } else {
-                  drawCorner("round",ringSizes, 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                  drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
                }
                break;
             case "f":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
                if (charInSet(nextLetter,["ul", "gap"])) {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
                } else {
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
                }
-               drawLine(ringSizes, 4, 4, 0, 0, "v", descenders)
-               drawCorner("square", ringSizes, 4, 4, 0, 0, "branch", "start")
+               drawLine(style, 4, 4, 0, 0, "v", descenders)
+               drawCorner(style, "square", 4, 4, 0, 0, "branch", "start")
 
                // SECOND LAYER
                if (!"sx".includes(nextLetter)) {
                   if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
-                     drawLine(ringSizes, 3, 3, 0, 0, "h", -weight-1 + ((letterInner<2) ? 1 : 0))
+                     drawLine(style, 3, 3, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
                   } else {
-                     drawLine(ringSizes, 3, 3, 0, 0, "h", letterOuter*0.5-weight)
+                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5-style.weight)
                   }
                }
                break;
             case "k":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
-               drawCorner("diagonal",ringSizes, 1, 1, weight, 0, "", "")
-               drawCorner("diagonal",ringSizes, 4, 4, weight, 0, "", "")
+               drawLine(style, 1, 1, 0, 0, "v", ascenders)
+               drawLine(style, 4, 4, 0, 0, "v", 0)
+               drawCorner(style, "diagonal", 1, 1, style.weight, 0, "", "")
+               drawCorner(style, "diagonal", 4, 4, style.weight, 0, "", "")
                if (!"x".includes(nextLetter)) {
-                  drawLine(ringSizes, 2, 2, weight, 0, "h", -oneoffset-weight)
+                  drawLine(style, 2, 2, style.weight, 0, "h", -oneoffset-style.weight)
                }
                if (!"sx".includes(nextLetter)) {
                   if (!(charInSet(nextLetter,["dl", "gap"]))) {
-                     drawCorner("round",ringSizes, 3, 3, weight, 0, "roundcut", "start")
+                     drawCorner(style, "round", 3, 3, style.weight, 0, "roundcut", "start")
                   } else {
-                     drawLine(ringSizes, 3, 3, weight, 0, "h", -oneoffset-weight)
+                     drawLine(style, 3, 3, style.weight, 0, "h", -oneoffset-style.weight)
                   }
                }
                break;
             case "h":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, 0)
+               drawLine(style, 1, 1, 0, 0, "v", ascenders, 0)
 
                // SECOND LAYER
-               if (altNH) {
-                  drawCorner("square",ringSizes, 1, 1, 0, 0, "branch", "end")
-                  drawCorner("square",ringSizes, 2, 2, 0, 0, "", "")
+               if (mode.altNH) {
+                  drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
+                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
                } else {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "", "")
-                  drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
                }
-               drawLine(ringSizes, 3, 3, 0, 0, "v", 0)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               drawLine(style, 3, 3, 0, 0, "v", 0)
+               drawLine(style, 4, 4, 0, 0, "v", 0)
                break;
             case "v":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", 0)
-               drawLine(ringSizes, 2, 2, 0, 0, "v", 0)
+               drawLine(style, 1, 1, 0, 0, "v", 0)
+               drawLine(style, 2, 2, 0, 0, "v", 0)
                if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                  drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "")
-                  drawCorner("diagonal",ringSizes, 4, 4, 0, 0, "", "")
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
                } else {
-                  drawCorner("diagonal",ringSizes, 3, 3, 0, 0, "", "")
-                  drawCorner("square",ringSizes, 4, 4, 0, 0, "", "")
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "square", 4, 4, 0, 0, "", "")
                }
                break;
             case ".":
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (weight+0.5))
+               drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
                break;
             case ",":
-               drawLine(ringSizes, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (weight+0.5))
+               drawLine(style, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (style.weight+0.5))
                break;
             case "!":
                // wip
-               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders,)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", -weight-1.5)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (weight+0.5))
+               drawLine(style, 1, 1, 0, 0, "v", ascenders,)
+               drawLine(style, 4, 4, 0, 0, "v", -style.weight-1.5)
+               drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
                break;
             case "?":
                // wip
-               drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
-               drawCorner("round", ringSizes, 2, 2, 0, 0, "", "")
-               drawCorner("round", ringSizes, 3, 3, 0, 0, "", "")
-               drawCorner("round", ringSizes, 4, 4, 0, 0, "linecut", "end")
-               drawLine(ringSizes, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (weight+0.5))
+               drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               drawCorner(style, "round", 2, 2, 0, 0, "", "")
+               drawCorner(style, "round", 3, 3, 0, 0, "", "")
+               drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
+               drawLine(style, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (style.weight+0.5))
                break;
             case "i":
-               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               drawLine(ringSizes, 1, 1, 0, 0, "v", 0)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
+               drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+               drawLine(style, 1, 1, 0, 0, "v", 0)
+               drawLine(style, 4, 4, 0, 0, "v", 0)
                break;
             case "j":
                let leftOffset = 0
                if (charInSet(prevLetter,["gap"])) {
-                  leftOffset = -weight-1
+                  leftOffset = -style.weight-1
                }
 
                // LEFT OVERLAP
                if (prevLetter !== undefined) {
                   if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
+                     drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
                   } else if (!"tk".includes(prevLetter)) {
-                     drawCorner("round",ringSizes, 4, 4, leftOffset, 0, "roundcut", "end")
+                     drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
                   }
                   if (!charInSet(prevLetter,["tr"]) && !"ckrsx".includes(prevLetter)) {
-                     drawLine(ringSizes, 1, 1, leftOffset, 0, "h", -weight-1)
+                     drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
                   }
                }
                
-               drawLine(ringSizes, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
-               drawCorner("square", ringSizes, 2, 2, leftOffset, 0, "", "")
-               drawCorner("round", ringSizes, 3, 3, leftOffset, 0, "", "")
+               drawLine(style, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
+               drawCorner(style, "square", 2, 2, leftOffset, 0, "", "")
+               drawCorner(style, "round", 3, 3, leftOffset, 0, "", "")
                if (prevLetter === undefined) {
-                  drawLine(ringSizes, 1, 1, leftOffset, 0, "h", -weight-1)
-                  drawCorner("round", ringSizes, 4, 4, leftOffset, 0, "linecut", "end")
+                  drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
+                  drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end")
                }
                break;
             case "z":
                let oddOffset = (letterOuter % 2 === 0) ? 0 : 0.5
                // TOP LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
+                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
                } else if (!charInSet(prevLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 1, 1, 0, 0, "roundcut", "start")
+                  drawCorner(style, "round", 1, 1, 0, 0, "roundcut", "start")
                } else if (charInSet(prevLetter, ["gap"])) {
-                  drawCorner("round", ringSizes, 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
                }
 
-               drawLine(ringSizes, 2, 2, 0, 0, "h", 1+oddOffset*2)
-               drawCorner("diagonal", ringSizes, 1, 2, letterOuter*0.5 +1+oddOffset, 0, "", "", "flipped")
+               drawLine(style, 2, 2, 0, 0, "h", 1+oddOffset*2)
+               drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset, 0, "", "", "flipped")
 
                // BOTTOM RIGHT OVERLAP
                if (charInSet(nextLetter,["dl"])) {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "linecut", "start")
+                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "linecut", "start")
                } else if (!charInSet(nextLetter,["gap"])) {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "roundcut", "start")
+                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "roundcut", "start")
                } else {
-                  drawCorner("round",ringSizes, 3, 4, weight+2+animStretchX*2+oddOffset*2, 0, "", "")
+                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "", "")
                }
 
-               drawCorner("diagonal", ringSizes, 3, 3, weight+1-letterOuter*0.5+oddOffset, 0, "", "", "flipped")
-               drawLine(ringSizes, 4, 3, weight+2+oddOffset*2, 0, "h", 1+oddOffset*2)
+               drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset, 0, "", "", "flipped")
+               drawLine(style, 4, 3, style.weight+2+oddOffset*2, 0, "h", 1+oddOffset*2)
                break;
             case "-":
-               drawLine([letterOuter], 1, 1, 0, +letterOuter*0.5, "h", -1)
-               drawLine([letterOuter], 2, 2, 0, +letterOuter*0.5, "h", -1)
+               style.sizes = [letterOuter]
+               drawLine(style, 1, 1, 0, +letterOuter*0.5, "h", -1)
+               drawLine(style, 2, 2, 0, +letterOuter*0.5, "h", -1)
                break;
             case "_":
-               drawLine([letterOuter], 3, 3, 0, 0, "h", -1)
-               drawLine([letterOuter], 4, 4, 0, 0, "h", -1)
+               style.sizes = [letterOuter]
+               drawLine(style, 3, 3, 0, 0, "h", -1)
+               drawLine(style, 4, 4, 0, 0, "h", -1)
                break;
             case " ":
                break;
             case "‸":
                //caret symbol
-               letterOpacity = 0.5
-               drawLine([letterOuter], 1, 1, 1, 0, "v", animAscenders, undefined, undefined)
-               drawLine([letterOuter], 4, 4, 1, 0, "v", animAscenders)
+               style.opacity = 0.5
+               style.sizes = [letterOuter]
+               drawLine(style, 1, 1, 1, 0, "v", animAscenders)
+               drawLine(style, 4, 4, 1, 0, "v", animAscenders)
                break;
             case "|":
-               drawLine([letterOuter], 1, 1, 0, 0, "v", animAscenders)
-               drawLine([letterOuter], 4, 4, 0, 0, "v", animAscenders)
+               style.sizes = [letterOuter]
+               drawLine(style, 1, 1, 0, 0, "v", animAscenders)
+               drawLine(style, 4, 4, 0, 0, "v", animAscenders)
                break;
             default:
-               drawCorner("square",[letterOuter], 1, 1, 0, 0, "", "")
-               drawCorner("square",[letterOuter], 2, 2, 0, 0, "", "")
-               drawCorner("square",[letterOuter], 3, 3, 0, 0, "", "")
-               drawCorner("square",[letterOuter], 4, 4, 0, 0, "", "")
+               style.sizes = [letterOuter]
+               drawCorner(style, "square", 1, 1, 0, 0, "", "")
+               drawCorner(style, "square", 2, 2, 0, 0, "", "")
+               drawCorner(style, "square", 3, 3, 0, 0, "", "")
+               drawCorner(style, "square", 4, 4, 0, 0, "", "")
                break;
          }
-         letterOpacity = 1
       })()
    }
 
-   const height = animSize + Math.abs(animOffsetY) + animStretchY
-   const asc = animAscenders
-
-   //(wip)
-   startOffsetY += height + asc + 1
-   totalHeight[lineNum] = height + asc + 1
-
-   if (xrayMode) {
+   if (mode.xray) {
       drawGrid("debug")
    }
 
-   if (stretchEffects.includes(effect)) {
-      drawStretchEffect()
+   if (midlineEffects.includes(effect)) {
+      drawMidlineEffects()
    }
 
    function drawGrid (type) {
@@ -2067,14 +1499,14 @@ function drawTextAt (lineNum) {
          push()
          translate(0,i+height*0.5)
          noStroke()
-         fill((darkMode) ? "#FFBB00E0" : "#2222FFA0")
+         fill((mode.dark) ? "#FFBB00E0" : "#2222FFA0")
          for (let c = 0; c <= lineText.length; c++) {
             const xpos = lineWidthUntil(lineText, c)
             ellipse(xpos, 0, 0.9, 0.9)
          }
          pop()
 
-      } else if (!xrayMode){
+      } else if (!mode.xray){
          stroke(palette.fg)
          strokeWeight((animWeight/10)*1*strokeScaleFactor)
          const i = lineNum * totalHeight[lineNum] - animSize/2
@@ -2102,41 +1534,29 @@ function drawTextAt (lineNum) {
       pop()
    }
 
-   function drawStretchEffect () {
+   function drawMidlineEffects () {
       push()
          stroke(palette.fg)
          noFill()
          strokeWeight((animWeight/10)*strokeScaleFactor)
-         if (xrayMode) {
+         if (mode.xray) {
             strokeWeight(0.2*strokeScaleFactor)
          }
+         translate(0, (Math.abs(animOffsetY) + animStretchY)*0.5 + lineNum * totalHeight[lineNum])
 
-         translate(0,height*0.5 + lineNum * totalHeight[lineNum] - animSize/2)
-
-         let trimEnd = 0
-         for (let c = lineText.length-1; c >= 0; c--) {
-            // get last char, trim, otherwise break loop
-            if (charInSet(lineText[c],["gap"]) && !"|".includes(lineText[c])) {
-               trimEnd++
-            } else {
-               break;
-            }
-         }
-         let lineWidth = lineWidthUntil(lineText, lineText.length - trimEnd)
-
-         const total = vConnectionSpots.length-1
+         const total = lineStyle.midlineSpots.length-1
 
          //style and caret
          stroke(lerpColor(palette.bg, palette.fg, 0.5))
-         rowLines("bezier", [vConnectionCaretSpot, vConnectionCaretSpot+animOffsetX], animStretchY)
+         rowLines("bezier", [lineStyle.caretSpots[0], lineStyle.caretSpots[0]+animOffsetX], animStretchY)
          stroke(palette.fg)
 
          let counter = 0
          let lastPos = undefined
 
-         const leftPos = vConnectionSpots[0]
-         const rightPos = vConnectionSpots [total]
-         vConnectionSpots.forEach((pos) => {
+         const leftPos = lineStyle.midlineSpots[0]
+         const rightPos = lineStyle.midlineSpots[total]
+         lineStyle.midlineSpots.forEach((pos) => {
             if (effect === "spread") {
                const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
                rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
@@ -2244,7 +1664,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          }
          break;
       case "s":
-         if (!altS) {
+         if (!mode.altS) {
             charWidth = weight*3 + inner*2
             if (charInSet(nextchar,["gap", "ul"])) {
                charWidth += -0.5*outer + optionalGap
@@ -2308,7 +1728,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       let minSpaceAfter
       switch(char) {
          case "s":
-            if (!altS) {
+            if (!mode.altS) {
                if (!charInSet(nextchar,["gap", "ul"])) {
                   spaceAfter = -weight
                   afterConnect = true
@@ -2368,7 +1788,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       if (afterConnect === false) {
          switch(nextchar) {
             case "s":
-               if (!altS) {
+               if (!mode.altS) {
                   if (!charInSet(char,["gap", "dr"])) {
                      spaceBefore = -weight
                      beforeConnect = true
@@ -2471,7 +1891,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
    let stretchWidth = 0
    switch (char) {
       case "s": 
-         if (!altS) {
+         if (!mode.altS) {
             if (charInSet(prevchar,["gap", "dr"])) {
                stretchWidth = extendOffset
             } else {
@@ -2516,7 +1936,7 @@ function letterYOffsetCount (prevchar, char, nextchar) {
          break;
       case "s":
          if (char === "s") {
-            if (!altS) {
+            if (!mode.altS) {
                // stretch spacing depends on if it connects
                if (charInSet(prevchar,["gap", "dr"])) {
                   offsetSegments +=1
@@ -2776,12 +2196,12 @@ function dropdownTextToEffect (text) {
    //check current effect
    const isWebgl = webglEffects.includes(effect)
    if (wasWebgl && !isWebgl) {
-      cnv = undefined
+      canvasEl = undefined
       noLoop()
       location.reload()
    }
    if (!wasWebgl && isWebgl) {
-      cnv = undefined
+      canvasEl = undefined
       noLoop()
       location.reload()
    }
@@ -2811,3 +2231,603 @@ function sortIntoArray(array, insertNumber) {
 function roundTo(a, precision) {
    return Math.round(a*precision)/precision
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function drawCornerFill (style, shape, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
+   if (style.weight === 0 || !mode.drawFills) {
+      return
+   }
+
+   push()
+   translate(tx, ty)
+   noFill()
+   stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
+   strokeCap(SQUARE)
+   strokeWeight(style.weight*strokeScaleFactor)
+
+   //for entire line
+   const size = style.sizes[0]
+   const smallest = style.sizes[style.sizes.length-1]
+   const fillsize = smallest+style.weight
+
+   // base position
+   const topOffset = (size < 0) ? -style.offsetX : 0
+   let xpos = topOffset + style.posFromLeft + size/2
+   let ypos = style.posFromTop
+   // offset based on quarter and prev vertical offset
+   let offx = (offQ === 3 || offQ === 4) ? 1:0
+   let offy = (offQ === 2 || offQ === 3) ? 1:0
+   xpos += (offx > 0) ? style.offsetX : 0
+   ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+   xpos += (offy > 0) ? style.stretchX : 0
+   ypos += (offx > 0) ? style.stretchY : 0
+
+   if (shape === "round") {
+      // angles
+      let startAngle = PI + (arcQ-1)*HALF_PI
+      let endAngle = startAngle + HALF_PI
+      arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
+   } else if (shape === "square") {
+      const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+      const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+      beginShape()
+      vertex(xpos+dirX*fillsize/2, ypos)
+      vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
+      vertex(xpos, ypos+dirY*fillsize/2)
+      endShape()
+   } else if (shape === "diagonal") {
+      const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+      const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+      const step = (fillsize-smallest)/2 + 1
+      const stepslope = step*tan(HALF_PI/4)
+      beginShape()
+      vertex(xpos+dirX*fillsize/2, ypos)
+      vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
+      vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
+      vertex(xpos, ypos+dirY*fillsize/2)
+      endShape()
+   }
+
+   if (style.stretchX > 0 && !noStretchX) {
+      stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+      const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+      let stretchXPos = xpos
+      let stretchYPos = ypos + fillsize*toSideX*0.5
+      const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+
+      // the offset can be in between the regular lines vertically if it would staircase nicely
+      let offsetShift = 0
+      let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+      if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+         offsetShift = (style.offsetY/3)*stairDir
+      } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+         offsetShift = (style.offsetY/2)*stairDir
+      }
+
+     lineType(stretchXPos, stretchYPos+offsetShift,
+         stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
+   }
+   if (style.stretchY > 0 && !noStretchY) {
+      stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+      const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
+      let stretchXPos = xpos + fillsize*toSideY*0.5
+      let stretchYPos = ypos
+      const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
+
+      // the offset can be in between the regular lines horizontally if it would staircase nicely
+      let offsetShift = 0
+      if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+         offsetShift = style.offsetX/3*dirY
+      } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+         offsetShift = style.offsetX/2*dirY
+      }
+
+     lineType(stretchXPos+offsetShift, stretchYPos,
+         stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
+   }
+   pop()
+}
+
+function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped, noSmol, noStretchX, noStretchY) {
+   //draw fills
+   // only if corner can be drawn at all
+   const smallest = style.sizes[style.sizes.length-1]
+   const biggest = style.sizes[0]
+   const topOffset = (biggest < 0) ? -style.offsetX : 0
+
+   if (!webglEffects.includes(effect) && style.sizes.length > 1) {
+      // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
+      if (cutMode === "" || cutMode === "branch") {
+         drawCornerFill(style, shape, arcQ, offQ, tx, ty, noStretchX, noStretchY)
+      }
+   }
+
+   push()
+   translate(tx, ty)
+   noFill()
+
+   let innerColor; let outerColor
+
+   strokeWeight((style.stroke/10)*strokeScaleFactor)
+   if (mode.xray) {
+      strokeWeight(0.2*strokeScaleFactor)
+   }
+   innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   outerColor = palette.fg
+
+   function getQuarterPos(offx, offy, biggest) {
+      // base position
+      let xpos = topOffset + style.posFromLeft + (biggest/2)
+      let ypos = style.posFromTop
+      // offset based on quarter and prev vertical offset
+      xpos += (offx > 0) ? style.offsetX : 0
+      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      xpos += (offy > 0) ? style.stretchX : 0
+      ypos += (offx > 0) ? style.stretchY : 0
+      return {x: xpos, y:ypos}
+   }
+
+   draw()
+
+   function draw() {
+      style.sizes.forEach((size) => {
+         // gradient from inside to outside - color or weight
+         ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+
+         const offx = (offQ === 3 || offQ === 4) ? 1:0
+         const offy = (offQ === 2 || offQ === 3) ? 1:0
+         const basePos = getQuarterPos(offx, offy, biggest, topOffset)
+         let xpos = basePos.x
+         let ypos = basePos.y
+
+         if (shape === "round") {
+            // angles
+            let startAngle = PI + (arcQ-1)*HALF_PI
+            let endAngle = startAngle + HALF_PI
+
+            let cutDifference = 0
+            let drawCurve = true
+
+            if (cutMode === "linecut") {
+               if (smallest-2 <= 0 && noSmol) {
+                  drawCurve = false
+               }
+               cutDifference = HALF_PI-arcUntil(size, smallest-2, HALF_PI)
+            }
+            else if (cutMode === "roundcut") {
+               if ((smallest <= 2 || biggest+2 <= 2) && noSmol) {
+                  drawCurve = false
+               }
+               if (smallest > 2) {
+                  cutDifference = HALF_PI-arcUntilArc(size, biggest+2, smallest+style.weight, HALF_PI)
+               } else {
+                  cutDifference = 0
+               }
+            }
+
+            if (cutSide === "start") {
+               startAngle += cutDifference
+            } else if (cutSide === "end") {
+               endAngle -= cutDifference
+            }
+
+            // random animation idea, maybe try more with this later
+            //endAngle = startAngle + (endAngle-startAngle) * Math.abs(((frameCount % 60) /30)-1)
+
+            if (drawCurve) {
+               arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
+            } else {
+               // draw 0.5 long lines instead
+               // wip
+            }
+         } else if (shape === "square") {
+            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+            if (cutMode === "branch") {
+               let branchLength = size
+               let revSize = (biggest+smallest)-size
+               if (size > (biggest+smallest)/2) branchLength = biggest-(size-smallest)
+              lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
+              lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
+               if ((arcQ % 2 === 1) === (cutSide === "start")) {
+                 lineType(xpos+dirX*biggest/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
+               } else {
+                 lineType(xpos+dirX*size/2, ypos+dirY*biggest/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
+               }
+            } else {
+              lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*size/2)
+              lineType(xpos, ypos+dirY*size/2, xpos+dirX*size/2, ypos+dirY*size/2)
+            }
+         } else if (shape === "diagonal") {
+            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+            const step = (size-smallest)/2 + 1
+            const stepslope = step*tan(HALF_PI/4)
+            let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
+            let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
+
+            if (cutMode === "linecut" && ((biggest-smallest)/2+1)*tan(HALF_PI/4) < smallest/2-2) {
+               let changeAxis = ""
+               if (cutSide === "start") {
+                  changeAxis = (arcQ === 1 || arcQ === 3) ? "x" : "y"
+               } else if (cutSide === "end") {
+                  changeAxis = (arcQ === 1 || arcQ === 3) ? "y" : "x"
+               }
+               if (changeAxis === "x") {
+                  xPoint.x = xpos+dirX*(biggest/2 -style.weight -1)
+                  xPoint.y = yPoint.y - (biggest/2 - style.weight -1) + dirY*stepslope
+                 lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+               } else if (changeAxis === "y") {
+                  yPoint.y = ypos+dirY*(biggest/2 -style.weight -1)
+                  yPoint.x = xPoint.x - (biggest/2 - style.weight -1) + dirX*stepslope
+                 lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
+               }
+              lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+            } else {
+              lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+               if (step > 0) {
+                 lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
+                 lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+               }
+            }
+         }
+
+         const cutX = (arcQ % 2 === 0) === (cutSide === "start")
+         if (style.stretchX > 0 && !noStretchX) {
+            // check if not cut off
+            if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
+               const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+               let stretchXPos = xpos
+               let stretchYPos = ypos + size*toSideX*0.5
+               const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+
+               // the offset can be in between the regular lines vertically if it would staircase nicely
+               let offsetShift = 0
+               let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+               if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+                  offsetShift = (style.offsetY/3)*stairDir
+               } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+                  offsetShift = (style.offsetY/2)*stairDir
+               }
+
+              lineType(stretchXPos, stretchYPos+offsetShift,
+                  stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
+            }
+         }
+         if (style.stretchY > 0 && !noStretchY) {
+            // check if not cut off
+            if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
+               const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
+               let stretchXPos = xpos + size*toSideY*0.5
+               let stretchYPos = ypos
+               const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
+
+               //if (curveMode) {
+               //   curve(stretchXPos, stretchYPos-dirY*typeStretchY*3,
+               //      stretchXPos, stretchYPos,
+               //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY,
+               //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY)
+               //}
+
+               // the offset can be in between the regular lines horizontally if it would staircase nicely
+               let offsetShift = 0
+               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+                  offsetShift = style.offsetX/3*dirY
+               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+                  offsetShift = style.offsetX/2*dirY
+               }
+
+               if (!midlineEffects.includes(effect)) {
+                  lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
+               }
+
+               // if vertical line goes down, set those connection spots in the array
+               if (dirY === 1 && midlineEffects.includes(effect)) {
+                  if (style.letter === "‸") {
+                     //caret counts separately
+                     style.caretSpots[0] = stretchXPos + tx
+                  } else {
+                     sortIntoArray(style.midlineSpots, stretchXPos + tx)
+                  }
+               }
+            }
+         }
+         const extendamount = ((biggest % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
+         if (cutMode === "extend" && extendamount > 0) {
+            const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+            let extendXPos = xpos
+            let extendYPos = ypos + size*toSideX*0.5
+            const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+           lineType(extendXPos, extendYPos, extendXPos + dirX*extendamount, extendYPos)
+         }
+      });
+   }
+
+   pop()
+}
+
+function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, noStretch) {
+   //first, draw the fill
+   if (!webglEffects.includes(effect) && style.sizes.length > 1) {
+      drawLineFill(style, arcQ, offQ, tx, ty, axis, extension, startFrom, noStretch)
+   }
+
+   push()
+   translate(tx, ty)
+   noFill()
+
+   const smallest = style.sizes[style.sizes.length-1]
+   const biggest = style.sizes[0]
+   const topOffset = (biggest < 0) ? -style.offsetX : 0
+
+   let innerColor; let outerColor
+
+   //if (true) {
+   //   innerColor = color("green")
+   //   outerColor = color("lime")
+   //   strokeWeight((typeWeight/5)*strokeScaleFactor)
+   //   draw()
+   //}
+
+   function getQuarterPos(offx, offy, biggest) {
+      // base position
+      let xpos = topOffset + style.posFromLeft + (biggest/2)
+      let ypos = style.posFromTop
+      // offset based on quarter and prev vertical offset
+      xpos += (offx > 0) ? style.offsetX : 0
+      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      xpos += (offy > 0) ? style.stretchX : 0
+      ypos += (offx > 0) ? style.stretchY : 0
+      return {x: xpos, y:ypos}
+   }
+
+   strokeWeight((style.stroke/10)*strokeScaleFactor)
+   if (mode.xray) {
+      strokeWeight(0.2*strokeScaleFactor)
+   }
+   innerColor = (mode.xray)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   outerColor = palette.fg
+   draw()
+
+   function draw() {
+      style.sizes.forEach((size) => {
+         // gradient from inside to outside - color or weight
+         ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+
+         const outerExt = 0
+
+         // base position
+         const offx = (offQ === 3 || offQ === 4) ? 1:0
+         const offy = (offQ === 2 || offQ === 3) ? 1:0
+         const basePos = getQuarterPos(offx, offy, biggest)
+
+         let x1 = basePos.x
+         let x2 = basePos.x
+         let y1 = basePos.y
+         let y2 = basePos.y
+
+         const innerPosV = (startFrom !== undefined) ? startFrom : 0
+         const innerPosH = (startFrom !== undefined) ? startFrom : 0
+
+         if (axis === "v") {
+            const toSideX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+            x1 += size*toSideX*0.5
+            x2 += size*toSideX*0.5
+            const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+            y1 += innerPosV * dirY
+            y2 += (biggest*0.5 + extension + outerExt) * dirY
+            //only draw the non-stretch part if it is long enough to be visible
+            if (dirY*(y2-y1)>=0) {
+              lineType(x1, y1, x2, y2)
+            }
+            if (style.stretchY !== 0 && innerPosV === 0 && !noStretch) {
+               //stretch
+               // the offset can be in between the regular lines horizontally if it would staircase nicely
+               let offsetShift = 0
+               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+                  offsetShift = style.offsetX/3*dirY
+               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+                  offsetShift = style.offsetX/2*dirY
+               }
+               if (!midlineEffects.includes(effect)) {
+                  lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+               }
+               
+               // if vertical line goes down, set those connection spots in the array
+               if (dirY === -1 && midlineEffects.includes(effect)) {
+                  if (style.letter === "‸") {
+                     //caret counts separately
+                     style.caretSpots[0] = x1 + tx
+                  } else {
+                     sortIntoArray(style.midlineSpots, x1 + tx)
+                  }
+               }
+            }
+         } else if (axis === "h") {
+            const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+            y1 += size*toSideY*0.5
+            y2 += size*toSideY*0.5
+            const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+            x1 += innerPosH * dirX
+            x2 += (biggest*0.5 + extension) * dirX
+            //only draw the non-stretch part if it is long enough to be visible
+            if (dirX*(x2-x1)>=0) {
+               lineType(x1, y1, x2, y2)
+            }
+            if (style.stretchX !== 0 && innerPosH === 0  && !noStretch) {
+               //stretch
+               // the offset can be in between the regular lines vertically if it would staircase nicely
+               let offsetShift = 0
+               let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+               if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+                  offsetShift = (style.offsetY/3)*stairDir
+               } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+                  offsetShift = (style.offsetY/2)*stairDir
+               }
+               lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+            }
+         }
+      });
+   }
+
+   pop()
+}
+
+function drawLineFill (style, arcQ, offQ, tx, ty, axis, extension, startFrom) {
+   if (style.weight === 0 || !mode.drawFills) {
+      return
+   }
+
+   push()
+   translate(tx, ty)
+   noFill()
+   stroke((mode.xray)? palette.xrayBg : palette.bg)
+   strokeWeight(style.weight*strokeScaleFactor)
+   strokeCap(SQUARE)
+
+   //for entire line
+   const biggest = style.sizes[0]
+   const smallest = style.sizes[style.sizes.length-1]
+   const topOffset = (biggest < 0) ? -style.offsetX : 0
+
+   // to make the rectangles a little shorter at the end (?)
+   let strokeWeightReference = (style.weight/10)
+   if (mode.xray) {
+      strokeWeightReference = 0.2*strokeScaleFactor
+   }
+   const outerExt = strokeWeightReference*-0.5
+
+   function getQuarterPos(offx, offy, biggest) {
+      // base position
+      let xpos = topOffset + style.posFromLeft + (biggest/2)
+      let ypos = style.posFromTop
+      // offset based on quarter and prev vertical offset
+      xpos += (offx > 0) ? style.offsetX : 0
+      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      xpos += (offy > 0) ? style.stretchX : 0
+      ypos += (offx > 0) ? style.stretchY : 0
+      return {x: xpos, y:ypos}
+   }
+
+   // base position
+   const offx = (offQ === 3 || offQ === 4) ? 1:0
+   const offy = (offQ === 2 || offQ === 3) ? 1:0
+   const basePos = getQuarterPos(offx, offy, biggest)
+
+   let x1 = basePos.x
+   let x2 = basePos.x
+   let y1 = basePos.y
+   let y2 = basePos.y
+
+   const innerPosV = (startFrom !== undefined) ? startFrom - outerExt: 0
+   const innerPosH = (startFrom !== undefined) ? startFrom - outerExt: 0
+
+   if (axis === "v") {
+      const toSideX = (arcQ === 1 || arcQ === 4) ? -0.5 : 0.5
+      x1 += (smallest+style.weight)*toSideX
+      x2 += (smallest+style.weight)*toSideX
+      const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+      y1 += innerPosV * dirY
+      y2 += (biggest*0.5 + extension + outerExt) * dirY
+      //only draw the non-stretch part if it is long enough to be visible
+      if (dirY*(y2-y1)>0.1) {
+        lineType(x1, y1, x2, y2)
+      }
+      if (style.stretchY !== 0 && innerPosV === 0) {
+         //stretch
+         // the offset can be in between the regular lines horizontally if it would staircase nicely
+         let offsetShift = 0
+         if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+            offsetShift = style.offsetX/3*dirY
+         } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+            offsetShift = style.offsetX/2*dirY
+         }
+
+         stroke((mode.xray)? palette.xrayStretch : palette.bg)
+         lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+      }
+   } else if (axis === "h") {
+      const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
+      y1 += (smallest+style.weight)*toSideY
+      y2 += (smallest+style.weight)*toSideY
+      const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+      x1 += innerPosH * dirX
+      x2 += (biggest*0.5 + extension + outerExt) * dirX
+      //only draw the non-stretch part if it is long enough to be visible
+      if (dirX*(x2-x1)>0.1) {
+        lineType(x1, y1, x2, y2)
+      }
+      if (style.stretchX !== 0 && innerPosH === 0) {
+         //stretch
+
+         // the offset can be in between the regular lines vertically if it would staircase nicely
+         let offsetShift = 0
+         let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+         if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+            offsetShift = (style.offsetY/3)*stairDir
+         } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+            offsetShift = (style.offsetY/2)*stairDir
+         }
+
+         stroke((mode.xray)? palette.xrayStretch : palette.bg)
+         lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+      }
+   }
+   pop()
+}
+
+function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, opacity, strokeWidth) {
+   //strokeweight
+   if ((effect==="weightgradient") && !mode.xray) {
+      strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
+      if ((arcQ !== offQ) !== (flipped === "flipped")) {
+         strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
+      }
+   }
+
+   //color
+   let innerEdgeReference = smallest
+   //1-2 rings
+   if ((biggest-smallest) <1) {
+      innerEdgeReference = biggest-2
+   }
+   let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
+   if ((arcQ !== offQ) !== (flipped === "flipped")) {
+      lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
+   }
+   lerpedColor = lerpColor(palette.bg, lerpedColor, opacity)
+   stroke(lerpedColor)
+}
+
