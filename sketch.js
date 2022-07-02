@@ -73,7 +73,7 @@ const numberInputsObj = {
 }
 let numberOffset
 
-let linesArray = ["hamburgefonstiv"]
+let linesArray = ["the quick brown\nfox jumps over\nthe lazy dog."]
 const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
 
 // use alt letters?
@@ -167,7 +167,6 @@ function createGUI () {
    const randomTextButton = document.getElementById('button-randomText')
    randomTextButton.addEventListener('click', () => {
       const textOptions = [
-         "hamburgefonstiv\nlorem ipsum",
          "lorem ipsum\ndolor sit amet",
          "the quick brown\nfox jumps over\nthe lazy dog.",
          "Victor jagt zwölf\nBoxkämpfer quer\nüber den großen\nSylter Deich"
@@ -887,7 +886,7 @@ function drawStyle (lineNum) {
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
 
    // make array that will track every vertical connection spot (rounded to grid)
-   let vConnectionSpots = new Array(Math.floor(totalWidth[lineNum])).fill(0)
+   const vConnectionSpots = []
    let vConnectionCaretSpot = undefined
 
    //translate to account for x offset
@@ -1211,7 +1210,7 @@ function drawStyle (lineNum) {
                            //caret counts separately
                            vConnectionCaretSpot = Math.floor(stretchXPos + tx)
                         } else {
-                           vConnectionSpots[Math.floor(stretchXPos + tx)] = 1
+                           sortIntoArray(vConnectionSpots, stretchXPos + tx)
                         }
                      }
                   }
@@ -1310,7 +1309,7 @@ function drawStyle (lineNum) {
                            //caret counts separately
                            vConnectionCaretSpot = Math.floor(x1 + tx)
                         } else {
-                           vConnectionSpots[Math.floor(x1 + tx)] = 1
+                           sortIntoArray(vConnectionSpots, x1 + tx)
                         }
                      }
                   }
@@ -2123,12 +2122,7 @@ function drawStyle (lineNum) {
          }
          let lineWidth = lineWidthUntil(lineText, lineText.length - trimEnd)
 
-         let connectTotal = 0
-         for (let j = 0; j < lineWidth; j++) {
-            if (vConnectionSpots[j] === 1) {
-               connectTotal++
-            }
-         }
+         const connectTotal = vConnectionSpots.length-1
 
          //style and caret
          stroke(lerpColor(palette.bg, palette.fg, 0.5))
@@ -2137,46 +2131,44 @@ function drawStyle (lineNum) {
 
          let connectCounter = 0
          let lastPos = undefined
-         for (let pos = 0; pos <= lineWidth; pos++) {
-            if (vConnectionSpots[pos] === 1) {
-               if (effect === "spread") {
-                  const midX = map(connectCounter, 0, connectTotal, 0, lineWidth) + animOffsetX*0.5
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-               } else if (effect === "compress") {
-                  const midX = (lineWidth - connectTotal + animOffsetX) *0.5 + connectCounter
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-               } else if (effect === "split") {
-                  if (connectCounter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
-                  }
-               } else if (effect === "twist") {
-                  if (connectCounter % 2 ==1) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
-                  } else if (connectCounter === connectTotal-1) {
-                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
-                  }
-               } else if (effect === "lean") {
-                  if (connectCounter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                  }
-               } else if (effect === "teeth") {
-                  if (connectCounter % 2 ==1) {
-                     const x = lastPos + (pos-lastPos)*0.5
-                     const w = pos-lastPos
-                     arc(x, -animStretchY*0.5,w,w, 0, PI)
-                  } else {
-                     //bottom
-                     const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
-                     const w = pos-lastPos
-                     arc(x, animStretchY*0.5,w,w, PI, TWO_PI)
-                  }
+         vConnectionSpots.forEach((pos) => {
+            if (effect === "spread") {
+               const midX = map(connectCounter, 0, connectTotal, 0, vConnectionSpots[connectTotal]) + animOffsetX*0.5
+               rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+            } else if (effect === "compress") {
+               const midX = (vConnectionSpots[connectTotal] - (connectTotal) + animOffsetX) *0.5 + connectCounter
+               rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+            } else if (effect === "split") {
+               if (connectCounter > 0) {
+                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                  rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                }
-               lastPos = pos
-               connectCounter++
+            } else if (effect === "twist") {
+               if (connectCounter % 2 ==1) {
+                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                  rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+               } else if (connectCounter === connectTotal) {
+                  rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
+               }
+            } else if (effect === "lean") {
+               if (connectCounter > 0) {
+                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+               }
+            } else if (effect === "teeth") {
+               if (connectCounter % 2 ==1) {
+                  const x = lastPos + (pos-lastPos)*0.5
+                  const w = pos-lastPos
+                  arc(x, -animStretchY*0.5,w,w, 0, PI)
+               } else {
+                  //bottom
+                  const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
+                  const w = pos-lastPos
+                  arc(x, animStretchY*0.5,w,w, PI, TWO_PI)
+               }
             }
-         }
+            lastPos = pos
+            connectCounter++
+         })
       pop()
    }
    pop()
@@ -2788,4 +2780,22 @@ function dropdownTextToEffect (text) {
       noLoop()
       location.reload()
    }
+}
+
+function sortIntoArray(array, insertNumber) {
+   //from the end
+   for (let a = array.length-1; a >= 0; a--) {
+
+      if (array[a] < insertNumber) {
+         // insert after a
+         array.splice(a+1, 0, insertNumber)
+         return true
+         
+      } else if (array[a] === insertNumber) {
+         // already existed
+         return false
+      }
+   }
+   array.splice(0, 0, insertNumber)
+   return true
 }
