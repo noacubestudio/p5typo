@@ -2788,16 +2788,23 @@ function sortIntoArray(array, insertNumber) {
    //from the end
    for (let a = array.length-1; a >= 0; a--) {
 
-      if (array[a] < insertNumber) {
+      const existingNumber = roundTo(array[a],1000)
+      insertNumber = roundTo(insertNumber,1000)
+
+      if (existingNumber < insertNumber) {
          // insert after a
          array.splice(a+1, 0, insertNumber)
          return true
          
-      } else if (array[a] === insertNumber) {
+      } else if (existingNumber === insertNumber) {
          // already existed
          return false
       }
    }
    array.splice(0, 0, insertNumber)
    return true
+}
+
+function roundTo(a, precision) {
+   return Math.round(a*precision)/precision
 }
