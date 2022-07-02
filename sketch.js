@@ -932,7 +932,7 @@ function drawStyle (lineNum) {
       // part drawing functions
       // corners and straight lines
 
-      function drawCornerFill (shape, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
+      function drawCornerFill (shape, strokeSizes, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
          if (weight === 0 || !drawFills) {
             return
          }
@@ -944,11 +944,10 @@ function drawStyle (lineNum) {
          strokeCap(SQUARE)
          strokeWeight(weight*strokeScaleFactor)
 
-         const smallest = letterInner
-         const size = smallest + weight
-         //if (frameCount<2) {
-         //   print("drawCornerFill",char,smallest,letterOuter)
-         //}
+         //for entire line
+         const size = strokeSizes[0]
+         const smallest = strokeSizes[strokeSizes.length-1]
+         const fillsize = smallest+weight
 
          // base position
          let xpos = topOffset + letterPositionFromLeft + (letterOuter/2)
@@ -965,25 +964,25 @@ function drawStyle (lineNum) {
             // angles
             let startAngle = PI + (arcQ-1)*HALF_PI
             let endAngle = startAngle + HALF_PI
-            arcType(xpos, ypos, size, size, startAngle, endAngle)
+            arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
          } else if (shape === "square") {
             const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
             const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
             beginShape()
-            vertex(xpos+dirX*size/2, ypos)
-            vertex(xpos+dirX*size/2, ypos+dirY*size/2)
-            vertex(xpos, ypos+dirY*size/2)
+            vertex(xpos+dirX*fillsize/2, ypos)
+            vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
+            vertex(xpos, ypos+dirY*fillsize/2)
             endShape()
          } else if (shape === "diagonal") {
             const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
             const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-            const step = (size-smallest)/2 + 1
+            const step = (fillsize-smallest)/2 + 1
             const stepslope = step*tan(HALF_PI/4)
             beginShape()
-            vertex(xpos+dirX*size/2, ypos)
-            vertex(xpos+dirX*size/2, ypos+dirY*stepslope)
-            vertex(xpos+dirX*stepslope, ypos+dirY*size/2)
-            vertex(xpos, ypos+dirY*size/2)
+            vertex(xpos+dirX*fillsize/2, ypos)
+            vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
+            vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
+            vertex(xpos, ypos+dirY*fillsize/2)
             endShape()
          }
 
@@ -991,7 +990,7 @@ function drawStyle (lineNum) {
             stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
             let stretchXPos = xpos
-            let stretchYPos = ypos + size*toSideX*0.5
+            let stretchYPos = ypos + fillsize*toSideX*0.5
             const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
 
             // the offset can be in between the regular lines vertically if it would staircase nicely
@@ -1009,7 +1008,7 @@ function drawStyle (lineNum) {
          if (animStretchY > 0 && !noStretchY) {
             stroke((xrayMode)? palette.xrayStretchCorner : palette.bg)
             const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-            let stretchXPos = xpos + size*toSideY*0.5
+            let stretchXPos = xpos + fillsize*toSideY*0.5
             let stretchYPos = ypos
             const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
 
@@ -1036,7 +1035,7 @@ function drawStyle (lineNum) {
          if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
             // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
             if (cutMode === "" || cutMode === "branch") {
-               drawCornerFill(shape,arcQ,offQ,tx,ty,noStretchX,noStretchY)
+               drawCornerFill(shape, strokeSizes, arcQ, offQ, tx, ty, noStretchX, noStretchY)
             }
          }
 
@@ -1360,7 +1359,6 @@ function drawStyle (lineNum) {
          //for entire line
          const size = strokeSizes[0]
          const smallest = strokeSizes[strokeSizes.length-1]
-         const biggest = strokeSizes[0]
 
          // to make the rectangles a little shorter at the end (?)
          let strokeWeightReference = (animWeight/10)
@@ -1544,20 +1542,24 @@ function drawStyle (lineNum) {
                }
                break;
             case "ß":
-               drawCorner("round",ringSizes, 1, 1, 0, 0, "linecut", "start")
+               const smallRingSizes = []
+               for (let s = 0; s < ringSizes.length; s++) {
+                  smallRingSizes.push(ringSizes[s]-1)
+               }
                drawCorner("round",ringSizes, 2, 2, 0, 0, "", "")
                drawCorner("round",ringSizes, 3, 3, 0, 0, "", "")
                drawCorner("round",ringSizes, 4, 4, 0, 0, "linecut", "end")
+               drawLine(ringSizes, 4, 4, 0, 0, "v", 0)
 
-               drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
-               drawLine(ringSizes, 4, 4, 0, 0, "v", descenders)
-
-               if (ascenders >= weight+letterInner) {
-                  drawCorner("round",ringSizes, 1, 1, 0, -ascenders, "", "")
-                  drawCorner("round",ringSizes, 2, 2, 0, -ascenders, "", "")
-                  drawCorner("round",ringSizes, 3, 3, 0, -weight-letterInner, "roundcut", "end")
-                  drawLine(ringSizes, 3, 2, 0, -ascenders, "v", -letterOuter*0.5+(ascenders-(weight+letterInner)))
+               if (ascenders >= weight+letterInner-1) {
+                  drawLine(ringSizes, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
+                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
+                  drawCorner("round",smallRingSizes, 1, 1, -0.5, -ascenders -0.5, "", "")
+                  drawCorner("round",smallRingSizes, 2, 2, -0.5, -ascenders -0.5, "", "")
+                  drawCorner("round",smallRingSizes, 3, 3, -0.5, -weight-letterInner +0.5, "", "")
+                  drawLine(ringSizes, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(weight+letterInner))+1)
                } else {
+                  drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
                   drawCorner("square", ringSizes, 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
                   drawLine(ringSizes, 2, 2, 0, -ascenders, "h", -1)
                }
