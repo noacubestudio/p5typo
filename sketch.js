@@ -1230,10 +1230,10 @@ function drawStyle (lineNum) {
          pop()
       }
 
-      function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped) {
+      function drawLine (strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, noStretch) {
          //first, draw the fill
          if (!webglEffects.includes(effect) && strokeSizes.length > 1) {
-            drawLineFill(strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom)
+            drawLineFill(strokeSizes, arcQ, offQ, tx, ty, axis, extension, startFrom, noStretch)
          }
 
          push()
@@ -1291,7 +1291,7 @@ function drawStyle (lineNum) {
                   if (dirY*(y2-y1)>=0) {
                     lineType(x1, y1, x2, y2)
                   }
-                  if (animStretchY !== 0 && innerPosV === 0) {
+                  if (animStretchY !== 0 && innerPosV === 0 && !noStretch) {
                      //stretch
                      // the offset can be in between the regular lines horizontally if it would staircase nicely
                      let offsetShift = 0
@@ -1325,7 +1325,7 @@ function drawStyle (lineNum) {
                   if (dirX*(x2-x1)>=0) {
                      lineType(x1, y1, x2, y2)
                   }
-                  if (animStretchX !== 0 && innerPosH === 0) {
+                  if (animStretchX !== 0 && innerPosH === 0  && !noStretch) {
                      //stretch
                      // the offset can be in between the regular lines vertically if it would staircase nicely
                      let offsetShift = 0
@@ -1554,10 +1554,10 @@ function drawStyle (lineNum) {
                if (ascenders >= weight+letterInner-1) {
                   drawLine(ringSizes, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
-                  drawCorner("round",smallRingSizes, 1, 1, -0.5, -ascenders -0.5, "", "")
-                  drawCorner("round",smallRingSizes, 2, 2, -0.5, -ascenders -0.5, "", "")
-                  drawCorner("round",smallRingSizes, 3, 3, -0.5, -weight-letterInner +0.5, "", "")
-                  drawLine(ringSizes, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(weight+letterInner))+1)
+                  drawCorner("round",smallRingSizes, 1, 1, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner("round",smallRingSizes, 2, 2, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner("round",smallRingSizes, 3, 2, -0.5, -weight-letterInner +0.5, "", "", undefined, false, false, true)
+                  drawLine(ringSizes, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(weight+letterInner))+1, 0, false, true)
                } else {
                   drawLine(ringSizes, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
                   drawCorner("square", ringSizes, 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
