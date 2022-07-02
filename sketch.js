@@ -768,7 +768,7 @@ function drawElements() {
    translate(0,0.5*animSize)
 
    for (let i = 0; i < linesArray.length; i++) {
-      drawStyle(i)
+      drawTextAt(i)
    }
    pop()
    pop()
@@ -814,7 +814,7 @@ function charInSet (char, sets) {
 }
 
 
-function drawStyle (lineNum) {
+function drawTextAt (lineNum) {
 
    // current line text
    let lineText = linesArray[lineNum].toLowerCase()
@@ -2124,40 +2124,43 @@ function drawStyle (lineNum) {
          }
          let lineWidth = lineWidthUntil(lineText, lineText.length - trimEnd)
 
-         const connectTotal = vConnectionSpots.length-1
+         const total = vConnectionSpots.length-1
 
          //style and caret
          stroke(lerpColor(palette.bg, palette.fg, 0.5))
          rowLines("bezier", [vConnectionCaretSpot, vConnectionCaretSpot+animOffsetX], animStretchY)
          stroke(palette.fg)
 
-         let connectCounter = 0
+         let counter = 0
          let lastPos = undefined
+
+         const leftPos = vConnectionSpots[0]
+         const rightPos = vConnectionSpots [total]
          vConnectionSpots.forEach((pos) => {
             if (effect === "spread") {
-               const midX = map(connectCounter, 0, connectTotal, 0, vConnectionSpots[connectTotal]) + animOffsetX*0.5
+               const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
                rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
             } else if (effect === "compress") {
-               const midX = (vConnectionSpots[connectTotal] - (connectTotal) + animOffsetX) *0.5 + connectCounter
+               const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
                rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
             } else if (effect === "split") {
-               if (connectCounter > 0) {
+               if (counter > 0) {
                   rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
                   rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                }
             } else if (effect === "twist") {
-               if (connectCounter % 2 ==1) {
+               if (counter % 2 ==1) {
                   rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
                   rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
-               } else if (connectCounter === connectTotal) {
+               } else if (counter === total) {
                   rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
                }
             } else if (effect === "lean") {
-               if (connectCounter > 0) {
+               if (counter > 0) {
                   rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
                }
             } else if (effect === "teeth") {
-               if (connectCounter % 2 ==1) {
+               if (counter % 2 ==1) {
                   const x = lastPos + (pos-lastPos)*0.5
                   const w = pos-lastPos
                   arc(x, -animStretchY*0.5,w,w, 0, PI)
@@ -2169,7 +2172,7 @@ function drawStyle (lineNum) {
                }
             }
             lastPos = pos
-            connectCounter++
+            counter++
          })
       pop()
    }
