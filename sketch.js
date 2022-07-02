@@ -916,8 +916,9 @@ function drawTextAt (lineNum) {
       const ascenders = animAscenders
       const descenders = animAscenders
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
+      map(letterOuter, 3, 4, 0, 1, true)
       const wideOffset = 0.5*letterOuter + 0.5*letterInner
-      const extendOffset = ((letterOuter % 2 === 0) ? 0 : 0.5) + (animStretchX-animStretchX%2)*0.5
+      const extendOffset = waveValue(letterOuter, 0, 0.5) + (animStretchX-animStretchX%2)*0.5
 
       // style per letter, modify during drawing when needed
       const style = {
@@ -990,9 +991,9 @@ function drawTextAt (lineNum) {
                   }
                   drawLine(style, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
                   drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
-                  drawCorner(modifiedStyle, "round", 1, 1, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner(modifiedStyle, "round", 2, 2, -0.5, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner(modifiedStyle, "round", 3, 2, -0.5, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
+                  drawCorner(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, "", "", undefined, false, false, true)
+                  drawCorner(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
                   drawLine(style, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, false, true)
                } else {
                   drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
@@ -1394,7 +1395,7 @@ function drawTextAt (lineNum) {
                }
                break;
             case "z":
-               let oddOffset = (letterOuter % 2 === 0) ? 0 : 0.5
+               let oddOffset = waveValue(letterOuter, 0, 0.5)
                // TOP LEFT OVERLAP
                if (charInSet(prevLetter,["ur"])) {
                   drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
@@ -1625,7 +1626,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
    // negative spacing can't go past width of lines
    spacing = max(spacing, -weight)
-   let optionalGap = (inner > 1) ? 1 : 0
+   let optionalGap = map(inner, 1, 2, 0, 1, true)
 
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
@@ -1675,7 +1676,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          }
          break;
       case "z":
-         charWidth = 2 + outer + ((outer % 2 === 0) ? 0 : 1)
+         charWidth = 2 + outer + waveValue(outer, 0, 1)
          break;
       case " ":
          charWidth = max([2, spacing*2, ceil(inner*0.5)])
@@ -2232,34 +2233,9 @@ function roundTo(a, precision) {
    return Math.round(a*precision)/precision
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+function waveValue(input, low, high) {
+   return (-0.5*Math.cos(input*PI)+0.5)*(high-low)+low
+}
 
 
 
