@@ -46,7 +46,7 @@ const mode = {
    drawFills: true,
    wave: false,
    // use alt letters?
-   altS: false,
+   altS: true,
    altM: false,
    altNH: true,
 }
@@ -74,6 +74,12 @@ let values = {
 let animSize, animRings, animSpacing, animWeight, animAscenders, animZoom
 let animOffsetX, animOffsetY, animStretchX, animStretchY
 let animColorDark, animColorLight
+
+//drawfillcorner graphic layers
+const fillCornerLayers = {
+   linecut: {},
+   roundcut: {},
+}
 
 
 function windowResized() {
@@ -215,6 +221,12 @@ function createGUI () {
    altNHToggle.checked = mode.altNH
    altNHToggle.addEventListener('click', () => {
       mode.altNH = altNHToggle.checked
+      writeValuesToURL()
+   })
+   const altSToggle = document.getElementById('checkbox-altS')
+   altSToggle.checked = mode.altS
+   altSToggle.addEventListener('click', () => {
+      mode.altS = altSToggle.checked
       writeValuesToURL()
    })
 
@@ -1153,19 +1165,18 @@ function drawTextAt (lineNum) {
                   }
                } else {
                   // alternative cursive s
+                  const gapPos = charInSet(prevLetter,["gap"]) ? -style.weight-1:0
 
                   //LEFT OVERLAP
-                  if (charInSet(prevchar,["dr"])) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
+                  if (charInSet(prevLetter,["dr", "gap"])) {
+                     drawCorner(style, "round", 4, 4, gapPos, 0, "linecut", "end")
                   } else if (prevLetter !== "t") {
-                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
+                     drawCorner(style, "round", 4, 4, gapPos, 0, "roundcut", "end")
                   }
+                  //drawLine(style, 1, 1, 0, 0, "h", -style.weight-1)
 
-                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
-                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
-                  if (charInSet(prevLetter,["gap"])) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "", "")
-                  }
+                  drawCorner(style, "round", 2, 2, gapPos, 0, "", "")
+                  drawCorner(style, "round", 3, 3, gapPos, 0, "", "")
                }
                break;
             case "x":
@@ -1672,6 +1683,10 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             }
             if (charInSet(prevchar,["gap", "dr"])) {
                charWidth += -0.5*outer
+            }
+         } else {
+            if (charInSet(prevchar,["gap"])) {
+               charWidth = weight*1 + inner -1
             }
          }
          break;
@@ -2555,234 +2570,228 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
 }
 
 function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, noStretch) {
-   //first, draw the fill
-   if (!webglEffects.includes(effect) && style.sizes.length > 1) {
-      drawLineFill(style, arcQ, offQ, tx, ty, axis, extension, startFrom, noStretch)
-   }
 
    push()
    translate(tx, ty)
    noFill()
 
-   const smallest = style.sizes[style.sizes.length-1]
-   const biggest = style.sizes[0]
-   const topOffset = (biggest < 0) ? -style.offsetX : 0
-
-   let innerColor; let outerColor
-
-   //if (true) {
-   //   innerColor = color("green")
-   //   outerColor = color("lime")
-   //   strokeWeight((typeWeight/5)*strokeScaleFactor)
-   //   draw()
-   //}
-
-   function getQuarterPos(offx, offy, biggest) {
-      // base position
-      let xpos = topOffset + style.posFromLeft + (biggest/2)
-      let ypos = style.posFromTop
-      // offset based on quarter and prev vertical offset
-      xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
-      xpos += (offy > 0) ? style.stretchX : 0
-      ypos += (offx > 0) ? style.stretchY : 0
-      return {x: xpos, y:ypos}
-   }
-
-   strokeWeight((style.stroke/10)*strokeScaleFactor)
-   if (mode.xray) {
-      strokeWeight(0.2*strokeScaleFactor)
-   }
-   innerColor = (mode.xray)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-   outerColor = palette.fg
-   draw()
-
-   function draw() {
-      style.sizes.forEach((size) => {
-         // gradient from inside to outside - color or weight
-         ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
-
-         const outerExt = 0
-
-         // base position
-         const offx = (offQ === 3 || offQ === 4) ? 1:0
-         const offy = (offQ === 2 || offQ === 3) ? 1:0
-         const basePos = getQuarterPos(offx, offy, biggest)
-
-         let x1 = basePos.x
-         let x2 = basePos.x
-         let y1 = basePos.y
-         let y2 = basePos.y
-
-         const innerPosV = (startFrom !== undefined) ? startFrom : 0
-         const innerPosH = (startFrom !== undefined) ? startFrom : 0
-
-         if (axis === "v") {
-            const toSideX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-            x1 += size*toSideX*0.5
-            x2 += size*toSideX*0.5
-            const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            y1 += innerPosV * dirY
-            y2 += (biggest*0.5 + extension + outerExt) * dirY
-            //only draw the non-stretch part if it is long enough to be visible
-            if (dirY*(y2-y1)>=0) {
-              lineType(x1, y1, x2, y2)
-            }
-            if (style.stretchY !== 0 && innerPosV === 0 && !noStretch) {
-               //stretch
-               // the offset can be in between the regular lines horizontally if it would staircase nicely
-               let offsetShift = 0
-               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-                  offsetShift = style.offsetX/3*dirY
-               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-                  offsetShift = style.offsetX/2*dirY
-               }
-               if (!midlineEffects.includes(effect)) {
-                  lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
-               }
-               
-               // if vertical line goes down, set those connection spots in the array
-               if (dirY === -1 && midlineEffects.includes(effect)) {
-                  if (style.letter === "‸") {
-                     //caret counts separately
-                     style.caretSpots[0] = x1 + tx
-                  } else {
-                     sortIntoArray(style.midlineSpots, x1 + tx)
-                  }
-               }
-            }
-         } else if (axis === "h") {
-            const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            y1 += size*toSideY*0.5
-            y2 += size*toSideY*0.5
-            const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-            x1 += innerPosH * dirX
-            x2 += (biggest*0.5 + extension) * dirX
-            //only draw the non-stretch part if it is long enough to be visible
-            if (dirX*(x2-x1)>=0) {
-               lineType(x1, y1, x2, y2)
-            }
-            if (style.stretchX !== 0 && innerPosH === 0  && !noStretch) {
-               //stretch
-               // the offset can be in between the regular lines vertically if it would staircase nicely
-               let offsetShift = 0
-               let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-               if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-                  offsetShift = (style.offsetY/3)*stairDir
-               } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-                  offsetShift = (style.offsetY/2)*stairDir
-               }
-               lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
-            }
-         }
-      });
-   }
-
-   pop()
-}
-
-function drawLineFill (style, arcQ, offQ, tx, ty, axis, extension, startFrom) {
-   if (style.weight === 0 || !mode.drawFills) {
-      return
-   }
-
-   push()
-   translate(tx, ty)
-   noFill()
-   stroke((mode.xray)? palette.xrayBg : palette.bg)
-   strokeWeight(style.weight*strokeScaleFactor)
-   strokeCap(SQUARE)
-
-   //for entire line
-   const biggest = style.sizes[0]
-   const smallest = style.sizes[style.sizes.length-1]
-   const topOffset = (biggest < 0) ? -style.offsetX : 0
-
-   // to make the rectangles a little shorter at the end (?)
-   let strokeWeightReference = (style.weight/10)
-   if (mode.xray) {
-      strokeWeightReference = 0.2*strokeScaleFactor
-   }
-   const outerExt = strokeWeightReference*-0.5
-
-   function getQuarterPos(offx, offy, biggest) {
-      // base position
-      let xpos = topOffset + style.posFromLeft + (biggest/2)
-      let ypos = style.posFromTop
-      // offset based on quarter and prev vertical offset
-      xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
-      xpos += (offy > 0) ? style.stretchX : 0
-      ypos += (offx > 0) ? style.stretchY : 0
-      return {x: xpos, y:ypos}
-   }
+   const innerSize = style.sizes[style.sizes.length-1]
+   const outerSize = style.sizes[0]
 
    // base position
-   const offx = (offQ === 3 || offQ === 4) ? 1:0
-   const offy = (offQ === 2 || offQ === 3) ? 1:0
-   const basePos = getQuarterPos(offx, offy, biggest)
+   const basePos = getQuarterPos()
+   function getQuarterPos() {
+      // base position
+      const offx = (offQ === 3 || offQ === 4) ? 1:0
+      const offy = (offQ === 2 || offQ === 3) ? 1:0
+               //const topOffset = (outerSize < 0) ? -style.offsetX : 0
+      let xpos = style.posFromLeft + (outerSize/2)
+      let ypos = style.posFromTop
+      // offset based on quarter and prev vertical offset
+      xpos += (offx > 0) ? style.offsetX : 0
+      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      xpos += (offy > 0) ? style.stretchX : 0
+      ypos += (offx > 0) ? style.stretchY : 0
+      return {x: xpos, y:ypos}
+   }
 
-   let x1 = basePos.x
-   let x2 = basePos.x
-   let y1 = basePos.y
-   let y2 = basePos.y
+   //first, draw the background
+   if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
+      stroke((mode.xray)? palette.xrayBg : palette.bg)
+      strokeWeight(style.weight*strokeScaleFactor)
+      strokeCap(SQUARE)
+      draw(innerSize+style.weight, "bg")
+   }
 
-   const innerPosV = (startFrom !== undefined) ? startFrom - outerExt: 0
-   const innerPosH = (startFrom !== undefined) ? startFrom - outerExt: 0
+   // draw the foreground
+   strokeCap(ROUND)
+   strokeWeight((style.stroke/10)*strokeScaleFactor)
+   if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
+   const innerColor = (mode.xray)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   const outerColor = palette.fg
 
-   if (axis === "v") {
-      const toSideX = (arcQ === 1 || arcQ === 4) ? -0.5 : 0.5
-      x1 += (smallest+style.weight)*toSideX
-      x2 += (smallest+style.weight)*toSideX
-      const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-      y1 += innerPosV * dirY
-      y2 += (biggest*0.5 + extension + outerExt) * dirY
-      //only draw the non-stretch part if it is long enough to be visible
-      if (dirY*(y2-y1)>0.1) {
-        lineType(x1, y1, x2, y2)
+   style.sizes.forEach((size) => {
+      draw(size, "fg")
+   })
+   
+
+   function draw(size, layer) {
+
+      let outerExt // to make the fill rectangles a little shorter at the end (?)
+
+      if (layer === "fg") {
+         // gradient from inside to outside - color or weight
+         ringStyle(size, innerSize, outerSize, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+         outerExt = 0
+      } else {
+         outerExt = ((mode.xray) ? 0.2*strokeScaleFactor : style.weight/10) *-0.5
       }
-      if (style.stretchY !== 0 && innerPosV === 0) {
-         //stretch
-         // the offset can be in between the regular lines horizontally if it would staircase nicely
-         let offsetShift = 0
-         if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-            offsetShift = style.offsetX/3*dirY
-         } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-            offsetShift = style.offsetX/2*dirY
+
+      //per ring, gets modified
+      let x1 = basePos.x; let x2 = basePos.x
+      let y1 = basePos.y; let y2 = basePos.y
+
+      const innerPosV = (startFrom !== undefined) ? startFrom - outerExt : 0
+      const innerPosH = (startFrom !== undefined) ? startFrom - outerExt : 0
+
+      if (axis === "v") {
+         const toSideX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+         x1 += size*toSideX*0.5
+         x2 += size*toSideX*0.5
+         const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+         y1 += innerPosV * dirY
+         y2 += (outerSize*0.5 + extension + outerExt) * dirY
+         //only draw the non-stretch part if it is long enough to be visible
+         if (dirY*(y2-y1)>=0) {
+            lineType(x1, y1, x2, y2)
          }
-
-         stroke((mode.xray)? palette.xrayStretch : palette.bg)
-         lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
-      }
-   } else if (axis === "h") {
-      const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
-      y1 += (smallest+style.weight)*toSideY
-      y2 += (smallest+style.weight)*toSideY
-      const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-      x1 += innerPosH * dirX
-      x2 += (biggest*0.5 + extension + outerExt) * dirX
-      //only draw the non-stretch part if it is long enough to be visible
-      if (dirX*(x2-x1)>0.1) {
-        lineType(x1, y1, x2, y2)
-      }
-      if (style.stretchX !== 0 && innerPosH === 0) {
-         //stretch
-
-         // the offset can be in between the regular lines vertically if it would staircase nicely
-         let offsetShift = 0
-         let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-         if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-            offsetShift = (style.offsetY/3)*stairDir
-         } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-            offsetShift = (style.offsetY/2)*stairDir
+         if (style.stretchY !== 0 && innerPosV === 0 && !noStretch) {
+            //stretch
+            // the offset can be in between the regular lines horizontally if it would staircase nicely
+            let offsetShift = 0
+            if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+               offsetShift = style.offsetX/3*dirY
+            } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+               offsetShift = style.offsetX/2*dirY
+            }
+            if (!midlineEffects.includes(effect)) {
+               if (layer === "bg") stroke((mode.xray)? palette.xrayStretch : palette.bg)
+               lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+            }
+            
+            // if vertical line goes down, set those connection spots in the array
+            if (layer=== "fg" && dirY === -1 && midlineEffects.includes(effect)) {
+               if (style.letter === "‸") {
+                  //caret counts separately
+                  style.caretSpots[0] = x1 + tx
+               } else {
+                  sortIntoArray(style.midlineSpots, x1 + tx)
+               }
+            }
          }
-
-         stroke((mode.xray)? palette.xrayStretch : palette.bg)
-         lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+      } else if (axis === "h") {
+         const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+         y1 += size*toSideY*0.5
+         y2 += size*toSideY*0.5
+         const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+         x1 += innerPosH * dirX
+         x2 += (outerSize*0.5 + extension + outerExt) * dirX
+         //only draw the non-stretch part if it is long enough to be visible
+         if (dirX*(x2-x1)>=0) {
+            lineType(x1, y1, x2, y2)
+         }
+         if (style.stretchX !== 0 && innerPosH === 0 && !noStretch) {
+            //stretch
+            // the offset can be in between the regular lines vertically if it would staircase nicely
+            let offsetShift = 0
+            let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+            if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+               offsetShift = (style.offsetY/3)*stairDir
+            } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+               offsetShift = (style.offsetY/2)*stairDir
+            }
+            if (layer === "bg") stroke((mode.xray)? palette.xrayStretch : palette.bg)
+            lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+         }
       }
    }
    pop()
 }
+
+// function drawLineFill (style, arcQ, offQ, axis, extension, startFrom) {
+
+//    stroke((mode.xray)? palette.xrayBg : palette.bg)
+//    strokeWeight(style.weight*strokeScaleFactor)
+//    strokeCap(SQUARE)
+
+//    const biggest = style.sizes[0]
+//    const smallest = style.sizes[style.sizes.length-1]
+//    const topOffset = (biggest < 0) ? -style.offsetX : 0
+
+//    // to make the rectangles a little shorter at the end (?)
+//    let strokeWeightReference = (style.weight/10)
+//    if (mode.xray) {
+//       strokeWeightReference = 0.2*strokeScaleFactor
+//    }
+//    const outerExt = strokeWeightReference*-0.5
+
+//    function getQuarterPos(offx, offy, biggest) {
+//       // base position
+//       let xpos = topOffset + style.posFromLeft + (biggest/2)
+//       let ypos = style.posFromTop
+//       // offset based on quarter and prev vertical offset
+//       xpos += (offx > 0) ? style.offsetX : 0
+//       ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+//       xpos += (offy > 0) ? style.stretchX : 0
+//       ypos += (offx > 0) ? style.stretchY : 0
+//       return {x: xpos, y:ypos}
+//    }
+
+//    // base position
+//    const offx = (offQ === 3 || offQ === 4) ? 1:0
+//    const offy = (offQ === 2 || offQ === 3) ? 1:0
+//    const basePos = getQuarterPos(offx, offy, biggest)
+
+//    let x1 = basePos.x
+//    let x2 = basePos.x
+//    let y1 = basePos.y
+//    let y2 = basePos.y
+
+//    const innerPosV = (startFrom !== undefined) ? startFrom - outerExt: 0
+//    const innerPosH = (startFrom !== undefined) ? startFrom - outerExt: 0
+
+//    if (axis === "v") {
+//       const toSideX = (arcQ === 1 || arcQ === 4) ? -0.5 : 0.5
+//       x1 += (smallest+style.weight)*toSideX
+//       x2 += (smallest+style.weight)*toSideX
+//       const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
+//       y1 += innerPosV * dirY
+//       y2 += (biggest*0.5 + extension + outerExt) * dirY
+//       //only draw the non-stretch part if it is long enough to be visible
+//       if (dirY*(y2-y1)>0.1) {
+//         lineType(x1, y1, x2, y2)
+//       }
+//       if (style.stretchY !== 0 && innerPosV === 0) {
+//          //stretch
+//          // the offset can be in between the regular lines horizontally if it would staircase nicely
+//          let offsetShift = 0
+//          if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+//             offsetShift = style.offsetX/3*dirY
+//          } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+//             offsetShift = style.offsetX/2*dirY
+//          }
+
+//          stroke((mode.xray)? palette.xrayStretch : palette.bg)
+//          lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+//       }
+//    } else if (axis === "h") {
+//       const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
+//       y1 += (smallest+style.weight)*toSideY
+//       y2 += (smallest+style.weight)*toSideY
+//       const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
+//       x1 += innerPosH * dirX
+//       x2 += (biggest*0.5 + extension + outerExt) * dirX
+//       //only draw the non-stretch part if it is long enough to be visible
+//       if (dirX*(x2-x1)>0.1) {
+//         lineType(x1, y1, x2, y2)
+//       }
+//       if (style.stretchX !== 0 && innerPosH === 0) {
+//          //stretch
+
+//          // the offset can be in between the regular lines vertically if it would staircase nicely
+//          let offsetShift = 0
+//          let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+//          if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+//             offsetShift = (style.offsetY/3)*stairDir
+//          } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+//             offsetShift = (style.offsetY/2)*stairDir
+//          }
+
+//          stroke((mode.xray)? palette.xrayStretch : palette.bg)
+//          lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
+//       }
+//    }
+// }
 
 function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, opacity, strokeWidth) {
    //strokeweight
