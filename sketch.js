@@ -1536,8 +1536,14 @@ function drawTextAt (lineNum) {
                //caret symbol
                style.opacity = 0.5
                style.sizes = [letterOuter]
-               drawLine(style, 1, 1, 1, 0, "v", animAscenders)
-               drawLine(style, 4, 4, 1, 0, "v", animAscenders)
+               //if (style.caretSpots[0] === 0) {
+               //   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
+               //   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+               //} else {
+                  drawLine(style, 1, 1, 0, 0, "v", animAscenders)
+                  drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+               //}
+               
                break;
             case "|":
                style.sizes = [letterOuter]
@@ -1755,9 +1761,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          charWidth = ceil(outer*0.5)
          break;
       case "‸":
-         charWidth = 2
+         charWidth = 1
          if (charInSet(nextchar,["gap"])) {
-            charWidth = 1
+            charWidth = 0
          }
          break;
       case "|":
@@ -1770,7 +1776,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       charWidth -= 1
    }
    // 1 less space in front of xsz-
-   if ("xsz-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
+   if ("xs-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
       charWidth -= 1
    }
 
@@ -1945,6 +1951,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             }
          } else if (!"-_ ‸".includes(char) && !"-_ ‸".includes(nextchar)) {
             spacingResult = charWidth + spacing
+         } else if ("‸".includes(nextchar)){
+            // other punctuation?
+            spacingResult = charWidth + 1
          } else {
             // other punctuation?
             spacingResult = charWidth
@@ -2512,7 +2521,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
          if (drawCurve) {
             if (layer === "fg" || cutMode === "" || cutMode === "extend") {
                arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
-            } else if (layer === "bg" && (mode.svg || mode.xray)) {
+            } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
                const layerGroup = (cutMode === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                if (layerGroup[size] === undefined) {
                   layerGroup[size] = createGraphics((size)*animZoom, (size)*animZoom)
@@ -2525,13 +2534,15 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
                   arcType(size,size,size,size,HALF_PI*2,HALF_PI*3, layerGroup[size])
                   if (cutMode === "linecut") {
                      for (let x = 0; x < size*animZoom; x++) {
-                        for (let y = 0; y < ((size+style.weight)*0.5+1)*animZoom; y++) {
+                        const lineUntil = (size+style.weight)*0.5+1+(style.stroke/10)*0.5
+                        for (let y = 0; y < lineUntil*animZoom; y++) {
                            layerGroup[size].set(x, y, color("#00000000"))
                         }
                      }
                   } else {
                      layerGroup[size].erase()
-                     layerGroup[size].strokeWeight((style.weight+2)*strokeScaleFactor)
+                     const gap = 1-(style.stroke/10)*0.5
+                     layerGroup[size].strokeWeight((style.weight+gap*2)*strokeScaleFactor)
                      layerGroup[size].ellipse(size, 0, size, size)
                   }
                   layerGroup[size].updatePixels()
