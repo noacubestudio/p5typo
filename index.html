@@ -19,7 +19,7 @@
    <body>
       <div class="top-container">
          <div class="grid-container">
-            <textarea rows="5" id="textarea-lines" placeholder="type lines here!"></textarea>
+            <textarea rows="5" id="textarea-lines" spellcheck="false" placeholder="type lines here!"></textarea>
             <div class="buttons-container">
                <button class="primary-button" id="button-randomize">random style</button>
                <button class="secondary-button" id="button-resetStyle">reset style</button>
@@ -56,8 +56,6 @@
                <input id="number-stretchX" type="number" value="0" min="0" max="50">
                <label class="number-label">stretch&nbsp;h</label>
             </div>
-         </div>
-         <div class="right-grid-container">
             <div>
                <!-- <label class="dropdown-label">effects</label> -->
                <div class="custom-select" style="width:240px;">
@@ -78,6 +76,8 @@
                   </select>
                </div>
             </div>
+         </div>
+         <div class="right-grid-container">
             <div>
                <label class="checkbox-container">m alt.
                   <input type="checkbox" id="checkbox-altM">

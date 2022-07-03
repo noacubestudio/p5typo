@@ -2197,6 +2197,7 @@ function dropdownTextToEffect (text) {
          break;
       case "color gradient":
          effect = "gradient"
+         if (values.rings.from < 2) values.rings.to = 2 
          break;
       case "stripes v":
          effect = "vstripes"
@@ -2206,21 +2207,33 @@ function dropdownTextToEffect (text) {
          break;
       case "compress v":
          effect = "compress"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "spread v":
          effect = "spread"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = values.size.from
          break;
       case "lean v":
          effect = "lean"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "twist v":
          effect = "twist"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "split v":
          effect = "split"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "teeth v":
          effect = "teeth"
+         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "spheres (test)":
          effect = "spheres"
@@ -2230,6 +2243,7 @@ function dropdownTextToEffect (text) {
    }
 
    writeValuesToURL()
+   writeValuesToGUI()
 
    //check current effect
    const isWebgl = webglEffects.includes(effect)
@@ -2389,6 +2403,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
    stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
    strokeCap(SQUARE)
    strokeWeight(style.weight*strokeScaleFactor)
+   strokeJoin(MITER)
    // only if corner can be drawn at all
    if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
       draw(smallest+style.weight, "bg")
@@ -2398,6 +2413,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
    }
 
    strokeCap(ROUND)
+   strokeJoin(ROUND)
    strokeWeight((style.stroke/10)*strokeScaleFactor)
    if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
    let innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
@@ -2455,7 +2471,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
          if (drawCurve) {
             if (layer === "fg" || cutMode === "" || cutMode === "extend") {
                arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
-            } else if (layer === "bg") {
+            } else if (layer === "bg" && (mode.svg || mode.xray)) {
                const layerGroup = (cutMode === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                if (layerGroup[size] === undefined) {
                   layerGroup[size] = createGraphics((size)*animZoom, (size)*animZoom)
