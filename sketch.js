@@ -848,15 +848,15 @@ function charInSet (char, sets) {
          }
          else if (set === "dl") {
             //down left sharp
-            found = "hikmnprfv".includes(char) || !validLetters.includes(char)
+            found = "hikmnprfvw".includes(char) || !validLetters.includes(char)
          }
          else if (set === "ur") {
             //up right sharp
-            found = "dijuüvwymg".includes(char) || (mode.altNH && "nh".includes(char)) || !validLetters.includes(char)
+            found = "dijuüvwymgl".includes(char) || (mode.altNH && "nh".includes(char)) || !validLetters.includes(char)
          }
          else if (set === "dr") {
             //down right sharp
-            found = "aähimnqye".includes(char) || !validLetters.includes(char)
+            found = "aähimnqyew".includes(char) || !validLetters.includes(char)
          }
          else if (set === "gap") {
             //separating regular letters
@@ -1111,15 +1111,19 @@ function drawTextAt (lineNum) {
                break;
             case "c":
                drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (charInSet(nextLetter, ["ul", "gap"])) {
-                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-               } else {
-                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+               if (!"z".includes(nextLetter)) {
+                  if (charInSet(nextLetter, ["ul", "gap"])) {
+                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  } else {
+                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                  }
                }
-               if (charInSet(nextLetter, ["dl", "gap"])) {
-                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
-               } else {
-                  drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+               if (!"sz".includes(nextLetter)) {
+                  if (charInSet(nextLetter, ["dl", "gap"])) {
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  } else {
+                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                  }
                }
                drawCorner(style, "round", 4, 4, 0, 0, "", "")
                break;
@@ -1212,7 +1216,7 @@ function drawTextAt (lineNum) {
                      drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   } else if (prevLetter === "r") {
                      drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
-                  } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fk".includes(prevLetter)) {
+                  } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fkz".includes(prevLetter)) {
                      drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   }
                   let xOffset = 0
@@ -1253,7 +1257,7 @@ function drawTextAt (lineNum) {
 
                //LEFT OVERLAP
                // top connection
-               if (!charInSet(prevLetter,["gap"]) && prevLetter !== "x") {
+               if (!charInSet(prevLetter,["gap"]) && !"xz".includes(prevLetter)) {
                   if (charInSet(prevLetter,["ur"]) || "l".includes(prevLetter)) {
                      drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
                   } else if (prevLetter !== "t"){
@@ -1261,7 +1265,7 @@ function drawTextAt (lineNum) {
                   }
                }
                // bottom connection
-               if (!"xef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
+               if (!"zxef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
                   if (prevLetter === "s" && !mode.altS) {
                      drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
                   } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
@@ -1277,7 +1281,7 @@ function drawTextAt (lineNum) {
                drawCorner(style, "round", 2, 2, 0, 0, "", "")
                drawCorner(style, "round", 4, 3, wideOffset, 0, "", "")
 
-               if (nextLetter !== "x") {
+               if (!"xz".includes(nextLetter)) {
                   if (!charInSet(nextLetter,["dl", "gap"])) {
                      drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
                   } else {
@@ -1287,7 +1291,7 @@ function drawTextAt (lineNum) {
 
                // SECOND LAYER
                drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-               if (nextLetter !== "x") {
+               if (!"xz".includes(nextLetter)) {
                   if (!charInSet(nextLetter,["gap", "ul"])) {
                      drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
                   } else {
@@ -1329,10 +1333,12 @@ function drawTextAt (lineNum) {
                break;
             case "r":
                drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (charInSet(nextLetter,["ul", "gap"])) {
-                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-               } else {
-                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
+               if (!"z".includes(nextLetter)) {
+                  if (charInSet(nextLetter,["ul", "gap"])) {
+                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  } else {
+                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
+                  }
                }
                drawLine(style, 4, 4, 0, 0, "v", 0)
                break;
@@ -1354,24 +1360,28 @@ function drawTextAt (lineNum) {
                }
 
                drawCorner(style, "round", 4, 4, 0, 0, "", "")
-               if (charInSet(nextLetter,["dl", "gap"])) {
-                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
-               } else {
-                  drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
-               }
+               if (!"z".includes(nextLetter)) {
+                  if (charInSet(nextLetter,["dl", "gap"])) {
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  } else {
+                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                  }
+               }  
                break;
             case "f":
                drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (charInSet(nextLetter,["ul", "gap"])) {
-                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-               } else {
-                  drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+               if (!"z".includes(nextLetter)) {
+                  if (charInSet(nextLetter,["ul", "gap"])) {
+                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                  } else {
+                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                  }
                }
                drawLine(style, 4, 4, 0, 0, "v", descenders)
                drawCorner(style, "square", 4, 4, 0, 0, "branch", "start")
 
                // SECOND LAYER
-               if (!"sx".includes(nextLetter)) {
+               if (!"sxz".includes(nextLetter)) {
                   if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
                      drawLine(style, 3, 3, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
                   } else {
@@ -1384,10 +1394,10 @@ function drawTextAt (lineNum) {
                drawLine(style, 4, 4, 0, 0, "v", 0)
                drawCorner(style, "diagonal", 1, 1, style.weight, 0, "", "")
                drawCorner(style, "diagonal", 4, 4, style.weight, 0, "", "")
-               if (!"x".includes(nextLetter)) {
+               if (!"zx".includes(nextLetter)) {
                   drawLine(style, 2, 2, style.weight, 0, "h", -oneoffset-style.weight)
                }
-               if (!"sx".includes(nextLetter)) {
+               if (!"sxz".includes(nextLetter)) {
                   if (!(charInSet(nextLetter,["dl", "gap"]))) {
                      drawCorner(style, "round", 3, 3, style.weight, 0, "roundcut", "start")
                   } else {
@@ -1453,12 +1463,14 @@ function drawTextAt (lineNum) {
 
                // LEFT OVERLAP
                if (prevLetter !== undefined) {
-                  if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                     drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
-                  } else if (!"tk".includes(prevLetter)) {
-                     drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
+                  if (!"tkz".includes(prevLetter)) {
+                     if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
+                        drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
+                     } else {
+                        drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
+                     }
                   }
-                  if (!charInSet(prevLetter,["tr"]) && !"ckrsx".includes(prevLetter)) {
+                  if (!charInSet(prevLetter,["tr"]) && !"ckrsxz".includes(prevLetter)) {
                      drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
                   }
                }
@@ -1473,29 +1485,40 @@ function drawTextAt (lineNum) {
                break;
             case "z":
                let oddOffset = waveValue(letterOuter, 0, 0.5)
-               // TOP LEFT OVERLAP
-               if (charInSet(prevLetter,["ur"])) {
-                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
-               } else if (!charInSet(prevLetter,["gap"])) {
-                  drawCorner(style, "round", 1, 1, 0, 0, "roundcut", "start")
-               } else if (charInSet(prevLetter, ["gap"])) {
-                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+               let leftZoffset = 0
+               if (charInSet(prevLetter,["gap"])) {
+                  leftZoffset = -style.weight-1
+               } else if ("czfkxt".includes(prevLetter)) {
+                  leftZoffset = -style.weight-1
                }
 
-               drawLine(style, 2, 2, 0, 0, "h", 1+oddOffset*2)
-               drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset, 0, "", "", "flipped")
+               // TOP LEFT OVERLAP
+               if (!"czfkxt".includes(prevLetter)) {
+                  if (charInSet(prevLetter,["ur", "gap"])) {
+                     drawCorner(style, "round", 1, 1, leftZoffset, 0, "linecut", "start")
+                  } else {
+                     drawCorner(style, "round", 1, 1, leftZoffset, 0, "roundcut", "start")
+                  }
+               } else {
+                  drawLine(style, 1, 1, leftZoffset, 0, "h", -(style.weight+1))
+               }
+
+               drawLine(style, 2, 2, leftZoffset, 0, "h", 1+oddOffset*2)
+               drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, "", "", "flipped")
 
                // BOTTOM RIGHT OVERLAP
-               if (charInSet(nextLetter,["dl"])) {
-                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "linecut", "start")
-               } else if (!charInSet(nextLetter,["gap"])) {
-                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "roundcut", "start")
-               } else {
-                  drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2, 0, "", "")
-               }
+               drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, "", "", "flipped")
+               drawLine(style, 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, "h", 1+oddOffset*2)
 
-               drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset, 0, "", "", "flipped")
-               drawLine(style, 4, 3, style.weight+2+oddOffset*2, 0, "h", 1+oddOffset*2)
+               if (!"zxj".includes(nextLetter)) {
+                  if (charInSet(nextLetter,["dl", "gap"])) {
+                     drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "linecut", "start")
+                  } else {
+                     drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "roundcut", "start")
+                  }
+               } else {
+                  //drawLine(style, 4, 3, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "h", 0)
+               }
                break;
             case "-":
                style.sizes = [letterOuter]
@@ -1702,6 +1725,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          break;
       case "z":
          charWidth = 2 + outer + waveValue(outer, 0, 1)
+         if (charInSet(prevchar,["gap"])) {
+            charWidth -= weight+1
+         }
          break;
       case " ":
          charWidth = max([2, spacing*2, ceil(inner*0.5)])
@@ -1740,11 +1766,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
    }
 
    // 1 less space after letters with cutoff
-   if ("ktlcrfsx-".includes(char) && charInSet(nextchar,["gap"]) && !"|".includes(nextchar)) {
+   if ("ktlcrfsxz-".includes(char) && charInSet(nextchar,["gap"]) && !"|".includes(nextchar)) {
       charWidth -= 1
    }
-   // 1 less space in front of xs-
-   if ("xs-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
+   // 1 less space in front of xsz-
+   if ("xsz-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
       charWidth -= 1
    }
 
@@ -1866,20 +1892,35 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       }
 
       //extra special combinations
-      if ("ktlcrfsx".includes(char) && nextchar === "s") {
+      if ("ktlcrfsxz".includes(char) && nextchar === "s") {
          spaceBefore = -inner-weight-animStretchX
          beforeConnect = true
       }
-      if ("ktlcrfsx".includes(char) && nextchar === "x") {
+      else if ("ktlcrfsx".includes(char) && nextchar === "x") {
          spaceBefore = -inner-weight-animStretchX
          beforeConnect = true
       }
-      if ("ktlcrfsx".includes(char) && nextchar === "j") {
+      else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
          spaceBefore = -inner-weight-animStretchX
          beforeConnect = true
       }
-      if ("s".includes(char) && nextchar === "z") {
+      else if ("sr".includes(char) && nextchar === "z") {
          spaceBefore = -inner-weight-animStretchX
+         beforeConnect = true
+      }
+      else if ("ltkcfx".includes(char) && nextchar === "z") {
+         //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-animStretchX
+         spaceBefore = weight -outer/2 - animStretchX/2
+         beforeConnect = true
+         //-i-w+(o/2) //-o+i+2w
+         //w-0.5o
+      }
+      else if ("z".includes(char) && nextchar === "z") {
+         spaceBefore = -2-animStretchX
+         beforeConnect = true
+      }
+      else if ("z".includes(char) && nextchar === "x") {
+         spaceBefore = weight -outer/2 - animStretchX/2
          beforeConnect = true
       }
 
