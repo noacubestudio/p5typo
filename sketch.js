@@ -76,10 +76,7 @@ let animOffsetX, animOffsetY, animStretchX, animStretchY
 let animColorDark, animColorLight
 
 //drawfillcorner graphic layers
-const fillCornerLayers = {
-   linecut: {},
-   roundcut: {},
-}
+let fillCornerLayers = {}
 
 
 function windowResized() {
@@ -897,6 +894,11 @@ function drawTextAt (lineNum) {
    const lineStyle = {
       midlineSpots: [],
       caretSpots: [],
+   }
+
+   fillCornerLayers = {
+      linecut: {},
+      roundcut: {},
    }
 
 
@@ -2046,7 +2048,7 @@ function lineType (x1, y1, x2, y2) {
    line(x1, y1, x2, y2)
 }
 
-function arcType (x, y, w, h, start, stop) {
+function arcType (x, y, w, h, start, stop, layer) {
    if (webglEffects.includes(effect)) {
       push()
 
@@ -2078,6 +2080,9 @@ function arcType (x, y, w, h, start, stop) {
       //pop()
       return
    }
+   if (layer !== undefined) {
+      layer.arc(x, y, w, h, start, stop);
+      return}
    arc(x, y, w, h, start, stop)
 }
 
@@ -2256,87 +2261,87 @@ function waveValue(input, low, high) {
 
 
 
-function drawCornerFill (style, shape, arcQ, offQ, noStretchX, noStretchY) {
-   //for entire line
-   const size = style.sizes[0]
-   const smallest = style.sizes[style.sizes.length-1]
-   const fillsize = smallest+style.weight
+// function drawCornerFill (style, shape, arcQ, offQ, noStretchX, noStretchY) {
+//    //for entire line
+//    const size = style.sizes[0]
+//    const smallest = style.sizes[style.sizes.length-1]
+//    const fillsize = smallest+style.weight
 
-   // base position
-   let xpos = style.posFromLeft + size/2
-   let ypos = style.posFromTop
-   // offset based on quarter and prev vertical offset
-   let offx = (offQ === 3 || offQ === 4) ? 1:0
-   let offy = (offQ === 2 || offQ === 3) ? 1:0
-   xpos += (offx > 0) ? style.offsetX : 0
-   ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
-   xpos += (offy > 0) ? style.stretchX : 0
-   ypos += (offx > 0) ? style.stretchY : 0
+//    // base position
+//    let xpos = style.posFromLeft + size/2
+//    let ypos = style.posFromTop
+//    // offset based on quarter and prev vertical offset
+//    let offx = (offQ === 3 || offQ === 4) ? 1:0
+//    let offy = (offQ === 2 || offQ === 3) ? 1:0
+//    xpos += (offx > 0) ? style.offsetX : 0
+//    ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+//    xpos += (offy > 0) ? style.stretchX : 0
+//    ypos += (offx > 0) ? style.stretchY : 0
 
-   if (shape === "round") {
-      // angles
-      let startAngle = PI + (arcQ-1)*HALF_PI
-      let endAngle = startAngle + HALF_PI
-      arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
-   } else if (shape === "square") {
-      const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-      const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-      beginShape()
-      vertex(xpos+dirX*fillsize/2, ypos)
-      vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
-      vertex(xpos, ypos+dirY*fillsize/2)
-      endShape()
-   } else if (shape === "diagonal") {
-      const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-      const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-      const step = (fillsize-smallest)/2 + 1
-      const stepslope = step*tan(HALF_PI/4)
-      beginShape()
-      vertex(xpos+dirX*fillsize/2, ypos)
-      vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
-      vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
-      vertex(xpos, ypos+dirY*fillsize/2)
-      endShape()
-   }
+//    if (shape === "round") {
+//       // angles
+//       let startAngle = PI + (arcQ-1)*HALF_PI
+//       let endAngle = startAngle + HALF_PI
+//       arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
+//    } else if (shape === "square") {
+//       const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+//       const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+//       beginShape()
+//       vertex(xpos+dirX*fillsize/2, ypos)
+//       vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
+//       vertex(xpos, ypos+dirY*fillsize/2)
+//       endShape()
+//    } else if (shape === "diagonal") {
+//       const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+//       const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+//       const step = (fillsize-smallest)/2 + 1
+//       const stepslope = step*tan(HALF_PI/4)
+//       beginShape()
+//       vertex(xpos+dirX*fillsize/2, ypos)
+//       vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
+//       vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
+//       vertex(xpos, ypos+dirY*fillsize/2)
+//       endShape()
+//    }
 
-   if (style.stretchX > 0 && !noStretchX) {
-      stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-      const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-      let stretchXPos = xpos
-      let stretchYPos = ypos + fillsize*toSideX*0.5
-      const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+//    if (style.stretchX > 0 && !noStretchX) {
+//       stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+//       const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+//       let stretchXPos = xpos
+//       let stretchYPos = ypos + fillsize*toSideX*0.5
+//       const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
 
-      // the offset can be in between the regular lines vertically if it would staircase nicely
-      let offsetShift = 0
-      let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-      if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-         offsetShift = (style.offsetY/3)*stairDir
-      } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-         offsetShift = (style.offsetY/2)*stairDir
-      }
+//       // the offset can be in between the regular lines vertically if it would staircase nicely
+//       let offsetShift = 0
+//       let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+//       if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+//          offsetShift = (style.offsetY/3)*stairDir
+//       } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+//          offsetShift = (style.offsetY/2)*stairDir
+//       }
 
-     lineType(stretchXPos, stretchYPos+offsetShift,
-         stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
-   }
-   if (style.stretchY > 0 && !noStretchY) {
-      stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-      const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-      let stretchXPos = xpos + fillsize*toSideY*0.5
-      let stretchYPos = ypos
-      const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
+//      lineType(stretchXPos, stretchYPos+offsetShift,
+//          stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
+//    }
+//    if (style.stretchY > 0 && !noStretchY) {
+//       stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+//       const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
+//       let stretchXPos = xpos + fillsize*toSideY*0.5
+//       let stretchYPos = ypos
+//       const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
 
-      // the offset can be in between the regular lines horizontally if it would staircase nicely
-      let offsetShift = 0
-      if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-         offsetShift = style.offsetX/3*dirY
-      } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-         offsetShift = style.offsetX/2*dirY
-      }
+//       // the offset can be in between the regular lines horizontally if it would staircase nicely
+//       let offsetShift = 0
+//       if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+//          offsetShift = style.offsetX/3*dirY
+//       } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+//          offsetShift = style.offsetX/2*dirY
+//       }
 
-      lineType(stretchXPos+offsetShift, stretchYPos,
-         stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
-   }
-}
+//       lineType(stretchXPos+offsetShift, stretchYPos,
+//          stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
+//    }
+// }
 
 function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped, noSmol, noStretchX, noStretchY) {
 
@@ -2431,15 +2436,40 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
 
          // draw the line (until the cut angle if fg)
          if (drawCurve) {
-            if (layer === "fg" || cutMode === "") {
+            if (layer === "fg" || cutMode === "" || cutMode === "extend") {
                arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
-            } else {
+            } else if (layer === "bg") {
                const layerGroup = (cutMode === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                if (layerGroup[size] === undefined) {
-                  layerGroup[size] = createGraphics(size, size)
-                  //layerGroup[size].arcType(0,0,size,size,startAngle,endAngle)
+                  layerGroup[size] = createGraphics((size)*animZoom, (size)*animZoom)
+                  if (mode.xray) layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010")
+                  layerGroup[size].scale(animZoom)
+                  layerGroup[size].noFill()
+                  layerGroup[size].stroke((mode.xray)?palette.xrayBgCorner : palette.bg)
+                  layerGroup[size].strokeCap(SQUARE)
+                  layerGroup[size].strokeWeight(style.weight*strokeScaleFactor)
+                  arcType(size,size,size,size,HALF_PI*2,HALF_PI*3, layerGroup[size])
+                  if (cutMode === "linecut") {
+                     for (let x = 0; x < size*animZoom; x++) {
+                        for (let y = 0; y < ((size+style.weight)*0.5+1)*animZoom; y++) {
+                           layerGroup[size].set(x, y, color("#00000000"))
+                        }
+                     }
+                  } else {
+                     layerGroup[size].erase()
+                     layerGroup[size].strokeWeight((style.weight+2)*strokeScaleFactor)
+                     layerGroup[size].ellipse(size, 0, size, size)
+                  }
+                  layerGroup[size].updatePixels()
                }
-               image(layerGroup[size], basePos.x, basePos.y);
+               push()
+               translate(basePos.x, basePos.y)
+               if (arcQ === 2) {rotate(HALF_PI)}
+               else if (arcQ === 3) {rotate(HALF_PI*2)}
+               else if (arcQ === 4) {rotate(HALF_PI*3)}
+               if (cutSide === 'start') {scale(-1,1); rotate(HALF_PI)}
+               image(layerGroup[size], -size, -size, size, size);
+               pop()
             }
          }
       } else if (shape === "square") {
