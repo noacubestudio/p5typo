@@ -226,6 +226,12 @@ function createGUI () {
       mode.altS = altSToggle.checked
       writeValuesToURL()
    })
+   const fillsToggle = document.getElementById('checkbox-fills')
+   fillsToggle.checked = mode.drawFills
+   fillsToggle.addEventListener('click', () => {
+      mode.drawFills = fillsToggle.checked
+      writeValuesToURL()
+   })
 
    const clamp = (num, min, max) => Math.min(Math.max(num, min), max)
 
@@ -295,7 +301,7 @@ function loadValuesFromURL () {
       mode.xray = true
       print("Loaded with URL Mode: XRAY")
    }
-   if (params.solid === "false" || params.solid === "0") {
+   if (params.fills === "false" || params.fills === "0") {
       mode.drawFills = false
       print("Loaded with URL Mode: Transparent overlaps")
    }
@@ -479,7 +485,7 @@ function writeValuesToURL (noReload) {
       }
    }
    if (!mode.drawFills) {
-      newParams.append("solid",false)
+      newParams.append("fills",false)
    }
 
    if (URLSearchParams.toString(newParams).length > 0) {
@@ -794,7 +800,6 @@ function drawElements() {
                      //ellipse(xpos+animOffsetX, 1, 0.9, 0.9)
                      pop()
                   }
-                  
                }
                pop()
             }
@@ -958,6 +963,7 @@ function drawTextAt (lineNum) {
    const lineStyle = {
       midlineSpots: [],
       caretSpots: [],
+      spaceSpots: [],
    }
 
    fillCornerLayers = {
@@ -1003,6 +1009,7 @@ function drawTextAt (lineNum) {
          //for entire line, but need while drawing
          midlineSpots: lineStyle.midlineSpots,
          caretSpots: lineStyle.caretSpots,
+         spaceSpots: lineStyle.spaceSpots,
          // position and offset after going through all letters in the line until this point
          posFromLeft: lineWidthUntil(lineText, layerArray.indexOf(layerPos)),
          posFromTop: ((animOffsetY<0) ? -animOffsetY:0) + lineNum*totalHeight[lineNum],
@@ -1531,6 +1538,7 @@ function drawTextAt (lineNum) {
                drawLine(style, 4, 4, 0, 0, "h", -1)
                break;
             case " ":
+               sortIntoArray(style.spaceSpots, style.posFromLeft)
                break;
             case "‸":
                //caret symbol
@@ -1543,13 +1551,14 @@ function drawTextAt (lineNum) {
                   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
                   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
                //}
-               
                break;
             case "|":
                style.sizes = [letterOuter]
                drawLine(style, 1, 1, 0, 0, "v", animAscenders)
                drawLine(style, 4, 4, 0, 0, "v", animAscenders)
                break;
+            case " ":
+               style.spaceSpots
             default:
                style.sizes = [letterOuter]
                drawCorner(style, "square", 1, 1, 0, 0, "", "")
@@ -1587,6 +1596,11 @@ function drawTextAt (lineNum) {
 
          const leftPos = lineStyle.midlineSpots[0]
          const rightPos = lineStyle.midlineSpots[total]
+
+         //lineStyle.spaceSpots.forEach((pos) => {
+         //   lineType(pos,0, pos, 10)
+         //})
+
          lineStyle.midlineSpots.forEach((pos) => {
             if (effect === "spread") {
                const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
