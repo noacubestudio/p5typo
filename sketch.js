@@ -46,7 +46,7 @@ const mode = {
    drawFills: true,
    wave: false,
    // use alt letters?
-   altS: true,
+   altS: false,
    altM: false,
    altNH: true,
 }
@@ -2256,26 +2256,14 @@ function waveValue(input, low, high) {
 
 
 
-function drawCornerFill (style, shape, arcQ, offQ, tx, ty, noStretchX, noStretchY) {
-   if (style.weight === 0 || !mode.drawFills) {
-      return
-   }
-
-   push()
-   translate(tx, ty)
-   noFill()
-   stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
-   strokeCap(SQUARE)
-   strokeWeight(style.weight*strokeScaleFactor)
-
+function drawCornerFill (style, shape, arcQ, offQ, noStretchX, noStretchY) {
    //for entire line
    const size = style.sizes[0]
    const smallest = style.sizes[style.sizes.length-1]
    const fillsize = smallest+style.weight
 
    // base position
-   const topOffset = (size < 0) ? -style.offsetX : 0
-   let xpos = topOffset + style.posFromLeft + size/2
+   let xpos = style.posFromLeft + size/2
    let ypos = style.posFromTop
    // offset based on quarter and prev vertical offset
    let offx = (offQ === 3 || offQ === 4) ? 1:0
@@ -2345,42 +2333,27 @@ function drawCornerFill (style, shape, arcQ, offQ, tx, ty, noStretchX, noStretch
          offsetShift = style.offsetX/2*dirY
       }
 
-     lineType(stretchXPos+offsetShift, stretchYPos,
+      lineType(stretchXPos+offsetShift, stretchYPos,
          stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
    }
-   pop()
 }
 
 function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped, noSmol, noStretchX, noStretchY) {
-   //draw fills
-   // only if corner can be drawn at all
-   const smallest = style.sizes[style.sizes.length-1]
-   const biggest = style.sizes[0]
-   const topOffset = (biggest < 0) ? -style.offsetX : 0
-
-   if (!webglEffects.includes(effect) && style.sizes.length > 1) {
-      // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
-      if (cutMode === "" || cutMode === "branch") {
-         drawCornerFill(style, shape, arcQ, offQ, tx, ty, noStretchX, noStretchY)
-      }
-   }
 
    push()
    translate(tx, ty)
    noFill()
 
-   let innerColor; let outerColor
+   const smallest = style.sizes[style.sizes.length-1]
+   const biggest = style.sizes[0]
 
-   strokeWeight((style.stroke/10)*strokeScaleFactor)
-   if (mode.xray) {
-      strokeWeight(0.2*strokeScaleFactor)
-   }
-   innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-   outerColor = palette.fg
+   const offx = (offQ === 3 || offQ === 4) ? 1:0
+   const offy = (offQ === 2 || offQ === 3) ? 1:0
+   const basePos = getQuarterPos(offx, offy, biggest)
 
    function getQuarterPos(offx, offy, biggest) {
       // base position
-      let xpos = topOffset + style.posFromLeft + (biggest/2)
+      let xpos = style.posFromLeft + (biggest/2)
       let ypos = style.posFromTop
       // offset based on quarter and prev vertical offset
       xpos += (offx > 0) ? style.offsetX : 0
@@ -2390,85 +2363,115 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
       return {x: xpos, y:ypos}
    }
 
-   draw()
+   //draw fills
+   stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
+   strokeCap(SQUARE)
+   strokeWeight(style.weight*strokeScaleFactor)
+   // only if corner can be drawn at all
+   if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
+      draw(smallest+style.weight, "bg")
+      //drawCornerFill(style, shape, arcQ, offQ, noStretchX, noStretchY)
+      // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
+      //if (cutMode === "" || cutMode === "branch") {}
+   }
 
-   function draw() {
-      style.sizes.forEach((size) => {
+   strokeCap(ROUND)
+   strokeWeight((style.stroke/10)*strokeScaleFactor)
+   if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
+   let innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   let outerColor = palette.fg
+
+   style.sizes.forEach((size) => {
+      draw(size, "fg")
+   })
+   
+
+   function draw(size, layer) {
+
+      if (layer === "fg") {
          // gradient from inside to outside - color or weight
          ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+      }
 
-         const offx = (offQ === 3 || offQ === 4) ? 1:0
-         const offy = (offQ === 2 || offQ === 3) ? 1:0
-         const basePos = getQuarterPos(offx, offy, biggest, topOffset)
-         let xpos = basePos.x
-         let ypos = basePos.y
+      let xpos = basePos.x
+      let ypos = basePos.y
 
-         if (shape === "round") {
-            // angles
-            let startAngle = PI + (arcQ-1)*HALF_PI
-            let endAngle = startAngle + HALF_PI
+      if (shape === "round") {
+         // angles
+         let startAngle = PI + (arcQ-1)*HALF_PI
+         let endAngle = startAngle + HALF_PI
 
-            let cutDifference = 0
-            let drawCurve = true
+         let cutDifference = 0
+         let drawCurve = true
 
-            if (cutMode === "linecut") {
-               if (smallest-2 <= 0 && noSmol) {
-                  drawCurve = false
-               }
-               cutDifference = HALF_PI-arcUntil(size, smallest-2, HALF_PI)
+         if (cutMode === "linecut") {
+            if (smallest-2 <= 0 && noSmol) {
+               drawCurve = false
             }
-            else if (cutMode === "roundcut") {
-               if ((smallest <= 2 || biggest+2 <= 2) && noSmol) {
-                  drawCurve = false
-               }
+            if (layer === "fg") cutDifference = HALF_PI-arcUntil(size, smallest-2, HALF_PI)
+         } else if (cutMode === "roundcut") {
+            if ((smallest <= 2 || biggest+2 <= 2) && noSmol) {
+               drawCurve = false
+            }
+            if (layer === "fg") {
                if (smallest > 2) {
                   cutDifference = HALF_PI-arcUntilArc(size, biggest+2, smallest+style.weight, HALF_PI)
                } else {
                   cutDifference = 0
                }
             }
+         }
 
-            if (cutSide === "start") {
-               startAngle += cutDifference
-            } else if (cutSide === "end") {
-               endAngle -= cutDifference
-            }
+         //angle
+         if (cutSide === "start") {
+            startAngle += cutDifference
+         } else if (cutSide === "end") {
+            endAngle -= cutDifference
+         }
 
-            // random animation idea, maybe try more with this later
-            //endAngle = startAngle + (endAngle-startAngle) * Math.abs(((frameCount % 60) /30)-1)
-
-            if (drawCurve) {
+         // draw the line (until the cut angle if fg)
+         if (drawCurve) {
+            if (layer === "fg" || cutMode === "") {
                arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
             } else {
-               // draw 0.5 long lines instead
-               // wip
-            }
-         } else if (shape === "square") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-            if (cutMode === "branch") {
-               let branchLength = size
-               let revSize = (biggest+smallest)-size
-               if (size > (biggest+smallest)/2) branchLength = biggest-(size-smallest)
-              lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
-              lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
-               if ((arcQ % 2 === 1) === (cutSide === "start")) {
-                 lineType(xpos+dirX*biggest/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
-               } else {
-                 lineType(xpos+dirX*size/2, ypos+dirY*biggest/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
+               const layerGroup = (cutMode === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
+               if (layerGroup[size] === undefined) {
+                  layerGroup[size] = createGraphics(size, size)
+                  //layerGroup[size].arcType(0,0,size,size,startAngle,endAngle)
                }
-            } else {
-              lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*size/2)
-              lineType(xpos, ypos+dirY*size/2, xpos+dirX*size/2, ypos+dirY*size/2)
+               image(layerGroup[size], basePos.x, basePos.y);
             }
-         } else if (shape === "diagonal") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-            const step = (size-smallest)/2 + 1
-            const stepslope = step*tan(HALF_PI/4)
-            let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
-            let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
+         }
+      } else if (shape === "square") {
+         const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+         const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+         if (cutMode === "branch" && layer === "fg") {
+            let branchLength = size
+            let revSize = (biggest+smallest)-size
+            if (size > (biggest+smallest)/2) branchLength = biggest-(size-smallest)
+            lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
+            lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
+            if ((arcQ % 2 === 1) === (cutSide === "start")) {
+               lineType(xpos+dirX*biggest/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
+            } else {
+               lineType(xpos+dirX*size/2, ypos+dirY*biggest/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
+            }
+         } else {
+            beginShape()
+            vertex(xpos+dirX*size/2, ypos)
+            vertex(xpos+dirX*size/2, ypos+dirY*size/2)
+            vertex(xpos, ypos+dirY*size/2)
+            endShape()
+         }
+      } else if (shape === "diagonal") {
+         const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+         const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+         const step = (size-smallest)/2 + 1
+         const stepslope = step*tan(HALF_PI/4)
+         let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
+         let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
 
+         if (layer === "fg") {
             if (cutMode === "linecut" && ((biggest-smallest)/2+1)*tan(HALF_PI/4) < smallest/2-2) {
                let changeAxis = ""
                if (cutSide === "start") {
@@ -2479,93 +2482,95 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
                if (changeAxis === "x") {
                   xPoint.x = xpos+dirX*(biggest/2 -style.weight -1)
                   xPoint.y = yPoint.y - (biggest/2 - style.weight -1) + dirY*stepslope
-                 lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+                  lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
                } else if (changeAxis === "y") {
                   yPoint.y = ypos+dirY*(biggest/2 -style.weight -1)
                   yPoint.x = xPoint.x - (biggest/2 - style.weight -1) + dirX*stepslope
-                 lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
+                  lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
                }
-              lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+               lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
             } else {
-              lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+               lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
                if (step > 0) {
-                 lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
-                 lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+                  lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
+                  lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
                }
             }
+         } else {
+            beginShape()
+            vertex(xpos+dirX*size/2, ypos)
+            vertex(xpos+dirX*size/2, ypos+dirY*stepslope)
+            vertex(xpos+dirX*stepslope, ypos+dirY*size/2)
+            vertex(xpos, ypos+dirY*size/2)
+            endShape()
          }
+      }
 
-         const cutX = (arcQ % 2 === 0) === (cutSide === "start")
-         if (style.stretchX > 0 && !noStretchX) {
-            // check if not cut off
-            if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
-               const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-               let stretchXPos = xpos
-               let stretchYPos = ypos + size*toSideX*0.5
-               const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-
-               // the offset can be in between the regular lines vertically if it would staircase nicely
-               let offsetShift = 0
-               let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-               if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-                  offsetShift = (style.offsetY/3)*stairDir
-               } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-                  offsetShift = (style.offsetY/2)*stairDir
-               }
-
-              lineType(stretchXPos, stretchYPos+offsetShift,
-                  stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
-            }
-         }
-         if (style.stretchY > 0 && !noStretchY) {
-            // check if not cut off
-            if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
-               const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-               let stretchXPos = xpos + size*toSideY*0.5
-               let stretchYPos = ypos
-               const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
-
-               //if (curveMode) {
-               //   curve(stretchXPos, stretchYPos-dirY*typeStretchY*3,
-               //      stretchXPos, stretchYPos,
-               //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY,
-               //      stretchXPos+typeOffsetX*0.5*dirY, stretchYPos + dirY*0.5*typeStretchY)
-               //}
-
-               // the offset can be in between the regular lines horizontally if it would staircase nicely
-               let offsetShift = 0
-               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-                  offsetShift = style.offsetX/3*dirY
-               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-                  offsetShift = style.offsetX/2*dirY
-               }
-
-               if (!midlineEffects.includes(effect)) {
-                  lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*animStretchY)
-               }
-
-               // if vertical line goes down, set those connection spots in the array
-               if (dirY === 1 && midlineEffects.includes(effect)) {
-                  if (style.letter === "‸") {
-                     //caret counts separately
-                     style.caretSpots[0] = stretchXPos + tx
-                  } else {
-                     sortIntoArray(style.midlineSpots, stretchXPos + tx)
-                  }
-               }
-            }
-         }
-         const extendamount = ((biggest % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
-         if (cutMode === "extend" && extendamount > 0) {
+      // stretch
+      const cutX = (arcQ % 2 === 0) === (cutSide === "start")
+      if (style.stretchX > 0 && !noStretchX) {
+         // check if not cut off
+         if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
+            if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            let extendXPos = xpos
-            let extendYPos = ypos + size*toSideX*0.5
+            let stretchXPos = xpos
+            let stretchYPos = ypos + size*toSideX*0.5
             const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-           lineType(extendXPos, extendYPos, extendXPos + dirX*extendamount, extendYPos)
-         }
-      });
-   }
 
+            // the offset can be in between the regular lines vertically if it would staircase nicely
+            let offsetShift = 0
+            let stairDir = (style.vOffset+(offQ === 2 || offQ === 3) ? 1:0) % 2===0 ? -1 : 1
+            if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+               offsetShift = (style.offsetY/3)*stairDir
+            } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+               offsetShift = (style.offsetY/2)*stairDir
+            }
+
+            lineType(stretchXPos, stretchYPos+offsetShift,
+               stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
+         }
+      }
+      if (style.stretchY > 0 && !noStretchY) {
+         // check if not cut off
+         if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
+            if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+            const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
+            let stretchXPos = xpos + size*toSideY*0.5
+            let stretchYPos = ypos
+            const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
+
+            // the offset can be in between the regular lines horizontally if it would staircase nicely
+            let offsetShift = 0
+            if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+               offsetShift = style.offsetX/3*dirY
+            } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+               offsetShift = style.offsetX/2*dirY
+            }
+
+            if (!midlineEffects.includes(effect)) {
+               lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
+            }
+
+            // if vertical line goes down, set those connection spots in the array
+            if (dirY === 1 && midlineEffects.includes(effect) && layer === "fg") {
+               if (style.letter === "‸") {
+                  //caret counts separately
+                  style.caretSpots[0] = stretchXPos + tx
+               } else {
+                  sortIntoArray(style.midlineSpots, stretchXPos + tx)
+               }
+            }
+         }
+      }
+      const extendamount = ((biggest % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
+      if (cutMode === "extend" && extendamount > 0) {
+         const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+         let extendXPos = xpos
+         let extendYPos = ypos + size*toSideX*0.5
+         const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+         lineType(extendXPos, extendYPos, extendXPos + dirX*extendamount, extendYPos)
+      }
+   }
    pop()
 }
 
@@ -2684,7 +2689,7 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
             //stretch
             // the offset can be in between the regular lines vertically if it would staircase nicely
             let offsetShift = 0
-            let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
+            let stairDir = (style.vOffset+(offQ === 2 || offQ === 3) ? 1:0) % 2===0 ? -1 : 1
             if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
                offsetShift = (style.offsetY/3)*stairDir
             } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {

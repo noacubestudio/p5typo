@@ -259,6 +259,7 @@ input[type=number] {
 
 #info {
   margin: 3em;
+  line-height: 150%;
 }
 #footer {
   color: rgba(var(--fg-color), 0.5);
