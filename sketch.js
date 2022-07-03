@@ -20,7 +20,7 @@ const numberInputsObj = {
    stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
    stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
 }
-let linesArray = ["the quick brown\nfox jumps over\nthe lazy dog."]
+let linesArray = ["the quick brown","fox jumps over","the lazy dog."]
 const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
 
 
@@ -32,10 +32,10 @@ let lerpLength = 6
 
 let effect = "none"
 let midlineEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
+let stripeEffects = ["vstripes", "hstripes"]
 let webglEffects = ["spheres"]
 
 let initialDraw = true
-let gridType = ""
 
 const mode = {
    // visual
@@ -345,6 +345,14 @@ function loadValuesFromURL () {
             effect = "spheres"
             print("Loaded with URL Mode: Webgl 3D Spheres")
             break;
+         case "vstripes":
+            effect = "vstripes"
+            print("Loaded with URL Mode: Stripes V Effect")
+            break;
+         case "hstripes":
+            effect = "hstripes"
+            print("Loaded with URL Mode: Stripes H Effect")
+            break;
          default:
             print("Could not load effect")
             break;
@@ -372,16 +380,6 @@ function loadValuesFromURL () {
          values.ascenders.from = parseInt(valArray[9])
       } else {
          print("Has to be 11 negative or positive numbers with _ in between")
-      }
-   }
-   if (params.grid !== null && params.grid.length > 0) {
-      const gridTypeString = String(params.grid)
-      if (gridTypeString === "v" || gridTypeString === "vertical") {
-         gridType = "vertical"
-      } else if (gridTypeString === "h" || gridTypeString === "horizontal") {
-         gridType = "horizontal"
-      } else if (gridTypeString === "hv" || gridTypeString === "square") {
-         gridType = "grid"
       }
    }
 }
@@ -466,6 +464,12 @@ function writeValuesToURL (noReload) {
          case "teeth":
             value = "teeth"
             break;
+         case "vstripes":
+            value = "vstripes"
+            break;
+         case "hstripes":
+            value = "hstripes"
+            break;
          case "spheres":
             value = "spheres"
             break;
@@ -476,13 +480,6 @@ function writeValuesToURL (noReload) {
    }
    if (!mode.drawFills) {
       newParams.append("solid",false)
-   }
-   if (gridType !== "") {
-      let gridTypeString = ""
-      if (gridType === "vertical") gridTypeString = "v"
-      else if (gridType === "horizontal") gridTypeString = "h"
-      else if (gridType === "grid") gridTypeString = "hv"
-      newParams.append("grid",gridTypeString)
    }
 
    if (URLSearchParams.toString(newParams).length > 0) {
@@ -718,25 +715,103 @@ function draw () {
    }
 }
 
-
 function drawElements() {
    push()
    if (webglEffects.includes(effect)) translate(-width/2, -height/2)
    scale(animZoom)
    translate(3, 3)
 
-   translate(0, max(animAscenders, 1))
+   translate(0, animAscenders)
 
    strokeWeight((animWeight/10)*strokeScaleFactor)
    palette.fg.setAlpha(255)
 
-   push()
-   translate(0,0.5*animSize)
+      push()
 
-   for (let i = 0; i < linesArray.length; i++) {
-      drawTextAt(i)
-   }
-   pop()
+      // draw line below everything
+      if (stripeEffects.includes(effect)) {
+         drawGrid(effect)
+      }
+
+      for (let i = 0; i < linesArray.length; i++) {
+         drawTextAt(i)
+      }
+      pop()
+
+      if (mode.xray) {
+         drawGrid("debug")
+      }
+   
+      function drawGrid (type) {
+         push()
+         if (webglEffects.includes(effect)) translate(0,0,-1)
+         const gridHeight = animSize + Math.abs(animOffsetY) + animStretchY
+         const gridWidth = (width/animZoom) - 6
+         const asc = animAscenders
+   
+         if (type === "debug") {
+            translate(0,0.5*animSize)
+            for (let lineNum = 0; lineNum < linesArray.length; lineNum++) {
+               palette.fg.setAlpha(50)
+               stroke(palette.fg)
+               strokeWeight(0.1*strokeScaleFactor)
+         
+               const i = lineNum * totalHeight[lineNum] - animSize/2
+      
+               //vertical gridlines
+               lineType(0, i, gridWidth, i)
+               lineType(0, i+gridHeight, gridWidth, i+gridHeight)
+               lineType(0, i-asc, gridWidth, i-asc)
+               lineType(0, i+gridHeight/2-animOffsetY*0.5, gridWidth, i+gridHeight/2-animOffsetY*0.5)
+               lineType(0, i+gridHeight/2+animOffsetY*0.5, gridWidth, i+gridHeight/2+animOffsetY*0.5)
+               lineType(0, i+gridHeight+asc, gridWidth, i+gridHeight+asc)
+         
+               //horizontal gridlines
+               push()
+               translate(0,i+gridHeight*0.5)
+               for (let j = 0; j <= gridWidth; j++) {
+                  lineType(j, -gridHeight/2-asc, j, gridHeight/2+asc)
+               }
+               pop()
+      
+               // markers for start of each letter
+               push()
+               translate(0,i+gridHeight*0.5)
+               noStroke()
+               fill((mode.dark) ? "#FFBB00E0" : "#2222FFA0")
+               for (let c = 0; c <= linesArray[lineNum].length; c++) {
+                  const xpos = lineWidthUntil(linesArray[lineNum], c)
+                  ellipse(xpos, 0, 0.9, 0.9)
+               }
+               pop()
+            }
+         } else {
+            stroke(palette.fg)
+            if (mode.xray) {
+               strokeWeight(0.2*strokeScaleFactor)
+            } else {
+               strokeWeight((animWeight/10)*1*strokeScaleFactor)
+            }
+            push()
+            translate(0,-asc)
+            if (type === "vstripes") {
+               const totalGridHeight = (gridHeight+asc*2)*linesArray.length //+ (1)*(linesArray.length-1)
+               for (let j = 0; j <= gridWidth; j++) {
+                 lineType(j, 0, j, totalGridHeight)
+               }
+            }
+            if (type === "hstripes") {
+               const totalGridHeight = (gridHeight+asc*2)*linesArray.length
+               for (let k = 0; k <= totalGridHeight; k++) {
+                 lineType(0, k, gridWidth, k)
+               }
+            }
+            pop()
+         }
+         palette.bg.setAlpha(255)
+         palette.fg.setAlpha(255)
+         pop()
+      }
    pop()
 }
 
@@ -812,26 +887,6 @@ function drawTextAt (lineNum) {
       return min(size, inner + i*2)
    }
 
-   function lineWidthUntil (lineText, charIndex) {
-      let total = 0
-      //add to total letter per letter until index is reached
-      for (let c = 0; c < charIndex; c++) {
-         // get characters
-         const char = lineText[c]
-         const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
-         const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
-         // WIP not writing this twice lol
-         let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
-         let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
-         letterInner = waveInner(c, letterInner, letterOuter)
-
-         const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
-         const isLastLetter = (c === charIndex)
-         total += letterKerning(isLastLetter, prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset)
-      }
-      return total
-   }
-
    function offsetUntil (lineText, charIndex) {
       let total = 0
       for (let c = 0; c < charIndex; c++) {
@@ -858,11 +913,7 @@ function drawTextAt (lineNum) {
    if (animOffsetX < 0) {
       translate(-animOffsetX,0)
    }
-
-   // draw line below everything
-   if (gridType !== "") {
-      drawGrid(gridType)
-   }
+   translate(0,0.5*animSize)
 
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
@@ -1468,84 +1519,8 @@ function drawTextAt (lineNum) {
       })()
    }
 
-   if (mode.xray) {
-      drawGrid("debug")
-   }
-
    if (midlineEffects.includes(effect)) {
       drawMidlineEffects()
-   }
-
-   function drawGrid (type) {
-      push()
-      if (webglEffects.includes(effect)) translate(0,0,-1)
-      const height = animSize + Math.abs(animOffsetY) + animStretchY
-      const width = totalWidth[lineNum] + Math.abs(animOffsetX)
-      const asc = animAscenders
-
-      if (type === "debug") {
-         palette.fg.setAlpha(50)
-         stroke(palette.fg)
-         strokeWeight(0.1*strokeScaleFactor)
-   
-         const i = lineNum * totalHeight[lineNum] - animSize/2
-         if (animOffsetX<0) {
-            translate(animOffsetX,0)
-         }
-
-         //vertical gridlines
-         lineType(0, i, width, i)
-         lineType(0, i+height, width, i+height)
-         lineType(0, i-asc, width, i-asc)
-         lineType(0, i+height/2-animOffsetY*0.5, width, i+height/2-animOffsetY*0.5)
-         lineType(0, i+height/2+animOffsetY*0.5, width, i+height/2+animOffsetY*0.5)
-         lineType(0, i+height+asc, width, i+height+asc)
-   
-         //horizontal gridlines
-         push()
-         translate(0,i+height*0.5)
-         for (let j = 0; j <= width; j++) {
-            lineType(j, -height/2-asc, j, height/2+asc)
-         }
-         pop()
-
-         // markers for start of each letter
-         push()
-         translate(0,i+height*0.5)
-         noStroke()
-         fill((mode.dark) ? "#FFBB00E0" : "#2222FFA0")
-         for (let c = 0; c <= lineText.length; c++) {
-            const xpos = lineWidthUntil(lineText, c)
-            ellipse(xpos, 0, 0.9, 0.9)
-         }
-         pop()
-
-      } else if (!mode.xray){
-         stroke(palette.fg)
-         strokeWeight((animWeight/10)*1*strokeScaleFactor)
-         const i = lineNum * totalHeight[lineNum] - animSize/2
-         push()
-         translate(0,i+height*0.5)
-         if (animOffsetX<0) {
-            translate(animOffsetX,0)
-         }
-         if (type === "vertical" || type === "grid") {
-            for (let j = 0; j <= width; j++) {
-              lineType(j, -height/2-asc, j, height/2+asc)
-            }
-         }
-         if (type === "horizontal" || type === "grid") {
-            let middleLine = ((animSize + animStretchY + animOffsetY) % 2 === 0) ? 0 : 0.5
-            for (let k = middleLine; k <= totalHeight[lineNum]/2; k++) {
-              lineType(0, k, width, k)
-              lineType(0, -k, width, -k)
-            }
-         }
-         pop()
-      }
-      palette.bg.setAlpha(255)
-      palette.fg.setAlpha(255)
-      pop()
    }
 
    function drawMidlineEffects () {
@@ -1628,6 +1603,26 @@ function rowLines (type, xValues, height) {
       }
       lastPos = pos
    }
+}
+
+function lineWidthUntil (lineText, charIndex) {
+   let total = 0
+   //add to total letter per letter until index is reached
+   for (let c = 0; c < charIndex; c++) {
+      // get characters
+      const char = lineText[c]
+      const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
+      const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
+      // WIP not writing this twice lol
+      let letterInner = getInnerSize(animSize, animRings) //+ [2,4,3,-2,0,2,4,5][i % 8]
+      let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
+      //letterInner = waveInner(c, letterInner, letterOuter)
+
+      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+      const isLastLetter = (c === charIndex)
+      total += letterKerning(isLastLetter, prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset)
+   }
+   return total
 }
 
 
@@ -1722,6 +1717,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          break;
       case "‸":
          charWidth = 2
+         if (charInSet(nextchar,["gap"])) {
+            charWidth = 1
+         }
          break;
       case "|":
          charWidth = 0
@@ -2186,6 +2184,12 @@ function dropdownTextToEffect (text) {
          break;
       case "color gradient":
          effect = "gradient"
+         break;
+      case "stripes v":
+         effect = "vstripes"
+         break;
+      case "stripes h":
+         effect = "hstripes"
          break;
       case "compress v":
          effect = "compress"
