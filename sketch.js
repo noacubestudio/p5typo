@@ -739,7 +739,7 @@ function drawElements() {
       pop()
 
       if (mode.xray) {
-         drawGrid("debug")
+         drawGrid("xray")
       }
    
       function drawGrid (type) {
@@ -749,7 +749,7 @@ function drawElements() {
          const gridWidth = (width/animZoom) - 6
          const asc = animAscenders
    
-         if (type === "debug") {
+         if (type === "xray") {
             translate(0,0.5*animSize)
             for (let lineNum = 0; lineNum < linesArray.length; lineNum++) {
                palette.fg.setAlpha(50)
@@ -781,7 +781,20 @@ function drawElements() {
                fill((mode.dark) ? "#FFBB00E0" : "#2222FFA0")
                for (let c = 0; c <= linesArray[lineNum].length; c++) {
                   const xpos = lineWidthUntil(linesArray[lineNum], c)
-                  ellipse(xpos, 0, 0.9, 0.9)
+                  if (animOffsetX === 0) {
+                     ellipse(xpos, 0, 0.9, 0.9)
+                  } else {
+                     push()
+                     if (animOffsetX<0) translate(-animOffsetX,0)
+                     stroke((mode.dark) ? "#FFBB00A0" : "#2222FF60")
+                     strokeWeight(0.9*strokeScaleFactor)
+                     noFill()
+                     line(xpos, 0, xpos+animOffsetX, 0)
+                     //ellipse(xpos, -1, 0.9, 0.9)
+                     //ellipse(xpos+animOffsetX, 1, 0.9, 0.9)
+                     pop()
+                  }
+                  
                }
                pop()
             }
