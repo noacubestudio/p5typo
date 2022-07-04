@@ -82,7 +82,7 @@ let fillCornerLayers = {}
 
 function windowResized() {
    if (!mode.svg) {
-      resizeCanvas(windowWidth-30, windowHeight-200)
+      resizeCanvas(windowWidth-100, windowHeight)
    }
 }
 
@@ -90,7 +90,7 @@ function setup () {
    loadValuesFromURL()
    createGUI()
 
-   canvasEl = createCanvas(windowWidth-50, windowHeight-40,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
+   canvasEl = createCanvas(windowWidth-100, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
    canvasEl.parent('sketch-holder')
    if (!webglEffects.includes(effect)) {
       strokeCap(ROUND)
@@ -999,542 +999,557 @@ function drawTextAt (lineNum) {
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
 
       ;(function drawLetter () {
-
-         const isFlipped = ("cktfe".includes(letter)) ? "" : "flipped"
-         // draw chars
-         switch(letter) {
-            case "o":
-            case "ö":
-            case "d":
-            case "b":
-            case "p":
-            case "q":
-               // circle
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               drawCorner(style, "round", 3, 3, 0, 0, "", "")
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-
-               // SECOND LAYER
-               if (letter === "d") {
-                  drawLine(style, 2, 2, 0, 0, "v", ascenders)
-               }
-               else if (letter === "b") {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
-               }
-               else if (letter === "q") {
-                  drawLine(style, 3, 3, 0, 0, "v", descenders)
-               } else if (letter === "p") {
-                  drawLine(style, 4, 4, 0, 0, "v", descenders)
-               } else if (letter === "ö") {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               }
-               break;
-            case "ß":
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               drawCorner(style, "round", 3, 3, 0, 0, "", "")
-               drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-
-               if (ascenders >= style.weight+letterInner-1) {
-                  const modifiedStyle = {...style}
-                  modifiedStyle.sizes = []
-                  for (let s = 0; s < style.sizes.length; s++) {
-                     modifiedStyle.sizes.push(style.sizes[s]-1)
-                  }
-                  drawLine(style, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
-                  drawCorner(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, "", "", undefined, false, false, true)
-                  drawCorner(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
-                  drawLine(style, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, false, true)
-               } else {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
-                  drawCorner(style, "square", 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
-                  drawLine(style, 2, 2, 0, -ascenders, "h", -1)
-               }
-               break;
-            case "g":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               drawCorner(style, "round", 2, 2, 0, 0, "linecut", "start")
-
-               if (descenders <= style.weight + 1) {
-                  // if only one ring, move line down so there is a gap
-                  const extragap = (letterOuter > letterInner) ? 0:1
-                  const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
-
-                  drawLine(style, 2, 3, 0, letterOuter + lineOffset, "h", 0)
-                  drawLine(style, 1, 4, 0, letterOuter + lineOffset, "h", 0)
-               } else if (letterOuter*0.5 + 1 <= descenders) {
-                  // enough room for a proper g
-                  drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                  drawLine(style, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
-                  drawCorner(style, "round", 3, 3, 0, descenders, "", "", undefined, false, false, true)
-                  drawCorner(style, "round", 4, 4, 0, descenders, "", "", undefined, false, false, true)
-               } else {
-                  // square corner g
-                  drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                  drawCorner(style, "square", 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
-                  drawLine(style, 4, 4, 0, descenders-1, "h", -1)
-               }
-
-               drawCorner(style, "round", 3, 3, 0, 0, "", "")
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-
-               drawLine(style, 2, 2, 0, 0, "h", 0)
-               //drawLine(style, 3, 3, 0, 0, "v", 0)
-               break;
-            case "c":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (!"z".includes(nextLetter)) {
-                  if (charInSet(nextLetter, ["ul", "gap"])) {
-                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-                  } else {
-                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
-                  }
-               }
-               if (!"sz".includes(nextLetter)) {
-                  if (charInSet(nextLetter, ["dl", "gap"])) {
-                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
-                  } else {
-                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
-                  }
-               }
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-               break;
-            case "e":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                  drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "end")
-               } else {
-                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", undefined, true)
-               }
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-
-               // SECOND LAYER
-               if ("s".includes(nextLetter)) {
-                  drawLine(style, 3, 3, 0, 0, "h", 1)
-               } else if (charInSet(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
-                  drawLine(style, 3, 3, 0, 0, "h", 0)
-               } else if (!charInSet(nextLetter,["dl", "gap"]) && letterInner <= 2) {
-                  drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
-               } else if ("x".includes(nextLetter)) {
-                  drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-style.weight)
-               } else if (!charInSet(nextLetter,["dl"])) {
-                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
-               } else if (animSpacing < 0) {
-                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
-               } else if (animSpacing > 0){
-                  drawLine(style, 3, 3, 0, 0, "h", 0)
-               } else {
-                  drawLine(style, 3, 3, 0, 0, "h", -oneoffset)
-               }
-               break;
-            case "a":
-            case "ä":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                  drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "start")
-               } else {
-                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
-               }
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-
-               // SECOND LAYER
-               drawLine(style, 3, 3, 0, 0, "v", 0)
-
-               if (letter === "ä") {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               }
-               break;
-            case "n":
-               if (mode.altNH) {
-                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
-                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
-               } else {
+         if (font === "fonta") {
+            const isFlipped = ("cktfe".includes(letter)) ? "" : "flipped"
+            // draw chars
+            switch(letter) {
+               case "o":
+               case "ö":
+               case "d":
+               case "b":
+               case "p":
+               case "q":
+                  // circle
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               }
-               drawLine(style, 3, 3, 0, 0, "v", 0)
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-               break;
-            case "m":
-               if (mode.altM) {
-                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
-                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+   
                   // SECOND LAYER
-                  drawCorner(style, "square", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                  drawCorner(style, "square", 1, 2, wideOffset, 0, "branch", "start", "flipped")
-                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-               } else {
-                  drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
-                  drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  if (letter === "d") {
+                     drawLine(style, 2, 2, 0, 0, "v", ascenders)
+                  }
+                  else if (letter === "b") {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                  }
+                  else if (letter === "q") {
+                     drawLine(style, 3, 3, 0, 0, "v", descenders)
+                  } else if (letter === "p") {
+                     drawLine(style, 4, 4, 0, 0, "v", descenders)
+                  } else if (letter === "ö") {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  }
+                  break;
+               case "ß":
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
                   drawLine(style, 4, 4, 0, 0, "v", 0)
-                  // SECOND LAYER
-                  drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-               }
-               break;
-            case "s":
-               if (!mode.altS) {
-                  //LEFT OVERLAP
-                  if (prevLetter === "s") {
-                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
-                  } else if (prevLetter === "r") {
-                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
-                  } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fkz".includes(prevLetter)) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
-                  }
-                  let xOffset = 0
-                  //start further left if not connecting left
-                  if (charInSet(prevLetter,["gap", "dr"])) {
-                     xOffset = -letterOuter*0.5 + extendOffset -animStretchX
-                     drawCorner(style, "round", 3, 3, xOffset, 0, "extend", "end", isFlipped)
+   
+                  if (ascenders >= style.weight+letterInner-1) {
+                     const modifiedStyle = {...style}
+                     modifiedStyle.sizes = []
+                     for (let s = 0; s < style.sizes.length; s++) {
+                        modifiedStyle.sizes.push(style.sizes[s]-1)
+                     }
+                     drawLine(style, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
+                     drawCorner(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, "", "", undefined, false, false, true)
+                     drawCorner(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, "", "", undefined, false, false, true)
+                     drawCorner(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
+                     drawLine(style, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, false, true)
                   } else {
-                     drawCorner(style, "round", 3, 3, xOffset, 0, "", "", isFlipped)
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
+                     drawCorner(style, "square", 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
+                     drawLine(style, 2, 2, 0, -ascenders, "h", -1)
                   }
-                  if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
-                     drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
-                     drawCorner(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
+                  break;
+               case "g":
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "start")
+   
+                  if (descenders <= style.weight + 1) {
+                     // if only one ring, move line down so there is a gap
+                     const extragap = (letterOuter > letterInner) ? 0:1
+                     const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
+   
+                     drawLine(style, 2, 3, 0, letterOuter + lineOffset, "h", 0)
+                     drawLine(style, 1, 4, 0, letterOuter + lineOffset, "h", 0)
+                  } else if (letterOuter*0.5 + 1 <= descenders) {
+                     // enough room for a proper g
+                     drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
+                     drawLine(style, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
+                     drawCorner(style, "round", 3, 3, 0, descenders, "", "", undefined, false, false, true)
+                     drawCorner(style, "round", 4, 4, 0, descenders, "", "", undefined, false, false, true)
                   } else {
-                     drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
+                     // square corner g
+                     drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
+                     drawCorner(style, "square", 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
+                     drawLine(style, 4, 4, 0, descenders-1, "h", -1)
                   }
-               } else {
-                  // alternative cursive s
-                  const gapPos = charInSet(prevLetter,["gap"]) ? -style.weight-1:0
-
-                  //LEFT OVERLAP
-                  if (charInSet(prevLetter,["dr", "gap"])) {
-                     drawCorner(style, "round", 4, 4, gapPos, 0, "linecut", "end")
-                  } else if (prevLetter !== "t") {
-                     drawCorner(style, "round", 4, 4, gapPos, 0, "roundcut", "end")
-                  }
-                  //drawLine(style, 1, 1, 0, 0, "h", -style.weight-1)
-
-                  drawCorner(style, "round", 2, 2, gapPos, 0, "", "")
-                  drawCorner(style, "round", 3, 3, gapPos, 0, "", "")
-               }
-               break;
-            case "x":
-               push()
-               if (charInSet(prevLetter,["gap","ur"]) && charInSet(prevLetter,["gap","dr"])) {
-                  translate(-style.weight-1,0)
-               }
-
-               //LEFT OVERLAP
-               // top connection
-               if (!charInSet(prevLetter,["gap"]) && !"xz".includes(prevLetter)) {
-                  if (charInSet(prevLetter,["ur"]) || "l".includes(prevLetter)) {
-                     drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
-                  } else if (prevLetter !== "t"){
-                     drawCorner(style, "round", 1, 1, 0, 0, "roundcut", "start")
-                  }
-               }
-               // bottom connection
-               if (!"zxef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
-                  if (prevLetter === "s" && !mode.altS) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
-                  } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
-                  } else {
-                     drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
-                  }
-               }
-
-               if (charInSet(prevLetter, ["gap"])) {
-                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start", undefined, true)
-               }
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               drawCorner(style, "round", 4, 3, wideOffset, 0, "", "")
-
-               if (!"xz".includes(nextLetter)) {
-                  if (!charInSet(nextLetter,["dl", "gap"])) {
-                     drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
-                  } else {
-                     drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
-                  }
-               }
-
-               // SECOND LAYER
-               drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-               if (!"xz".includes(nextLetter)) {
-                  if (!charInSet(nextLetter,["gap", "ul"])) {
-                     drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
-                  } else {
-                     drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
-                  }
-               }
-               drawCorner(style, "diagonal", 3, 3, 0, 0, "", "", "flipped")
-               if (charInSet(prevLetter,["gap"])) {
-                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", "flipped", true)
-               }
-               pop()
-               break;
-            case "u":
-            case "ü":
-            case "y":
-               drawLine(style, 1, 1, 0, 0, "v", 0)
-               drawLine(style, 2, 2, 0, 0, "v", 0)
-               drawCorner(style, "round", 3, 3, 0, 0, "", "")
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-
-               // SECOND LAYER
-               if (letter === "y") {
-                  drawLine(style, 3, 3, 0, 0, "v", descenders)
-               } else if (letter === "ü") {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               }
-               break;
-            case "w":
-               drawLine(style, 1, 1, 0, 0, "v", 0)
-               drawLine(style, 2, 2, 0, 0, "v", 0)
-               drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
-               drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
-
-               drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-               drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
-               drawCorner(style, "diagonal", 4, 3, wideOffset, 0, "", "", "flipped")
-               drawCorner(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
-               break;
-            case "r":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (!"z".includes(nextLetter)) {
-                  if (charInSet(nextLetter,["ul", "gap"])) {
-                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-                  } else {
-                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
-                  }
-               }
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-               break;
-            case "l":
-            case "t":
-
-               if (letter === "t") {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
-                  drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
-                  if (!"zx".includes(nextLetter)) {
-                     if (charInSet(nextLetter,["ul", "gap"]) || letterInner > 2) {
-                        drawLine(style, 2, 2, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
+   
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+   
+                  drawLine(style, 2, 2, 0, 0, "h", 0)
+                  //drawLine(style, 3, 3, 0, 0, "v", 0)
+                  break;
+               case "c":
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  if (!"z".includes(nextLetter)) {
+                     if (charInSet(nextLetter, ["ul", "gap"])) {
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
                      } else {
-                        drawLine(style, 2, 2, 0, 0, "h", letterOuter*0.5-style.weight)
+                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
                      }
                   }
-               } else {
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
-               }
-
-               drawCorner(style, "round", 4, 4, 0, 0, "", "")
-               if (!"z".includes(nextLetter)) {
-                  if (charInSet(nextLetter,["dl", "gap"])) {
-                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
-                  } else {
-                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                  if (!"sz".includes(nextLetter)) {
+                     if (charInSet(nextLetter, ["dl", "gap"])) {
+                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                     } else {
+                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                     }
                   }
-               }  
-               break;
-            case "f":
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               if (!"z".includes(nextLetter)) {
-                  if (charInSet(nextLetter,["ul", "gap"])) {
-                     drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-                  } else {
-                     drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
-                  }
-               }
-               drawLine(style, 4, 4, 0, 0, "v", descenders)
-               drawCorner(style, "square", 4, 4, 0, 0, "branch", "start")
-
-               // SECOND LAYER
-               if (!"sxz".includes(nextLetter)) {
-                  if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
-                     drawLine(style, 3, 3, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
-                  } else {
-                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5-style.weight)
-                  }
-               }
-               break;
-            case "k":
-               drawLine(style, 1, 1, 0, 0, "v", ascenders)
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-               drawCorner(style, "diagonal", 1, 1, style.weight, 0, "", "")
-               drawCorner(style, "diagonal", 4, 4, style.weight, 0, "", "")
-               if (!"zx".includes(nextLetter)) {
-                  drawLine(style, 2, 2, style.weight, 0, "h", -oneoffset-style.weight)
-               }
-               if (!"sxz".includes(nextLetter)) {
-                  if (!(charInSet(nextLetter,["dl", "gap"]))) {
-                     drawCorner(style, "round", 3, 3, style.weight, 0, "roundcut", "start")
-                  } else {
-                     drawLine(style, 3, 3, style.weight, 0, "h", -oneoffset-style.weight)
-                  }
-               }
-               break;
-            case "h":
-               drawLine(style, 1, 1, 0, 0, "v", ascenders, 0)
-
-               // SECOND LAYER
-               if (mode.altNH) {
-                  drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
-                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
-               } else {
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+                  break;
+               case "e":
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               }
-               drawLine(style, 3, 3, 0, 0, "v", 0)
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-               break;
-            case "v":
-               drawLine(style, 1, 1, 0, 0, "v", 0)
-               drawLine(style, 2, 2, 0, 0, "v", 0)
-               if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
+                  if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
+                     drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "end")
+                  } else {
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", undefined, true)
+                  }
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+   
+                  // SECOND LAYER
+                  if ("s".includes(nextLetter)) {
+                     drawLine(style, 3, 3, 0, 0, "h", 1)
+                  } else if (charInSet(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
+                     drawLine(style, 3, 3, 0, 0, "h", 0)
+                  } else if (!charInSet(nextLetter,["dl", "gap"]) && letterInner <= 2) {
+                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
+                  } else if ("x".includes(nextLetter)) {
+                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-style.weight)
+                  } else if (!charInSet(nextLetter,["dl"])) {
+                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
+                  } else if (animSpacing < 0) {
+                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
+                  } else if (animSpacing > 0){
+                     drawLine(style, 3, 3, 0, 0, "h", 0)
+                  } else {
+                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset)
+                  }
+                  break;
+               case "a":
+               case "ä":
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
+                     drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "start")
+                  } else {
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                  }
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+   
+                  // SECOND LAYER
+                  drawLine(style, 3, 3, 0, 0, "v", 0)
+   
+                  if (letter === "ä") {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  }
+                  break;
+               case "n":
+                  if (mode.altNH) {
+                     drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                     drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                  } else {
+                     drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                     drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  }
+                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  break;
+               case "m":
+                  if (mode.altM) {
+                     drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                     drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                     drawLine(style, 3, 3, 0, 0, "v", 0)
+                     drawLine(style, 4, 4, 0, 0, "v", 0)
+                     // SECOND LAYER
+                     drawCorner(style, "square", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
+                     drawCorner(style, "square", 1, 2, wideOffset, 0, "branch", "start", "flipped")
+                     drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                     drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                  } else {
+                     drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
+                     drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
+                     drawLine(style, 3, 3, 0, 0, "v", 0)
+                     drawLine(style, 4, 4, 0, 0, "v", 0)
+                     // SECOND LAYER
+                     drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
+                     drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
+                     drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                     drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                  }
+                  break;
+               case "s":
+                  if (!mode.altS) {
+                     //LEFT OVERLAP
+                     if (prevLetter === "s") {
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     } else if (prevLetter === "r") {
+                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
+                     } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fkz".includes(prevLetter)) {
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     }
+                     let xOffset = 0
+                     //start further left if not connecting left
+                     if (charInSet(prevLetter,["gap", "dr"])) {
+                        xOffset = -letterOuter*0.5 + extendOffset -animStretchX
+                        drawCorner(style, "round", 3, 3, xOffset, 0, "extend", "end", isFlipped)
+                     } else {
+                        drawCorner(style, "round", 3, 3, xOffset, 0, "", "", isFlipped)
+                     }
+                     if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
+                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
+                        drawCorner(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
+                     } else {
+                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
+                     }
+                  } else {
+                     // alternative cursive s
+                     const gapPos = charInSet(prevLetter,["gap"]) ? -style.weight-1:0
+   
+                     //LEFT OVERLAP
+                     if (charInSet(prevLetter,["dr", "gap"])) {
+                        drawCorner(style, "round", 4, 4, gapPos, 0, "linecut", "end")
+                     } else if (prevLetter !== "t") {
+                        drawCorner(style, "round", 4, 4, gapPos, 0, "roundcut", "end")
+                     }
+                     //drawLine(style, 1, 1, 0, 0, "h", -style.weight-1)
+   
+                     drawCorner(style, "round", 2, 2, gapPos, 0, "", "")
+                     drawCorner(style, "round", 3, 3, gapPos, 0, "", "")
+                  }
+                  break;
+               case "x":
+                  push()
+                  if (charInSet(prevLetter,["gap","ur"]) && charInSet(prevLetter,["gap","dr"])) {
+                     translate(-style.weight-1,0)
+                  }
+   
+                  //LEFT OVERLAP
+                  // top connection
+                  if (!charInSet(prevLetter,["gap"]) && !"xz".includes(prevLetter)) {
+                     if (charInSet(prevLetter,["ur"]) || "l".includes(prevLetter)) {
+                        drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start")
+                     } else if (prevLetter !== "t"){
+                        drawCorner(style, "round", 1, 1, 0, 0, "roundcut", "start")
+                     }
+                  }
+                  // bottom connection
+                  if (!"zxef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
+                     if (prevLetter === "s" && !mode.altS) {
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
+                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
+                     } else {
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                     }
+                  }
+   
+                  if (charInSet(prevLetter, ["gap"])) {
+                     drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start", undefined, true)
+                  }
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 3, wideOffset, 0, "", "")
+   
+                  if (!"xz".includes(nextLetter)) {
+                     if (!charInSet(nextLetter,["dl", "gap"])) {
+                        drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
+                     } else {
+                        drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
+                     }
+                  }
+   
+                  // SECOND LAYER
+                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
+                  if (!"xz".includes(nextLetter)) {
+                     if (!charInSet(nextLetter,["gap", "ul"])) {
+                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
+                     } else {
+                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
+                     }
+                  }
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "", "flipped")
+                  if (charInSet(prevLetter,["gap"])) {
+                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", "flipped", true)
+                  }
+                  pop()
+                  break;
+               case "u":
+               case "ü":
+               case "y":
+                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+   
+                  // SECOND LAYER
+                  if (letter === "y") {
+                     drawLine(style, 3, 3, 0, 0, "v", descenders)
+                  } else if (letter === "ü") {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  }
+                  break;
+               case "w":
+                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, 2, 2, 0, 0, "v", 0)
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
                   drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
-               } else {
-                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
-                  drawCorner(style, "square", 4, 4, 0, 0, "", "")
-               }
-               break;
-            case ".":
-               drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
-               break;
-            case ",":
-               drawLine(style, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (style.weight+0.5))
-               break;
-            case "!":
-               // wip
-               drawLine(style, 1, 1, 0, 0, "v", ascenders,)
-               drawLine(style, 4, 4, 0, 0, "v", -style.weight-1.5)
-               drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
-               break;
-            case "?":
-               // wip
-               drawCorner(style, "round", 1, 1, 0, 0, "", "")
-               drawCorner(style, "round", 2, 2, 0, 0, "", "")
-               drawCorner(style, "round", 3, 3, 0, 0, "", "")
-               drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
-               drawLine(style, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (style.weight+0.5))
-               break;
-            case "i":
-               drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-               drawLine(style, 1, 1, 0, 0, "v", 0)
-               drawLine(style, 4, 4, 0, 0, "v", 0)
-               break;
-            case "j":
-               let leftOffset = 0
-               if (charInSet(prevLetter,["gap"])) {
-                  leftOffset = -style.weight-1
-               }
-
-               // LEFT OVERLAP
-               if (prevLetter !== undefined) {
-                  if (!"tkz".includes(prevLetter)) {
-                     if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                        drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
+   
+                  drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                  drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
+                  drawCorner(style, "diagonal", 4, 3, wideOffset, 0, "", "", "flipped")
+                  drawCorner(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
+                  break;
+               case "r":
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  if (!"z".includes(nextLetter)) {
+                     if (charInSet(nextLetter,["ul", "gap"])) {
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
                      } else {
-                        drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
+                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
                      }
                   }
-                  if (!charInSet(prevLetter,["tr"]) && !"ckrsxz".includes(prevLetter)) {
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  break;
+               case "l":
+               case "t":
+   
+                  if (letter === "t") {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                     drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
+                     if (!"zx".includes(nextLetter)) {
+                        if (charInSet(nextLetter,["ul", "gap"]) || letterInner > 2) {
+                           drawLine(style, 2, 2, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
+                        } else {
+                           drawLine(style, 2, 2, 0, 0, "h", letterOuter*0.5-style.weight)
+                        }
+                     }
+                  } else {
+                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                  }
+   
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
+                  if (!"z".includes(nextLetter)) {
+                     if (charInSet(nextLetter,["dl", "gap"])) {
+                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                     } else {
+                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                     }
+                  }  
+                  break;
+               case "f":
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  if (!"z".includes(nextLetter)) {
+                     if (charInSet(nextLetter,["ul", "gap"])) {
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                     } else {
+                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                     }
+                  }
+                  drawLine(style, 4, 4, 0, 0, "v", descenders)
+                  drawCorner(style, "square", 4, 4, 0, 0, "branch", "start")
+   
+                  // SECOND LAYER
+                  if (!"sxz".includes(nextLetter)) {
+                     if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
+                        drawLine(style, 3, 3, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
+                     } else {
+                        drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5-style.weight)
+                     }
+                  }
+                  break;
+               case "k":
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawCorner(style, "diagonal", 1, 1, style.weight, 0, "", "")
+                  drawCorner(style, "diagonal", 4, 4, style.weight, 0, "", "")
+                  if (!"zx".includes(nextLetter)) {
+                     drawLine(style, 2, 2, style.weight, 0, "h", -oneoffset-style.weight)
+                  }
+                  if (!"sxz".includes(nextLetter)) {
+                     if (!(charInSet(nextLetter,["dl", "gap"]))) {
+                        drawCorner(style, "round", 3, 3, style.weight, 0, "roundcut", "start")
+                     } else {
+                        drawLine(style, 3, 3, style.weight, 0, "h", -oneoffset-style.weight)
+                     }
+                  }
+                  break;
+               case "h":
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders, 0)
+   
+                  // SECOND LAYER
+                  if (mode.altNH) {
+                     drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
+                     drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                  } else {
+                     drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                     drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  }
+                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  break;
+               case "v":
+                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
+                     drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+                     drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
+                  } else {
+                     drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+                     drawCorner(style, "square", 4, 4, 0, 0, "", "")
+                  }
+                  break;
+               case ".":
+                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  break;
+               case ",":
+                  drawLine(style, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (style.weight+0.5))
+                  break;
+               case "!":
+                  // wip
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders,)
+                  drawLine(style, 4, 4, 0, 0, "v", -style.weight-1.5)
+                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  break;
+               case "?":
+                  // wip
+                  drawCorner(style, "round", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
+                  drawLine(style, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (style.weight+0.5))
+                  break;
+               case "i":
+                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  break;
+               case "j":
+                  let leftOffset = 0
+                  if (charInSet(prevLetter,["gap"])) {
+                     leftOffset = -style.weight-1
+                  }
+   
+                  // LEFT OVERLAP
+                  if (prevLetter !== undefined) {
+                     if (!"tkz".includes(prevLetter)) {
+                        if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
+                           drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
+                        } else {
+                           drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
+                        }
+                     }
+                     if (!charInSet(prevLetter,["tr"]) && !"ckrsxz".includes(prevLetter)) {
+                        drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
+                     }
+                  }
+                  
+                  drawLine(style, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawCorner(style, "square", 2, 2, leftOffset, 0, "", "")
+                  drawCorner(style, "round", 3, 3, leftOffset, 0, "", "")
+                  if (prevLetter === undefined) {
                      drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
+                     drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end")
                   }
-               }
-               
-               drawLine(style, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
-               drawCorner(style, "square", 2, 2, leftOffset, 0, "", "")
-               drawCorner(style, "round", 3, 3, leftOffset, 0, "", "")
-               if (prevLetter === undefined) {
-                  drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
-                  drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end")
-               }
-               break;
-            case "z":
-               let oddOffset = waveValue(letterOuter, 0, 0.5)
-               let leftZoffset = 0
-               if (charInSet(prevLetter,["gap"])) {
-                  leftZoffset = -style.weight-1
-               } else if ("czfkxt".includes(prevLetter)) {
-                  leftZoffset = -style.weight-1
-               }
-
-               // TOP LEFT OVERLAP
-               if (!"czfkxt".includes(prevLetter)) {
-                  if (charInSet(prevLetter,["ur", "gap"])) {
-                     drawCorner(style, "round", 1, 1, leftZoffset, 0, "linecut", "start")
+                  break;
+               case "z":
+                  let oddOffset = waveValue(letterOuter, 0, 0.5)
+                  let leftZoffset = 0
+                  if (charInSet(prevLetter,["gap"])) {
+                     leftZoffset = -style.weight-1
+                  } else if ("czfkxt".includes(prevLetter)) {
+                     leftZoffset = -style.weight-1
+                  }
+   
+                  // TOP LEFT OVERLAP
+                  if (!"czfkxt".includes(prevLetter)) {
+                     if (charInSet(prevLetter,["ur", "gap"])) {
+                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "linecut", "start")
+                     } else {
+                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "roundcut", "start")
+                     }
                   } else {
-                     drawCorner(style, "round", 1, 1, leftZoffset, 0, "roundcut", "start")
+                     drawLine(style, 1, 1, leftZoffset, 0, "h", -(style.weight+1))
                   }
-               } else {
-                  drawLine(style, 1, 1, leftZoffset, 0, "h", -(style.weight+1))
-               }
-
-               drawLine(style, 2, 2, leftZoffset, 0, "h", 1+oddOffset*2)
-               drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, "", "", "flipped")
-
-               // BOTTOM RIGHT OVERLAP
-               drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, "", "", "flipped")
-               drawLine(style, 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, "h", 1+oddOffset*2)
-
-               if (!"zxj".includes(nextLetter)) {
-                  if (charInSet(nextLetter,["dl", "gap"])) {
-                     drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "linecut", "start")
+   
+                  drawLine(style, 2, 2, leftZoffset, 0, "h", 1+oddOffset*2)
+                  drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, "", "", "flipped")
+   
+                  // BOTTOM RIGHT OVERLAP
+                  drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, "", "", "flipped")
+                  drawLine(style, 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, "h", 1+oddOffset*2)
+   
+                  if (!"zxj".includes(nextLetter)) {
+                     if (charInSet(nextLetter,["dl", "gap"])) {
+                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "linecut", "start")
+                     } else {
+                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "roundcut", "start")
+                     }
                   } else {
-                     drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "roundcut", "start")
+                     //drawLine(style, 4, 3, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "h", 0)
                   }
-               } else {
-                  //drawLine(style, 4, 3, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "h", 0)
-               }
-               break;
-            case "-":
-               style.sizes = [letterOuter]
-               drawLine(style, 1, 1, 0, +letterOuter*0.5, "h", -1)
-               drawLine(style, 2, 2, 0, +letterOuter*0.5, "h", -1)
-               break;
-            case "_":
-               style.sizes = [letterOuter]
-               drawLine(style, 3, 3, 0, 0, "h", -1)
-               drawLine(style, 4, 4, 0, 0, "h", -1)
-               break;
-            case " ":
-               sortIntoArray(style.spaceSpots, style.posFromLeft)
-               break;
-            case "‸":
-               //caret symbol
-               style.opacity = 0.5
-               style.sizes = [letterOuter]
-               //if (style.caretSpots[0] === 0) {
-               //   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-               //   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
-               //} else {
+                  break;
+               case "-":
+                  style.sizes = [letterOuter]
+                  drawLine(style, 1, 1, 0, +letterOuter*0.5, "h", -1)
+                  drawLine(style, 2, 2, 0, +letterOuter*0.5, "h", -1)
+                  break;
+               case "_":
+                  style.sizes = [letterOuter]
+                  drawLine(style, 3, 3, 0, 0, "h", -1)
+                  drawLine(style, 4, 4, 0, 0, "h", -1)
+                  break;
+               case " ":
+                  sortIntoArray(style.spaceSpots, style.posFromLeft)
+                  break;
+               case "‸":
+                  //caret symbol
+                  style.opacity = 0.5
+                  style.sizes = [letterOuter]
+                  //if (style.caretSpots[0] === 0) {
+                  //   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
+                  //   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  //} else {
+                     drawLine(style, 1, 1, 0, 0, "v", animAscenders)
+                     drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  //}
+                  break;
+               case "|":
+                  style.sizes = [letterOuter]
                   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
                   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
-               //}
-               break;
-            case "|":
-               style.sizes = [letterOuter]
-               drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-               drawLine(style, 4, 4, 0, 0, "v", animAscenders)
-               break;
-            case " ":
-               style.spaceSpots
-            default:
-               style.sizes = [letterOuter]
-               drawCorner(style, "square", 1, 1, 0, 0, "", "")
-               drawCorner(style, "square", 2, 2, 0, 0, "", "")
-               drawCorner(style, "square", 3, 3, 0, 0, "", "")
-               drawCorner(style, "square", 4, 4, 0, 0, "", "")
-               break;
+                  break;
+               case " ":
+                  style.spaceSpots
+                  break;
+               default:
+                  style.sizes = [letterOuter]
+                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "square", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "square", 4, 4, 0, 0, "", "")
+                  break;
+            }
+         } else if (font === "fontb") {
+            switch (letter) {
+               case " ":
+                  style.spaceSpots
+                  break;
+               default:
+                  style.sizes = [letterOuter]
+                  drawCorner(style, "square", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "square", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "square", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "square", 4, 4, 0, 0, "", "")
+                  break;
+            }
          }
       })()
    }
@@ -1663,17 +1678,19 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
-   if (animRings > 1) {
-      if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
-         ("dgi".includes(char) && "i".includes(nextchar))) {
-      spacing = max(spacing, 1)
-      }
-   } else {
-      if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
-         ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
-         ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
-         ("nm".includes(char) && "nm".includes(nextchar))) {
-      spacing = max(spacing, 1)
+   if (font === "fonta") {
+      if (animRings > 1) {
+         if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
+            ("dgi".includes(char) && "i".includes(nextchar))) {
+         spacing = max(spacing, 1)
+         }
+      } else {
+         if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
+            ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
+            ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
+            ("nm".includes(char) && "nm".includes(nextchar))) {
+         spacing = max(spacing, 1)
+         }
       }
    }
    if ("|".includes(char)) spacing = max(spacing, 1)
@@ -1681,86 +1698,90 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
    // widths of letters without overlapping
    let charWidth = outer
-   switch(char) {
-      case "m":
-      case "w":
-         charWidth = weight*3 + inner*2
-         break;""
-      case "x":
-         charWidth = weight*2 + inner*2
-         if (charInSet(prevchar,["gap","ur"]) && charInSet(prevchar,["gap","dr"])) {
-            charWidth = weight*1 + inner*2 -1
-         }
-         break;
-      case "j":
-         if (charInSet(prevchar,["gap"])) {
-            charWidth = weight*1 + inner -1
-         }
-         break;
-      case "s":
-         if (!mode.altS) {
+   if (font === "fonta") {
+      switch(char) {
+         case "m":
+         case "w":
             charWidth = weight*3 + inner*2
-            if (charInSet(nextchar,["gap", "ul"])) {
-               charWidth += -0.5*outer + optionalGap
+            break;
+         case "x":
+            charWidth = weight*2 + inner*2
+            if (charInSet(prevchar,["gap","ur"]) && charInSet(prevchar,["gap","dr"])) {
+               charWidth = weight*1 + inner*2 -1
             }
-            if (charInSet(prevchar,["gap", "dr"])) {
-               charWidth += -0.5*outer
-            }
-         } else {
+            break;
+         case "j":
             if (charInSet(prevchar,["gap"])) {
                charWidth = weight*1 + inner -1
             }
-         }
-         break;
-      case "z":
-         charWidth = 2 + outer + waveValue(outer, 0, 1)
-         if (charInSet(prevchar,["gap"])) {
-            charWidth -= weight+1
-         }
-         break;
-      case " ":
-         charWidth = max([2, spacing*2, ceil(inner*0.5)])
-         break;
-      case "i":
-      case ".":
-      case ",":
-      case "!":
-         charWidth = weight
-         break;
-      case "t":
-      case "l":
-         if (charInSet(nextchar,["gap", "dl"])) {
-            charWidth = outer-weight
-         }
-         break;
-      case "f":
-      case "c":
-      case "r":
-         if (charInSet(nextchar,["gap", "ul"])) {
-            charWidth = outer-weight
-         }
-         break;
-      case "?":
-         charWidth = ceil(outer*0.5)
-         break;
-      case "‸":
-         charWidth = 1
-         if (charInSet(nextchar,["gap"])) {
+            break;
+         case "s":
+            if (!mode.altS) {
+               charWidth = weight*3 + inner*2
+               if (charInSet(nextchar,["gap", "ul"])) {
+                  charWidth += -0.5*outer + optionalGap
+               }
+               if (charInSet(prevchar,["gap", "dr"])) {
+                  charWidth += -0.5*outer
+               }
+            } else {
+               if (charInSet(prevchar,["gap"])) {
+                  charWidth = weight*1 + inner -1
+               }
+            }
+            break;
+         case "z":
+            charWidth = 2 + outer + waveValue(outer, 0, 1)
+            if (charInSet(prevchar,["gap"])) {
+               charWidth -= weight+1
+            }
+            break;
+         case " ":
+            charWidth = max([2, spacing*2, ceil(inner*0.5)])
+            break;
+         case "i":
+         case ".":
+         case ",":
+         case "!":
+            charWidth = weight
+            break;
+         case "t":
+         case "l":
+            if (charInSet(nextchar,["gap", "dl"])) {
+               charWidth = outer-weight
+            }
+            break;
+         case "f":
+         case "c":
+         case "r":
+            if (charInSet(nextchar,["gap", "ul"])) {
+               charWidth = outer-weight
+            }
+            break;
+         case "?":
+            charWidth = ceil(outer*0.5)
+            break;
+         case "‸":
+            charWidth = 1
+            if (charInSet(nextchar,["gap"])) {
+               charWidth = 0
+            }
+            break;
+         case "|":
             charWidth = 0
-         }
-         break;
-      case "|":
-         charWidth = 0
-         break;
+            break;
+      }
    }
 
-   // 1 less space after letters with cutoff
-   if ("ktlcrfsxz-".includes(char) && charInSet(nextchar,["gap"]) && !"|".includes(nextchar)) {
-      charWidth -= 1
-   }
-   // 1 less space in front of xsz-
-   if ("xs-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
-      charWidth -= 1
+   if (font === "fonta") {
+      // 1 less space after letters with cutoff
+      if ("ktlcrfsxz-".includes(char) && charInSet(nextchar,["gap"]) && !"|".includes(nextchar)) {
+         charWidth -= 1
+      }
+      // 1 less space in front of xsz-
+      if ("xs-".includes(nextchar) && charInSet(char,["gap"]) && !"|".includes(char)) {
+         charWidth -= 1
+      }
    }
 
    let spacingResult = 0
@@ -1770,58 +1791,60 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       let spaceAfter = 0
       let afterConnect = false
       let minSpaceAfter
-      switch(char) {
-         case "s":
-            if (!mode.altS) {
+      if (font === "fonta") {
+         switch(char) {
+            case "s":
+               if (!mode.altS) {
+                  if (!charInSet(nextchar,["gap", "ul"])) {
+                     spaceAfter = -weight
+                     afterConnect = true
+                  } else {
+                     minSpaceAfter = 0
+                  }
+               }
+               break;
+            case "k":
+            case "z":
+               if (!charInSet(nextchar,["gap", "dl"])) {
+                  afterConnect = true
+               } else {
+                  minSpaceAfter = 0
+               }
+               break;
+            case "x":
+               if (!(charInSet(nextchar,["gap", "dl"]) && charInSet(nextchar,["gap", "ul"]))) {
+                  afterConnect = true
+               } else {
+                  minSpaceAfter = 0
+               }
+               break;
+            case "t":
+            case "l":
+               if (!charInSet(nextchar,["gap", "dl"])) {
+                  spaceAfter = -weight
+                  afterConnect = true
+               } else {
+                  minSpaceAfter = 0
+               }
+               break;
+            case "f":
+            case "c":
+            case "r":
                if (!charInSet(nextchar,["gap", "ul"])) {
                   spaceAfter = -weight
                   afterConnect = true
                } else {
                   minSpaceAfter = 0
                }
-            }
-            break;
-         case "k":
-         case "z":
-            if (!charInSet(nextchar,["gap", "dl"])) {
-               afterConnect = true
-            } else {
-               minSpaceAfter = 0
-            }
-            break;
-         case "x":
-            if (!(charInSet(nextchar,["gap", "dl"]) && charInSet(nextchar,["gap", "ul"]))) {
-               afterConnect = true
-            } else {
-               minSpaceAfter = 0
-            }
-            break;
-         case "t":
-         case "l":
-            if (!charInSet(nextchar,["gap", "dl"])) {
-               spaceAfter = -weight
-               afterConnect = true
-            } else {
-               minSpaceAfter = 0
-            }
-            break;
-         case "f":
-         case "c":
-         case "r":
-            if (!charInSet(nextchar,["gap", "ul"])) {
-               spaceAfter = -weight
-               afterConnect = true
-            } else {
-               minSpaceAfter = 0
-            }
-            break;
-         case ".":
-         case ",":
-         case "!":
-         case "?":
-            if (!charInSet(nextchar,["gap"])) {
-               minSpaceAfter = 1
-            }
+               break;
+            case ".":
+            case ",":
+            case "!":
+            case "?":
+               if (!charInSet(nextchar,["gap"])) {
+                  minSpaceAfter = 1
+               }
+         }
       }
 
       // depending on the next letter, adjust the spacing
@@ -1830,87 +1853,91 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       let beforeConnect = false
       let minSpaceBefore
       if (afterConnect === false) {
-         switch(nextchar) {
-            case "s":
-               if (!mode.altS) {
-                  if (!charInSet(char,["gap", "dr"])) {
+         if (font === "fonta") {
+            switch(nextchar) {
+               case "s":
+                  if (!mode.altS) {
+                     if (!charInSet(char,["gap", "dr"])) {
+                        spaceBefore = -weight
+                        beforeConnect = true
+                     } else {
+                        if ("e".includes(char)) {
+                           beforeConnect = true
+                           spaceBefore = optionalGap
+                        } else {
+                           minSpaceBefore = optionalGap
+                        }
+                     }
+                  } else {
+                     //alt s
+                     if (!charInSet(char, ["gap"])) {
+                        spaceBefore = -weight
+                        beforeConnect = true
+                     }
+                  }
+                  break;
+               case "x":
+                  if (!(charInSet(char,["gap", "ur"]) && charInSet(char,["gap", "dr"]))) {
                      spaceBefore = -weight
                      beforeConnect = true
                   } else {
                      if ("e".includes(char)) {
                         beforeConnect = true
-                        spaceBefore = optionalGap
                      } else {
-                        minSpaceBefore = optionalGap
+                        minSpaceBefore = 1
                      }
                   }
-               } else {
-                  //alt s
-                  if (!charInSet(char, ["gap"])) {
+                  break;
+               case "z":
+               case "j":
+                  if (!(charInSet(char,["gap"]))) {
                      spaceBefore = -weight
                      beforeConnect = true
                   }
-               }
-               break;
-            case "x":
-               if (!(charInSet(char,["gap", "ur"]) && charInSet(char,["gap", "dr"]))) {
-                  spaceBefore = -weight
-                  beforeConnect = true
-               } else {
-                  if ("e".includes(char)) {
-                     beforeConnect = true
-                  } else {
-                     minSpaceBefore = 1
-                  }
-               }
-               break;
-            case "z":
-            case "j":
-               if (!(charInSet(char,["gap"]))) {
-                  spaceBefore = -weight
-                  beforeConnect = true
-               }
-               break;
-            case ",":
-            case ".":
-            case "!":
-            case "?":
-               minSpaceBefore = 1
-               break;
+                  break;
+               case ",":
+               case ".":
+               case "!":
+               case "?":
+                  minSpaceBefore = 1
+                  break;
+            }
          }
       }
 
       //extra special combinations
-      if ("ktlcrfsxz".includes(char) && nextchar === "s") {
-         spaceBefore = -inner-weight-animStretchX
-         beforeConnect = true
-      }
-      else if ("ktlcrfsx".includes(char) && nextchar === "x") {
-         spaceBefore = -inner-weight-animStretchX
-         beforeConnect = true
-      }
-      else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
-         spaceBefore = -inner-weight-animStretchX
-         beforeConnect = true
-      }
-      else if ("sr".includes(char) && nextchar === "z") {
-         spaceBefore = -inner-weight-animStretchX
-         beforeConnect = true
-      }
-      else if ("ltkcfx".includes(char) && nextchar === "z") {
-         //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-animStretchX
-         spaceBefore = weight -outer/2 - animStretchX/2
-         beforeConnect = true
-         //-i-w+(o/2) //-o+i+2w
-         //w-0.5o
-      }
-      else if ("z".includes(char) && nextchar === "z") {
-         spaceBefore = -2-animStretchX
-         beforeConnect = true
-      }
-      else if ("z".includes(char) && nextchar === "x") {
-         spaceBefore = weight -outer/2 - animStretchX/2
-         beforeConnect = true
+      if (font === "fonta") {
+         if ("ktlcrfsxz".includes(char) && nextchar === "s") {
+            spaceBefore = -inner-weight-animStretchX
+            beforeConnect = true
+         }
+         else if ("ktlcrfsx".includes(char) && nextchar === "x") {
+            spaceBefore = -inner-weight-animStretchX
+            beforeConnect = true
+         }
+         else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
+            spaceBefore = -inner-weight-animStretchX
+            beforeConnect = true
+         }
+         else if ("sr".includes(char) && nextchar === "z") {
+            spaceBefore = -inner-weight-animStretchX
+            beforeConnect = true
+         }
+         else if ("ltkcfx".includes(char) && nextchar === "z") {
+            //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-animStretchX
+            spaceBefore = weight -outer/2 - animStretchX/2
+            beforeConnect = true
+            //-i-w+(o/2) //-o+i+2w
+            //w-0.5o
+         }
+         else if ("z".includes(char) && nextchar === "z") {
+            spaceBefore = -2-animStretchX
+            beforeConnect = true
+         }
+         else if ("z".includes(char) && nextchar === "x") {
+            spaceBefore = weight -outer/2 - animStretchX/2
+            beforeConnect = true
+         }
       }
 
       // remove overlap spacing if next to space
@@ -1951,36 +1978,38 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
    // stretchWidth
    let stretchWidth = 0
-   switch (char) {
-      case "s": 
-         if (!mode.altS) {
-            if (charInSet(prevchar,["gap", "dr"])) {
-               stretchWidth = extendOffset
-            } else {
-               stretchWidth = animStretchX
+   if (font === "fonta") {
+      switch (char) {
+         case "s": 
+            if (!mode.altS) {
+               if (charInSet(prevchar,["gap", "dr"])) {
+                  stretchWidth = extendOffset
+               } else {
+                  stretchWidth = animStretchX
+               }
+               if (charInSet(nextchar,["gap", "ul"])) {
+                  stretchWidth += extendOffset
+               } else {
+                  stretchWidth += animStretchX
+               }
             }
-            if (charInSet(nextchar,["gap", "ul"])) {
-               stretchWidth += extendOffset
-            } else {
-               stretchWidth += animStretchX
-            }
-         }
-         break;
-      case "m":
-      case "w":
-      case "x":
-      case "z":
-         stretchWidth = animStretchX * 2
-         break;
-      case "i":
-      case ".":
-      case ",":
-      case "!":
-      case " ":
-         stretchWidth = 0
-         break;
-      default:
-         stretchWidth = animStretchX
+            break;
+         case "m":
+         case "w":
+         case "x":
+         case "z":
+            stretchWidth = animStretchX * 2
+            break;
+         case "i":
+         case ".":
+         case ",":
+         case "!":
+         case " ":
+            stretchWidth = 0
+            break;
+         default:
+            stretchWidth = animStretchX
+      }
    }
 
    return spacingResult + stretchWidth
