@@ -20,7 +20,7 @@
       <div class="site-grid">
          <div class="sidebar-container">
             <div class="top-container">
-               <h1>Generator</h1>
+               <h1>Multiline Maker</h1>
                <div>
                   <!-- <label class="dropdown-label">effects</label> -->
                   <div class="custom-select" style="width:100%;">
@@ -105,12 +105,12 @@
                         <input type="checkbox" id="checkbox-fills" checked="checked">
                         <span class="checkmark"></span>
                      </label>
-                     <label class="checkbox-container">alt. m
-                        <input type="checkbox" id="checkbox-altM">
-                        <span class="checkmark"></span>
-                     </label>
                      <label class="checkbox-container">alt. n/h
                         <input type="checkbox" id="checkbox-altNH">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. m
+                        <input type="checkbox" id="checkbox-altM">
                         <span class="checkmark"></span>
                      </label>
                      <label class="checkbox-container">alt. s
@@ -142,27 +142,49 @@
                <!--sketch appears here--->
             </div>
             <div id="info">
-               <h1>
-                  how to:
-               </h1>
-               <p id="description">
-                  Type in the top left or press the "a" button to make text. Currently, the following character set is supported, no numbers:
-                  abcdefghijklmnopqrstuvwxyz äöüß .,!?|_-
-               </p>
-               <p id="description">
-                  See how different values change the font by first selecting a property, then using the mouse wheel or arrow keys to increase or decrease.
-                  Then try some special modes via the dropdown. Many of them require either multiple rings or vertical stretch to actually have an effect.
-                  Use the checkboxes to toggle alternative characters or view modes.
-               </p>
-               <h1>
-                  credits:
-               </h1>
-               <p id="description">
-                  Work in progress...
-               </p>
-               <p id="footer">
-                  © Ludmilla Plevako and Noa Hoffmann
-               </p>
+               <div>
+                  <h1>
+                     controls
+                  </h1>
+                  <p id="description">
+                     Focus the text field in the top left to write.<br>
+                     Generate example text: Press the Aa button under the text field.<br>
+                     Current supported character set: <kbd>abcdefghijklmnopqrstuvwxyz äöüß .,!?|_-</kbd><br>
+                  </p>
+                  <p id="description">
+                     Change properties: <kbd>Arrow Keys</kbd> or <kbd>Mousewheel</kbd> with field selected.<br>
+                     Export: In svg mode, find the svg object in the site source. Personal use only.<br>
+                  </p>
+               </div>
+               <div>
+                  <h1>
+                     about
+                  </h1>
+                  <p id="description">
+                     For this project, we designed a multiline font via code. 
+                     The construction, spacing and ligatures are influenced by various parameters, each of which can be animated.
+                     Connections between letters, for example via ligatures or overlaps, even out the negative space no matter the selected parameters.
+                  </p>
+                  <p>
+                     Lines and curves are placed on a square grid so that they can be connected in unusal ways.
+                     For example, the lower half of the letters can be offset, turning concentric rings into spirals.
+                     Since letters connect into other letters whenever possible, this effect carries through for the entire word. The result is often not very legible, but aesthetically interesting.
+                     Stretch effects in the [effects dropdown] provide even more cryptic or alien looks. 
+                  </p>
+               </div>
+               <div>
+                  <h1>
+                     credits and resources
+                  </h1>
+                  <p id="description">
+                     Concept, Design and Website created in 2022<br>
+                     Menu typeface: IBM Plex Sans<br>
+                     Libraries used: p5.js, p5.js-svg
+                  </p>
+                  <p id="footer">
+                     © Ludmilla Plevako and Noa Hoffmann
+                  </p>
+               </div>
             </div>
          </div>
       </div>

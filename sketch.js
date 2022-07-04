@@ -22,7 +22,7 @@ const numberInputsObj = {
    stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
    offsetX: {element: document.getElementById('number-offset'), min:-10, max:10},
 }
-let linesArray = ["the quick brown","fox jumps over","the lazy dog."]
+let linesArray = ["the quick green","alien jumps over","the lazy dog."]
 const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
 
 
@@ -364,6 +364,14 @@ function loadValuesFromURL () {
             break;
       }
    }
+   if (params.font !== undefined) {
+      switch (params.font) {
+         case "b":
+            font = "fontb"
+            print("Loaded font: B")
+            break;
+      }
+   }
    if (params.lines !== null && params.lines.length > 0) {
       linesArray = String(params.lines).split("\\")
       print("Loaded with URL Text", linesArray)
@@ -482,6 +490,13 @@ function writeValuesToURL (noReload) {
       }
       if (value !== "none") {
          newParams.append("effect", value)
+      }
+   }
+   if (font !== "fonta") {
+      switch (font) {
+         case "fontb":
+            newParams.append("font", "b")
+            break;
       }
    }
    if (!mode.drawFills) {
@@ -720,7 +735,9 @@ function drawElements() {
       function drawGrid (type) {
          push()
          if (webglEffects.includes(effect)) translate(0,0,-1)
-         const gridHeight = animSize + Math.abs(animOffsetY) + animStretchY
+         let fontSize = animSize
+         if (font === "fontb") fontSize = animSize*2 - animRings
+         const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY
          const gridWidth = (width/animZoom) - 6
          const asc = animAscenders
    
@@ -733,7 +750,7 @@ function drawElements() {
          
                const i = lineNum * totalHeight[lineNum] - animSize/2
       
-               //vertical gridlines
+               //horizontal gridlines
                lineType(0, i, gridWidth, i)
                lineType(0, i+gridHeight, gridWidth, i+gridHeight)
                lineType(0, i-asc, gridWidth, i-asc)
@@ -741,7 +758,7 @@ function drawElements() {
                lineType(0, i+gridHeight/2+animOffsetY*0.5, gridWidth, i+gridHeight/2+animOffsetY*0.5)
                lineType(0, i+gridHeight+asc, gridWidth, i+gridHeight+asc)
          
-               //horizontal gridlines
+               //vertical gridlines
                push()
                translate(0,i+gridHeight*0.5)
                for (let j = 0; j <= gridWidth; j++) {
@@ -890,7 +907,9 @@ function drawTextAt (lineNum) {
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
    // total height
-   totalHeight[lineNum] = animSize + Math.abs(animOffsetY) + animStretchY + animAscenders + 1
+   let fontSize = animSize
+   if (font === "fontb") fontSize = animSize*2 - animRings
+   totalHeight[lineNum] = fontSize + Math.abs(animOffsetY) + animStretchY + animAscenders + 1
 
    // wip test: always fit on screen?
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
@@ -900,7 +919,9 @@ function drawTextAt (lineNum) {
    if (animOffsetX < 0 && effect!=="staircase") {
       translate(-animOffsetX,0)
    }
-   translate(0,0.5*animSize)
+
+   //translate to (lower) midline
+   translate(0,fontSize-0.5*animSize)
 
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
@@ -973,6 +994,10 @@ function drawTextAt (lineNum) {
       const wideOffset = 0.5*letterOuter + 0.5*letterInner
       const extendOffset = waveValue(letterOuter, 0, 0.5) + (animStretchX-animStretchX%2)*0.5
 
+      let calcPosFromTop = lineNum*totalHeight[lineNum]
+      if (animOffsetY<0) calcPosFromTop -= animOffsetY
+      if (animOffsetX<0 && effect === "staircase") calcPosFromTop -= animOffsetX
+
       // style per letter, modify during drawing when needed
       const style = {
          //for entire line, but need while drawing
@@ -981,7 +1006,7 @@ function drawTextAt (lineNum) {
          spaceSpots: lineStyle.spaceSpots,
          // position and offset after going through all letters in the line until this point
          posFromLeft: lineWidthUntil(lineText, layerArray.indexOf(layerPos)),
-         posFromTop: ((animOffsetY<0) ? -animOffsetY:0) + lineNum*totalHeight[lineNum],
+         posFromTop: calcPosFromTop,
          vOffset: offsetUntil(lineText, layerArray.indexOf(layerPos)),
          // basics
          sizes: ringSizes,
