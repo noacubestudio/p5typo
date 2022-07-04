@@ -17,125 +17,152 @@
    </head>
 
    <body>
-      <div class="top-container">
-         <div class="grid-container">
-            <textarea rows="5" id="textarea-lines" spellcheck="false" placeholder="type lines here!"></textarea>
-            <div class="buttons-container">
-               <button class="primary-button" id="button-randomize">random style</button>
-               <button class="secondary-button" id="button-resetStyle">reset style</button>
-               <button class="secondary-button" id="button-randomText">random text</button>
-            </div>
-            <div class="numbers-container">
-               <input id="number-size" type="number" value="9" min="1">
-               <label class="number-label">size</label>
-
-               <input id="number-rings" type="number" value="3" min="1">
-               <label class="number-label">rings</label>
-
-               <input id="number-asc" type="number" value="2" min="1">
-               <label class="number-label">asc/desc</label>
-            </div>
-            <div class="numbers-container">
-               <input id="number-spacing" type="number" value="0" min="-2" max="2">
-               <label class="number-label">spacing</label>
-
-               <input id="number-weight" type="number" value="7" min="1" max="9">
-               <label class="number-label">weight</label>
-
-               <input id="number-scale" type="number" value="10">
-               <label class="number-label">zoom</label>
-            </div>
-            <div class="offset-container">
-               <input id="number-offset" type="number" value="0" min="-10" max="10">
-               <label id="label-offset" class="number-label">offset&nbsp;&nbsp;h</label>
-               <button class="toggle-button" id="toggle-offsetDirection">⇄</button>
-
-               <input id="number-stretchY" type="number" value="0" min="0" max="50">
-               <label class="number-label">stretch&nbsp;v</label>
-
-               <input id="number-stretchX" type="number" value="0" min="0" max="50">
-               <label class="number-label">stretch&nbsp;h</label>
-            </div>
-            <div>
-               <!-- <label class="dropdown-label">effects</label> -->
-               <div class="custom-select" style="width:240px;">
-                  <select>
-                    <option value="0">select effect:</option>
-                    <option value="1">(no effect)</option>
-                    <option value="2">weight gradient</option>
-                    <option value="3">color gradient</option>
-                    <option value="4">stripes v</option>
-                    <option value="5">stripes h</option>
-                    <option value="6">spread v</option>
-                    <option value="7">compress v</option>
-                    <option value="8">twist v</option>
-                    <option value="9">split v</option>
-                    <option value="10">lean v</option>
-                    <option value="11">teeth v</option>
-                    <option value="12">spheres (test)</option>
-                  </select>
+      <div class="site-grid">
+         <div class="sidebar-container">
+            <div class="top-container">
+               <h1>Generator</h1>
+               <div>
+                  <!-- <label class="dropdown-label">effects</label> -->
+                  <div class="custom-select" style="width:100%;">
+                     <select>
+                     <option value="0">Font A (2x2):</option>
+                     <option value="1">Font A (2x2)</option>
+                     <option value="2">Font B (3x2)</option>
+                     </select>
+                  </div>
+               </div>
+               <textarea rows="6" id="textarea-lines" spellcheck="false" placeholder="type lines here!"></textarea>
+               <div class="buttons-container">
+                  <button class="secondary-button" id="button-resetStyle">↺</button>
+                  <button class="secondary-button" id="button-randomText">a</button>
+                  <button class="primary-button" id="button-randomize">random style</button>
                </div>
             </div>
-         </div>
-         <div class="right-grid-container">
-            <div>
-               <label class="checkbox-container">fills
-                  <input type="checkbox" id="checkbox-fills" checked="checked">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">m alt.
-                  <input type="checkbox" id="checkbox-altM">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">nh alt.
-                  <input type="checkbox" id="checkbox-altNH">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">s alt.
-                  <input type="checkbox" id="checkbox-altS">
-                  <span class="checkmark"></span>
-               </label>
+            <div class="effect-container">
+               <h2>effect</h2>
+               <div>
+                  <!-- <label class="dropdown-label">effects</label> -->
+                  <div class="custom-select" style="width:100%;">
+                     <select>
+                     <option value="0">add effect:</option>
+                     <option value="1">(no effect)</option>
+                     <option value="2">weight gradient</option>
+                     <option value="3">color gradient</option>
+                     <option value="4">staircase</option>
+                     <option value="5">stripes v</option>
+                     <option value="6">stripes h</option>
+                     <option value="7">spread v</option>
+                     <option value="8">compress v</option>
+                     <option value="9">twist v</option>
+                     <option value="10">split v</option>
+                     <option value="11">lean v</option>
+                     <option value="12">teeth v</option>
+                     <option value="13">spheres (test)</option>
+                     </select>
+                  </div>
+               </div>
             </div>
-            <div>
-               <label class="checkbox-container">dark mode
-                  <input type="checkbox" id="checkbox-darkmode" checked="checked">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">monochrome
-                  <input type="checkbox" id="checkbox-monochrome">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">x-ray view
-                  <input type="checkbox" id="checkbox-xray">
-                  <span class="checkmark"></span>
-               </label>
-               <label class="checkbox-container">svg mode
-                  <input type="checkbox" id="checkbox-svg">
-                  <span class="checkmark"></span>
-               </label>
-            </div>
-         </div>
-      </div>
-      <div id="sketch-holder">
-         <script src="sketch.js"></script>
-         <!--sketch appears here--->
-      </div>
-      <div id="info">
-         <h1>
-            how to use:
-         </h1>
-         <p id="description">
-            Type characters in the top left to write. Currently, the following character set is supported:
-            abcdefghijklmnopqrstuvwxyz äöüß .,!?|_-<br>
-            There are no uppercase letters or numbers.<br>
+            <div class="properties-container">
+               <h2>properties</h2>
+               <div class="numbers-grid-container">
+                  <div class="numbers-container">
+                     <input id="number-size" type="number" value="9" min="1">
+                     <label class="number-label">size</label>
 
-            See how different values change the font by first selecting a property, then using the mouse wheel or arrow keys to increase or decrease.
-            Then try some special modes via the dropdown. Many of them require either multiple rings or vertical stretch to actually have an effect.
-            Use the checkboxes to toggle alternative characters or view modes.
-         </p>
-         <p id="footer">
-            © Ludmilla Plevako and Noa Hoffmann
-         </p>
+                     <input id="number-rings" type="number" value="3" min="1">
+                     <label class="number-label">rings</label>
+
+                     <input id="number-asc" type="number" value="2" min="1">
+                     <label class="number-label">height</label>
+
+                     <input id="number-weight" type="number" value="7" min="1" max="9">
+                     <label class="number-label">weight</label>
+
+                     <input id="number-scale" type="number" value="10">
+                     <label class="number-label">zoom</label>
+                  </div>
+                  <div class="numbers-container">
+                     <input id="number-spacing" type="number" value="0" min="-2" max="2">
+                     <label class="number-label">spacing</label>
+
+                     <input id="number-offset" type="number" value="0" min="-10" max="10">
+                     <label id="label-offset" class="number-label">offset</label>
+                     <!-- <button class="toggle-button" id="toggle-offsetDirection">⇄</button> -->
+
+                     <input id="number-stretchY" type="number" value="0" min="0" max="50">
+                     <label class="number-label">stretch&nbsp;v</label>
+
+                     <input id="number-stretchX" type="number" value="0" min="0" max="50">
+                     <label class="number-label">stretch&nbsp;h</label>
+                  </div>
+               </div>
+            </div>
+            <div class="other-container">
+               <h2>other</h2>
+               <div class="checkbox-grid-container"
+                  <div>
+                     <label class="checkbox-container">show fills
+                        <input type="checkbox" id="checkbox-fills" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. m
+                        <input type="checkbox" id="checkbox-altM">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. n/h
+                        <input type="checkbox" id="checkbox-altNH">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. s
+                        <input type="checkbox" id="checkbox-altS">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">dark mode
+                        <input type="checkbox" id="checkbox-darkmode" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">monochrome
+                        <input type="checkbox" id="checkbox-monochrome">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">x-ray view
+                        <input type="checkbox" id="checkbox-xray">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">svg mode
+                        <input type="checkbox" id="checkbox-svg">
+                        <span class="checkmark"></span>
+                     </label>
+                  </div>
+            </div>
+         </div>
+         <div class="main-column">
+            <div id="sketch-holder">
+               <script src="sketch.js"></script>
+               <!--sketch appears here--->
+            </div>
+            <div id="info">
+               <h1>
+                  how to use:
+               </h1>
+               <p id="description">
+                  Type characters in the top left to write. Currently, the following character set is supported:
+                  abcdefghijklmnopqrstuvwxyz äöüß .,!?|_- (Currently no numbers)<br>
+                  See how different values change the font by first selecting a property, then using the mouse wheel or arrow keys to increase or decrease.
+                  Then try some special modes via the dropdown. Many of them require either multiple rings or vertical stretch to actually have an effect.
+                  Use the checkboxes to toggle alternative characters or view modes.
+               </p>
+               <h1>
+                  credits:
+               </h1>
+               <p id="description">
+                  Work in progress...
+               </p>
+               <p id="footer">
+                  © Ludmilla Plevako and Noa Hoffmann
+               </p>
+            </div>
+         </div>
       </div>
    </body>
 </html>

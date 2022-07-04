@@ -1,9 +1,10 @@
 'use strict'
 
+let font = "fonta"
+
 // gui
 let canvasEl
 let writeEl
-let offsetLabelEl
 let numberOffsetEl
 
 let writingFocused = false
@@ -19,6 +20,7 @@ const numberInputsObj = {
    ascenders: {element: document.getElementById('number-asc'), min: 1, max:30},
    stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
    stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
+   offsetX: {element: document.getElementById('number-offset'), min:-10, max:10},
 }
 let linesArray = ["the quick brown","fox jumps over","the lazy dog."]
 const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
@@ -55,7 +57,6 @@ let strokeScaleFactor = 1
 const totalWidth = [0, 0, 0, 0]
 const totalHeight = [0, 0, 0, 0]
 
-let offsetDirection = "h"
 let values = {
    hueDark: {from: undefined, to: undefined, lerp: 0},
    hueLight: {from: undefined, to: undefined, lerp: 0},
@@ -89,7 +90,7 @@ function setup () {
    loadValuesFromURL()
    createGUI()
 
-   canvasEl = createCanvas(windowWidth-30, windowHeight-200,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
+   canvasEl = createCanvas(windowWidth-50, windowHeight-40,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
    canvasEl.parent('sketch-holder')
    if (!webglEffects.includes(effect)) {
       strokeCap(ROUND)
@@ -251,38 +252,37 @@ function createGUI () {
    }
 
    numberOffsetEl = document.getElementById('number-offset')
-   numberOffsetEl.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
+   numberOffsetEl.value = values.offsetX.from
    numberOffsetEl.addEventListener('input', () => {
       if (numberOffsetEl.value !== "") {
-         values[(offsetDirection === "h") ? "offsetX" : "offsetY"].to = clamp(numberOffsetEl.value, -10, 10)
-         values[(offsetDirection !== "h") ? "offsetX" : "offsetY"].to = 0
+         values.offsetX.to = clamp(numberOffsetEl.value, -10, 10)
          writeValuesToURL()
       }
    })
    numberOffsetEl.addEventListener("focusout", () => {
       if (numberOffsetEl.value === "") {
-         numberOffsetEl.value = values[(offsetDirection === "h") ? "offsetX" : "offsetY"].from
+         numberOffsetEl.value = values.offsetX.from
       }
    })
 
-   const offsetToggle = document.getElementById('toggle-offsetDirection')
-   offsetLabelEl = document.getElementById('label-offset')
-   offsetToggle.addEventListener('click', () => {
-      if (offsetDirection === "h") {
-         if (values.offsetX.from === 0) values.offsetY.to = 1
-         offsetDirection = "v"
-         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;v"
-      } else {
-         if (values.offsetY.from === 0) values.offsetX.to = 1
-         offsetDirection = "h"
-         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
-      }
-      if (values.offsetX.to === undefined) values.offsetX.to = values.offsetY.from
-      if (values.offsetY.to === undefined) values.offsetY.to = values.offsetX.from
+   // const offsetToggle = document.getElementById('toggle-offsetDirection')
+   // offsetLabelEl = document.getElementById('label-offset')
+   // offsetToggle.addEventListener('click', () => {
+   //    if (offsetDirection === "h") {
+   //       if (values.offsetX.from === 0) values.offsetY.to = 1
+   //       offsetDirection = "v"
+   //       offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;v"
+   //    } else {
+   //       if (values.offsetY.from === 0) values.offsetX.to = 1
+   //       offsetDirection = "h"
+   //       offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
+   //    }
+   //    if (values.offsetX.to === undefined) values.offsetX.to = values.offsetY.from
+   //    if (values.offsetY.to === undefined) values.offsetY.to = values.offsetX.from
 
-      writeValuesToURL()
-      writeValuesToGUI()
-   })
+   //    writeValuesToURL()
+   //    writeValuesToGUI()
+   // })
 }
 
 function loadValuesFromURL () {
@@ -507,33 +507,6 @@ function writeValuesToGUI () {
       }
    }
    writeEl.value = linesArray.join("\n")
-
-   let potentialOffsetX; let potentialOffsetY
-   if (values.offsetX.to !== undefined) {
-      potentialOffsetX = values.offsetX.to
-   } else {
-      potentialOffsetX = values.offsetX.from
-   }
-   if (values.offsetY.to !== undefined) {
-      potentialOffsetY = values.offsetY.to
-   } else {
-      potentialOffsetY = values.offsetY.from
-   }
-   if (potentialOffsetX === 0 && potentialOffsetY === 0) {
-      //both empty, default to horizontal
-      offsetDirection = "h"
-      offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
-   } else {
-      if (potentialOffsetX === 0) {
-         numberOffsetEl.value = potentialOffsetY
-         offsetDirection = "v"
-         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;v"
-      } else {
-         numberOffsetEl.value = potentialOffsetX
-         offsetDirection = "h"
-         offsetLabelEl.innerHTML = "offset&nbsp;&nbsp;h"
-      }
-   }
 }
 
 function keyTyped() {
@@ -560,12 +533,8 @@ function randomizeValues () {
    values.stretchX.to = 0
    values.stretchY.to = 0
 
-   const offsetType = random(["v", "h", "h", "h", "0", "0", "0"])
-   if (offsetType === "h") {
+   if (random() >= 0.5) {
       values.offsetX.to = floor(random(-2, 2))
-   } else if (offsetType === "v") {
-      values.offsetY.to = floor(random(-1, 2))
-      //if (values.offsetY.to === 0) offsetDirection = "h" //horizontal is preference
    }
 
    if (random() >= 0.8) {
@@ -928,7 +897,7 @@ function drawTextAt (lineNum) {
 
    //translate to account for x offset
    push()
-   if (animOffsetX < 0) {
+   if (animOffsetX < 0 && effect!=="staircase") {
       translate(-animOffsetX,0)
    }
    translate(0,0.5*animSize)
@@ -1018,8 +987,8 @@ function drawTextAt (lineNum) {
          sizes: ringSizes,
          opacity: 1,
          stroke: animWeight,
-         offsetX: animOffsetX,
-         offsetY: animOffsetY,
+         offsetX: (effect==="staircase")? 0 : animOffsetX,
+         offsetY: (effect==="staircase")? animOffsetX : animOffsetY,
          stretchX: animStretchX,
          stretchY: animStretchY,
          letter: letter,
@@ -2255,7 +2224,18 @@ function dropdownTextToEffect (text) {
    //check previous effect
    const wasWebgl = webglEffects.includes(effect)
 
+   //if it was staircase, remove offset
+   if (effect === "staircase") values.offsetX.from = 0
+
    switch (text) {
+      case "Font A (2x2)":
+         font = "fonta"
+         print("Switched to Font A")
+         break;
+      case "Font B (3x2)":
+         font = "fontb"
+         print("Switched to Font B")
+         break;
       case "weight gradient":
          effect = "weightgradient"
          break;
@@ -2271,36 +2251,35 @@ function dropdownTextToEffect (text) {
          break;
       case "compress v":
          effect = "compress"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "spread v":
          effect = "spread"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = values.size.from
          break;
       case "lean v":
          effect = "lean"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "twist v":
          effect = "twist"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "split v":
          effect = "split"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "teeth v":
          effect = "teeth"
-         if (offsetDirection = "v") {offsetDirection = "h"; values.offsetY.to = 0}
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
       case "spheres (test)":
          effect = "spheres"
+         break;
+      case "staircase":
+         effect = "staircase"
+         if (values.offsetX.from !== 0) values.offsetX.from = 0
+         values.offsetX.to = 1
          break;
       default:
          effect = "none"
@@ -2457,7 +2436,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
       let ypos = style.posFromTop
       // offset based on quarter and prev vertical offset
       xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      ypos += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
       xpos += (offy > 0) ? style.stretchX : 0
       ypos += (offx > 0) ? style.stretchY : 0
       return {x: xpos, y:ypos}
@@ -2723,7 +2702,7 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
       let ypos = style.posFromTop
       // offset based on quarter and prev vertical offset
       xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
+      ypos += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
       xpos += (offy > 0) ? style.stretchX : 0
       ypos += (offx > 0) ? style.stretchY : 0
       return {x: xpos, y:ypos}
