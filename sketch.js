@@ -33,7 +33,7 @@ let randomizeAuto = false
 let lerpLength = 6
 
 let effect = "none"
-let midlineEffects = ["compress", "spread", "twist", "split", "lean", "teeth"]
+let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth"]
 let stripeEffects = ["vstripes", "hstripes"]
 let webglEffects = ["spheres"]
 
@@ -335,8 +335,8 @@ function loadValuesFromURL () {
             effect = "split"
             print("Loaded with URL Mode: Split V Effect")
             break;
-         case "lean":
-            effect = "lean"
+         case "sway":
+            effect = "sway"
             print("Loaded with URL Mode: Lean V Effect")
             break;
          case "spread":
@@ -469,8 +469,8 @@ function writeValuesToURL (noReload) {
          case "split":
             value = "split"
             break;
-         case "lean":
-            value = "lean"
+         case "sway":
+            value = "sway"
             break;
          case "twist":
             value = "twist"
@@ -548,19 +548,35 @@ function randomizeValues () {
    values.stretchX.to = 0
    values.stretchY.to = 0
 
-   if (random() >= 0.5) {
-      values.offsetX.to = floor(random(-2, 2))
+   if (midlineEffects.includes(effect)) {
+      if (random() >= 0.5 && effect !== "teeth") {
+         values.offsetX.to = floor(random(-values.size.to, values.size.to+1))
+      }
+   } else {
+      if (random() >= 0.5) {
+         values.offsetX.to = floor(random(-1, 2))
+      }
    }
 
+   if (midlineEffects.includes(effect)) {
+      if (effect === "compress") {
+         values.stretchY.to = floor(random(values.size.to, values.size.to*3))
+      } else if (effect === "teeth") {
+         values.stretchY.to = floor(random(2, values.size.to-(values.rings.to-1)*2))
+      } else {
+         values.stretchY.to = floor(random(values.size.to, values.size.to*1.5))
+      }
+   } else {
+      if (random() >= 0.8) {
+         values.stretchY.to = floor(random(0, values.size.to*1.5))
+      }
+   }
    if (random() >= 0.8) {
       values.stretchX.to = floor(random(0, values.size.to*1.5))
    }
-   if (random() >= 0.8) {
-      values.stretchY.to = floor(random(0, values.size.to*1.5))
-   }
 
-   values.hueDark.to = floor(random(0,360))
-   values.hueLight.to = floor(random(0,360))
+   values.hueDark.to = floor(random(0,361))
+   values.hueLight.to = floor(random(0,361))
 
    writeValuesToURL()
    writeValuesToGUI()
@@ -1629,7 +1645,7 @@ function drawTextAt (lineNum) {
                } else if (counter === total) {
                   rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
                }
-            } else if (effect === "lean") {
+            } else if (effect === "sway") {
                if (counter > 0) {
                   rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
                }
@@ -2297,33 +2313,33 @@ function dropdownTextToEffect (text) {
          effect = "gradient"
          if (values.rings.from < 2) values.rings.to = 2 
          break;
-      case "stripes v":
+      case "vertical stripes bg":
          effect = "vstripes"
          break;
-      case "stripes h":
+      case "horizontal stripes bg":
          effect = "hstripes"
          break;
-      case "compress v":
+      case "stretch compress":
          effect = "compress"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
-      case "spread v":
+      case "stretch spread":
          effect = "spread"
          if (values.stretchY.from < 1) values.stretchY.to = values.size.from
          break;
-      case "lean v":
-         effect = "lean"
+      case "stretch sway":
+         effect = "sway"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
-      case "twist v":
+      case "stretch twist":
          effect = "twist"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
-      case "split v":
+      case "stretch split":
          effect = "split"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
-      case "teeth v":
+      case "stretch teeth":
          effect = "teeth"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
