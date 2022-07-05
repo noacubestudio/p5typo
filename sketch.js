@@ -587,8 +587,11 @@ function defaultStyle () {
       values.weight.to = 7
       values.ascenders.to = 2
       values.offsetX.to = 0
-      values.offsetY.to = 0
+   } else {
+      if (values.offsetX.to > 0) values.offsetX.to = 1
+      if (values.offsetX.to < 0) values.offsetX.to = -1
    }
+   values.offsetY.to = 0
    values.spacing.to = 0
    values.stretchX.to = 0
    values.stretchY.to = 0
@@ -639,7 +642,7 @@ function randomStyle () {
          values.stretchY.to = floor(random(values.size.to, values.size.to*1.5))
       }
    } else {
-      if (random() >= 0.8) {
+      if (random() >= 0.7) {
          values.stretchY.to = floor(random(0, values.size.to*1.5))
       }
    }
