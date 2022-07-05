@@ -99,6 +99,14 @@ kbd {
   flex-direction: column;
   gap: 0.5em;
 }
+#button-randomText {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+}
+.textarea-container {
+  position: relative;
+}
 
 .buttons-container {
   display: flex;
@@ -265,6 +273,29 @@ button {
   outline: 2px solid rgba(var(--fg-color), 0.15);
   outline-offset: -2px;
   color: rgba(var(--fg-color), 0.8);
+  padding: 0.6em 0.7em;
+  line-height: 1;
+}
+
+.tertiary-button {
+  background-color: transparent;
+  padding: 0.4em 0.6em;
+  margin: 0.3em;
+}
+.tertiary-button:hover {
+  background-color: rgba(var(--fg-color), 0.1);
+}
+.tertiary-button:active {
+  background-color: rgba(var(--fg-color), 0.05);
+}
+.secondary-button .material-icons {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.tertiary-button .material-icons {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .primary-button:hover {

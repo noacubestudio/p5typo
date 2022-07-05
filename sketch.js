@@ -29,7 +29,6 @@ const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
 // setup
 
 const palette = {}
-let randomizeAuto = false
 let lerpLength = 6
 
 let effect = "none"
@@ -51,6 +50,8 @@ const mode = {
    altS: false,
    altM: false,
    altNH: true,
+   // animation
+   auto: false,
 }
 
 let strokeScaleFactor = 1
@@ -87,7 +88,7 @@ function windowResized() {
 }
 
 function setup () {
-   loadValuesFromURL()
+   loadFromURL()
    createGUI()
 
    canvasEl = createCanvas(windowWidth-100, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
@@ -106,7 +107,7 @@ function setup () {
    values.hueDark.from = 270
    values.hueLight.from = 340
 
-   writeValuesToURL("noReload")
+   writeToURL("noReload")
 }
 
 function createGUI () {
@@ -121,7 +122,7 @@ function createGUI () {
    writeEl.addEventListener('input', function() {
       //split
       linesArray = writeEl.value.split("\n")
-      writeValuesToURL()
+      writeToURL()
    }, false)
    writeEl.addEventListener('focusin', () => {
       writingFocused = true
@@ -135,30 +136,34 @@ function createGUI () {
       }
       linesArray = linesArray.filter(function(e){ return e === 0 || e})
       writeEl.value = linesArray.join("\n")
-      writeValuesToURL()
+      writeToURL()
       
    })
 
    // toggles and buttles
+   const playToggle = document.getElementById('button-toggleAuto')
+   playToggle.addEventListener('click', () => {
+      mode.auto = !mode.auto
+      if (mode.auto) {
+         playToggle.innerHTML ="<i class=\"material-icons\">pause</i>"
+         lerpLength = 12
+      } else {
+         playToggle.innerHTML ="<i class=\"material-icons\">play_arrow</i>"
+         lerpLength = 6
+         writeToURL()
+      }
+   })
    const randomizeButton = document.getElementById('button-randomize')
    randomizeButton.addEventListener('click', () => {
       randomizeValues()
+      writeToURL()
+      writeValuesToGUI()
    })
 
    const resetStyleButton = document.getElementById('button-resetStyle')
    resetStyleButton.addEventListener('click', () => {
-      //reset
-      values.rings.to = 3
-      values.size.to = 9
-      values.spacing.to = 0
-      values.offsetX.to = 0
-      values.offsetY.to = 0
-      values.stretchX.to = 0
-      values.stretchY.to = 0
-      values.weight.to = 7
-      values.ascenders.to = 2
-      lerpLength = 6
-      writeValuesToURL()
+      resetStyle()
+      writeToURL()
       writeValuesToGUI()
    })
    const randomTextButton = document.getElementById('button-randomText')
@@ -178,7 +183,7 @@ function createGUI () {
             foundNewText = true
          }
       }
-      writeValuesToURL()
+      writeToURL()
       writeValuesToGUI()
    })
 
@@ -186,25 +191,25 @@ function createGUI () {
    darkmodeToggle.checked = mode.dark
    darkmodeToggle.addEventListener('click', () => {
       mode.dark = darkmodeToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const monochromeToggle = document.getElementById('checkbox-monochrome')
    monochromeToggle.checked = mode.mono
    monochromeToggle.addEventListener('click', () => {
       mode.mono = monochromeToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const xrayToggle = document.getElementById('checkbox-xray')
    xrayToggle.checked = mode.xray
    xrayToggle.addEventListener('click', () => {
       mode.xray = xrayToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const svgToggle = document.getElementById('checkbox-svg')
    svgToggle.checked = mode.svg
    svgToggle.addEventListener('click', () => {
       mode.svg = svgToggle.checked
-      writeValuesToURL()
+      writeToURL()
       if (!svgToggle.checked) {
          location.reload()
       }
@@ -213,25 +218,25 @@ function createGUI () {
    altMToggle.checked = mode.altM
    altMToggle.addEventListener('click', () => {
       mode.altM = altMToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const altNHToggle = document.getElementById('checkbox-altNH')
    altNHToggle.checked = mode.altNH
    altNHToggle.addEventListener('click', () => {
       mode.altNH = altNHToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const altSToggle = document.getElementById('checkbox-altS')
    altSToggle.checked = mode.altS
    altSToggle.addEventListener('click', () => {
       mode.altS = altSToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
    const fillsToggle = document.getElementById('checkbox-fills')
    fillsToggle.checked = mode.drawFills
    fillsToggle.addEventListener('click', () => {
       mode.drawFills = fillsToggle.checked
-      writeValuesToURL()
+      writeToURL()
    })
 
    const clamp = (num, min, max) => Math.min(Math.max(num, min), max)
@@ -241,7 +246,7 @@ function createGUI () {
       numberInput.element.addEventListener('input', () => {
          if (numberInput.element.value !== "") {
             values[property].to = clamp(numberInput.element.value, numberInput.min, numberInput.max)
-            writeValuesToURL()
+            writeToURL()
          }
       })
       numberInput.element.addEventListener("focusout", () => {
@@ -256,7 +261,7 @@ function createGUI () {
    numberOffsetEl.addEventListener('input', () => {
       if (numberOffsetEl.value !== "") {
          values.offsetX.to = clamp(numberOffsetEl.value, -10, 10)
-         writeValuesToURL()
+         writeToURL()
       }
    })
    numberOffsetEl.addEventListener("focusout", () => {
@@ -285,7 +290,7 @@ function createGUI () {
    // })
 }
 
-function loadValuesFromURL () {
+function loadFromURL () {
    const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
     });
@@ -312,6 +317,10 @@ function loadValuesFromURL () {
    if (params.mono === "true" || params.mono === "1") {
       mode.mono = true
       print("Loaded with URL Mode: Mono")
+   }
+   if (params.auto === "true" || params.auto === "1") {
+      mode.auto = true
+      print("Loaded with URL Mode: Auto")
    }
    if (params.effect !== undefined) {
       switch (params.effect) {
@@ -398,7 +407,7 @@ function loadValuesFromURL () {
    }
 }
 
-function writeValuesToURL (noReload) {
+function writeToURL (noReload) {
 
    let URL = String(window.location.href)
    if (URL.includes("?")) {
@@ -450,6 +459,9 @@ function writeValuesToURL (noReload) {
    }
    if (mode.wave) {
       newParams.append("wave",true)
+   }
+   if (mode.auto) {
+      newParams.append("auto",true)
    }
    if (effect !== undefined) {
       let value = "none"
@@ -536,10 +548,46 @@ function keyPressed() {
    }
 }
 
+function autoValues () {
+   const waitFrames = 30
+   if (frameCount % waitFrames !== 0) return
+
+   if ((frameCount/30) % 10 === 0) {
+      // do effect
+      const randomEffect = ["gradient", "weightgradient", "compress", "spread", "split", "sway", "twist", "teeth"]
+      effect = random(randomEffect)
+   } else if ((frameCount/30) % 10 === 9) {
+      // prepare effect
+      resetStyle()
+      writeValuesToGUI()
+      return
+   }
+
+   randomizeValues () // wip, add intensity?
+   //writeToURL()
+   writeValuesToGUI()
+}
+
+function resetStyle () {
+   values.rings.to = 3
+   values.size.to = 9
+   values.spacing.to = 0
+   values.offsetX.to = 0
+   values.offsetY.to = 0
+   values.stretchX.to = 0
+   values.stretchY.to = 0
+   values.weight.to = 7
+   values.ascenders.to = 2
+}
+
 function randomizeValues () {
    values.size.to = floor(random(4,16))
    values.weight.to = floor(random(2,10))
-   values.rings.to = floor(random(1, values.size.to/2 + 1))
+   if (effect === "gradient" || effect === "weightgradient") {
+      values.rings.to = floor(random(2, values.size.to/2 + 1))
+   } else {
+      values.rings.to = floor(random(1, values.size.to/2 + 1))
+   }
    values.spacing.to = floor(random(max(-values.rings.to, -2), 2))
    values.ascenders.to = floor(random(1, values.size.to*0.6))
 
@@ -577,10 +625,6 @@ function randomizeValues () {
 
    values.hueDark.to = floor(random(0,361))
    values.hueLight.to = floor(random(0,361))
-
-   writeValuesToURL()
-   writeValuesToGUI()
-   return
 }
 
 function draw () {
@@ -588,8 +632,8 @@ function draw () {
    // when the "lerp" value is at 6, the "to" value has been reached,
    // and can be cleared again, new "from" value set.
 
-   if (randomizeAuto && frameCount%60 === 0) {
-      randomizeValues()
+   if (mode.auto) {
+      autoValues()
    }
    caretTimer++ // like frameCount
 
@@ -2355,7 +2399,7 @@ function dropdownTextToEffect (text) {
          effect = "none"
    }
 
-   writeValuesToURL()
+   writeToURL()
    writeValuesToGUI()
 
    //check current effect

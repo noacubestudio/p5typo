@@ -14,6 +14,7 @@
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet"> 
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
    </head>
 
    <body>
@@ -31,10 +32,13 @@
                      </select>
                   </div>
                </div>
-               <textarea rows="6" id="textarea-lines" spellcheck="false" placeholder="type lines here!"></textarea>
+               <div class="textarea-container">
+                  <textarea rows="6" id="textarea-lines" spellcheck="false" placeholder="type lines here!"></textarea>
+                  <button class="tertiary-button" id="button-randomText"><i class="material-icons">refresh</i></button>
+               </div>
                <div class="buttons-container">
-                  <button class="secondary-button" id="button-randomText">a</button>
-                  <button class="secondary-button" id="button-resetStyle">↺</button>
+                  <button class="secondary-button" id="button-resetStyle"><i class="material-icons">refresh</i></button>
+                  <button class="secondary-button" id="button-toggleAuto"><i class="material-icons">play_arrow</i></button>
                   <button class="primary-button" id="button-randomize">random style</button>
                </div>
             </div>
