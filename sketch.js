@@ -560,15 +560,17 @@ function keyPressed() {
 }
 
 function autoValues () {
-   const waitFrames = 30
+   const waitFrames = 60
+   const versionsPerEffect = 7
    if (frameCount % waitFrames !== 0) return
 
-   if ((frameCount/30) % 10 === 0) {
+   if ((frameCount/waitFrames) % versionsPerEffect === 0) {
       // do effect
       const randomEffect = ["none","none","gradient", "weightgradient", "compress", "spread", "split", "sway", "twist", "teeth"]
       effect = random(randomEffect)
-   } else if ((frameCount/30) % 10 === 9) {
+   } else if ((frameCount/waitFrames) % versionsPerEffect === versionsPerEffect-1) {
       // prepare effect
+      randomStyle()
       defaultStyle()
       updateInGUI()
       return
@@ -581,15 +583,15 @@ function autoValues () {
 function defaultStyle () {
    if (!mode.auto) {
       values.size.to = 9
+      values.rings.to = 3
+      values.weight.to = 7
+      values.ascenders.to = 2
+      values.offsetX.to = 0
+      values.offsetY.to = 0
    }
-   values.rings.to = 3
    values.spacing.to = 0
-   values.offsetX.to = 0
-   values.offsetY.to = 0
    values.stretchX.to = 0
    values.stretchY.to = 0
-   values.weight.to = 7
-   values.ascenders.to = 2
 }
 
 function randomStyle () {
@@ -641,7 +643,7 @@ function randomStyle () {
          values.stretchY.to = floor(random(0, values.size.to*1.5))
       }
    }
-   if (random() >= 0.8 || effect !== "teeth") {
+   if (random() >= 0.8 && effect !== "teeth") {
       values.stretchX.to = floor(random(0, values.size.to*1.5))
    }
 
