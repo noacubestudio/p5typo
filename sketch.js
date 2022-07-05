@@ -2456,11 +2456,12 @@ function dropdownTextToEffect (text) {
 }
 
 function sortIntoArray(array, insertNumber) {
+
+   insertNumber = roundTo(insertNumber,1000)
+
    //from the end
    for (let a = array.length-1; a >= 0; a--) {
-
       const existingNumber = roundTo(array[a],1000)
-      insertNumber = roundTo(insertNumber,1000)
 
       if (existingNumber < insertNumber) {
          // insert after a
