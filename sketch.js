@@ -579,8 +579,10 @@ function autoValues () {
 }
 
 function defaultStyle () {
+   if (!mode.auto) {
+      values.size.to = 9
+   }
    values.rings.to = 3
-   values.size.to = 9
    values.spacing.to = 0
    values.offsetX.to = 0
    values.offsetY.to = 0
@@ -596,7 +598,12 @@ function randomStyle () {
       //wip
    }
 
-   values.size.to = floor(random(4,16))
+   if (mode.auto) {
+      values.size.to = values.size.from
+   } else {
+      values.size.to = floor(random(4,16))
+   }
+   
    values.weight.to = floor(random(2,10))
    if (effect === "gradient" || effect === "weightgradient") {
       values.rings.to = floor(random(2, values.size.to/2 + 1))
@@ -630,11 +637,11 @@ function randomStyle () {
          values.stretchY.to = floor(random(values.size.to, values.size.to*1.5))
       }
    } else {
-      if (random() >= 0.8 || effect !== "teeth") {
+      if (random() >= 0.8) {
          values.stretchY.to = floor(random(0, values.size.to*1.5))
       }
    }
-   if (random() >= 0.8) {
+   if (random() >= 0.8 || effect !== "teeth") {
       values.stretchX.to = floor(random(0, values.size.to*1.5))
    }
 
