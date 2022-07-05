@@ -6,6 +6,7 @@ let font = "fonta"
 let canvasEl
 let writeEl
 let numberOffsetEl
+let playToggleEl
 
 let writingFocused = false
 let caretTimer = 0
@@ -141,30 +142,36 @@ function createGUI () {
    })
 
    // toggles and buttles
-   const playToggle = document.getElementById('button-toggleAuto')
-   playToggle.addEventListener('click', () => {
+   playToggleEl = document.getElementById('button-toggleAuto')
+   if (mode.auto) {
+      playToggleEl.innerHTML ="<i class=\"material-icons\">pause</i>"
+   } else {
+      playToggleEl.innerHTML ="<i class=\"material-icons\">play_arrow</i>"
+   }
+   playToggleEl.addEventListener('click', () => {
       mode.auto = !mode.auto
       if (mode.auto) {
-         playToggle.innerHTML ="<i class=\"material-icons\">pause</i>"
+         playToggleEl.innerHTML ="<i class=\"material-icons\">pause</i>"
          lerpLength = 12
       } else {
-         playToggle.innerHTML ="<i class=\"material-icons\">play_arrow</i>"
+         playToggleEl.innerHTML ="<i class=\"material-icons\">play_arrow</i>"
          lerpLength = 6
-         writeToURL()
       }
+      writeToURL()
+      updateInGUI()
    })
    const randomizeButton = document.getElementById('button-randomize')
    randomizeButton.addEventListener('click', () => {
-      randomizeValues()
+      randomStyle()
       writeToURL()
-      writeValuesToGUI()
+      updateInGUI()
    })
 
    const resetStyleButton = document.getElementById('button-resetStyle')
    resetStyleButton.addEventListener('click', () => {
-      resetStyle()
+      defaultStyle()
       writeToURL()
-      writeValuesToGUI()
+      updateInGUI()
    })
    const randomTextButton = document.getElementById('button-randomText')
    randomTextButton.addEventListener('click', () => {
@@ -184,7 +191,7 @@ function createGUI () {
          }
       }
       writeToURL()
-      writeValuesToGUI()
+      updateInGUI()
    })
 
    const darkmodeToggle = document.getElementById('checkbox-darkmode')
@@ -525,7 +532,8 @@ function writeToURL (noReload) {
    }
 }
 
-function writeValuesToGUI () {
+function updateInGUI () {
+   // number properties
    for (const [property, numberInput] of Object.entries(numberInputsObj)) {
       if (values[property].to !== undefined) {
          numberInput.element.value = values[property].to
@@ -533,7 +541,10 @@ function writeValuesToGUI () {
          numberInput.element.value = values[property].from
       }
    }
+   // text field
    writeEl.value = linesArray.join("\n")
+
+   //effect
 }
 
 function keyTyped() {
@@ -554,21 +565,20 @@ function autoValues () {
 
    if ((frameCount/30) % 10 === 0) {
       // do effect
-      const randomEffect = ["gradient", "weightgradient", "compress", "spread", "split", "sway", "twist", "teeth"]
+      const randomEffect = ["none","none","gradient", "weightgradient", "compress", "spread", "split", "sway", "twist", "teeth"]
       effect = random(randomEffect)
    } else if ((frameCount/30) % 10 === 9) {
       // prepare effect
-      resetStyle()
-      writeValuesToGUI()
+      defaultStyle()
+      updateInGUI()
       return
    }
 
-   randomizeValues () // wip, add intensity?
-   //writeToURL()
-   writeValuesToGUI()
+   randomStyle() // wip, add intensity?
+   updateInGUI()
 }
 
-function resetStyle () {
+function defaultStyle () {
    values.rings.to = 3
    values.size.to = 9
    values.spacing.to = 0
@@ -580,7 +590,12 @@ function resetStyle () {
    values.ascenders.to = 2
 }
 
-function randomizeValues () {
+function randomStyle () {
+
+   function randomWander(from, min, max) {
+      //wip
+   }
+
    values.size.to = floor(random(4,16))
    values.weight.to = floor(random(2,10))
    if (effect === "gradient" || effect === "weightgradient") {
@@ -615,7 +630,7 @@ function randomizeValues () {
          values.stretchY.to = floor(random(values.size.to, values.size.to*1.5))
       }
    } else {
-      if (random() >= 0.8) {
+      if (random() >= 0.8 || effect !== "teeth") {
          values.stretchY.to = floor(random(0, values.size.to*1.5))
       }
    }
@@ -1653,60 +1668,75 @@ function drawTextAt (lineNum) {
          }
          translate(0, (Math.abs(animOffsetY) + animStretchY)*0.5 + lineNum * totalHeight[lineNum])
 
-         const total = lineStyle.midlineSpots.length-1
-
          //style and caret
          stroke(lerpColor(palette.bg, palette.fg, 0.5))
          rowLines("bezier", [lineStyle.caretSpots[0], lineStyle.caretSpots[0]+animOffsetX], animStretchY)
          stroke(palette.fg)
 
-         let counter = 0
-         let lastPos = undefined
-
-         const leftPos = lineStyle.midlineSpots[0]
-         const rightPos = lineStyle.midlineSpots[total]
-
+         const wordSpots = []
+         let untilSpaceIndex = 0
+         lineStyle.midlineSpots.forEach((pos) => {
+            if (pos > lineStyle.spaceSpots[untilSpaceIndex] && 
+                  untilSpaceIndex < lineStyle.spaceSpots.length) {
+               // check in the next word now
+               untilSpaceIndex++
+            }
+            // for this word
+            if (wordSpots[untilSpaceIndex] === undefined) {
+               wordSpots[untilSpaceIndex] = new Array
+            }
+            wordSpots[untilSpaceIndex].push(pos)
+         })
+         if (frameCount === 1) print(lineText, wordSpots)
+         // show spaces
          //lineStyle.spaceSpots.forEach((pos) => {
-         //   lineType(pos,0, pos, 10)
+         //   lineType(pos,5, pos, 7)
          //})
 
-         lineStyle.midlineSpots.forEach((pos) => {
-            if (effect === "spread") {
-               const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
-               rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-            } else if (effect === "compress") {
-               const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
-               rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
-            } else if (effect === "split") {
-               if (counter > 0) {
-                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                  rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+         wordSpots.forEach((word) => {
+            let total = word.length-1
+            const leftPos = word[0]
+            const rightPos = word[total]
+            let counter = 0
+            let lastPos = undefined
+            word.forEach((pos) => {
+               if (effect === "spread") {
+                  const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+               } else if (effect === "compress") {
+                  const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+               } else if (effect === "split") {
+                  if (counter > 0) {
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "twist") {
+                  if (counter % 2 === 1) {
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+                  } else if (counter === total) {
+                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "sway") {
+                  if (counter > 0) {
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                  }
+               } else if (effect === "teeth") {
+                  if (counter % 2 ==1) {
+                     const x = lastPos + (pos-lastPos)*0.5
+                     const w = pos-lastPos
+                     arc(x, -animStretchY*0.5,w,w, 0, PI)
+                  } else {
+                     //bottom
+                     const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
+                     const w = pos-lastPos
+                     arc(x, animStretchY*0.5,w,w, PI, TWO_PI)
+                  }
                }
-            } else if (effect === "twist") {
-               if (counter % 2 ==1) {
-                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                  rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
-               } else if (counter === total) {
-                  rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
-               }
-            } else if (effect === "sway") {
-               if (counter > 0) {
-                  rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-               }
-            } else if (effect === "teeth") {
-               if (counter % 2 ==1) {
-                  const x = lastPos + (pos-lastPos)*0.5
-                  const w = pos-lastPos
-                  arc(x, -animStretchY*0.5,w,w, 0, PI)
-               } else {
-                  //bottom
-                  const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
-                  const w = pos-lastPos
-                  arc(x, animStretchY*0.5,w,w, PI, TWO_PI)
-               }
-            }
-            lastPos = pos
-            counter++
+               lastPos = pos
+               counter++
+            })
          })
       pop()
    }
@@ -2400,7 +2430,7 @@ function dropdownTextToEffect (text) {
    }
 
    writeToURL()
-   writeValuesToGUI()
+   updateInGUI()
 
    //check current effect
    const isWebgl = webglEffects.includes(effect)
