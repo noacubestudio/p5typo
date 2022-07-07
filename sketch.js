@@ -798,7 +798,7 @@ function drawElements() {
    scale(animZoom)
    translate(3, 3)
 
-   translate(0, animAscenders)
+   if (font === "fonta") translate(0, animAscenders)
 
    strokeWeight((animWeight/10)*strokeScaleFactor)
    palette.fg.setAlpha(255)
@@ -811,7 +811,7 @@ function drawElements() {
       }
 
       for (let i = 0; i < linesArray.length; i++) {
-         drawTextAt(i)
+         drawText(i)
       }
       pop()
 
@@ -823,10 +823,10 @@ function drawElements() {
          push()
          if (webglEffects.includes(effect)) translate(0,0,-1)
          let fontSize = animSize
-         if (font === "fontb") fontSize = animSize*2 - animRings
-         const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY
+         if (font === "fontb") fontSize = animSize*2 - min(animRings, animSize/2) + 1
+         const gridHeight = fontSize + Math.abs(animOffsetY) + ((font === "fontb") ? animStretchY*2 : animStretchY)
          const gridWidth = (width/animZoom) - 6
-         const asc = animAscenders
+         const asc = (font === "fontb") ? 0 : animAscenders
    
          if (type === "xray") {
             translate(0,0.5*animSize)
@@ -979,7 +979,7 @@ function charInSet (char, sets) {
 }
 
 
-function drawTextAt (lineNum) {
+function drawText (lineNum) {
 
    // current line text
    let lineText = linesArray[lineNum].toLowerCase()
@@ -1030,7 +1030,7 @@ function drawTextAt (lineNum) {
    let fontSize = animSize
    let stretchSize = animStretchY
    if (font === "fontb") {
-      fontSize = animSize*2 - animRings
+      fontSize = animSize*2 - min(animRings, animSize/2)
       stretchSize = stretchSize*2
    }
    totalHeight[lineNum] = fontSize + Math.abs(animOffsetY) + stretchSize + animAscenders + max(1,animSpacing)
@@ -1042,11 +1042,13 @@ function drawTextAt (lineNum) {
    push()
    if (animOffsetX < 0 && effect!=="staircase") {
       translate(-animOffsetX,0)
+   } else if (animOffsetX > 0 && effect !== "staircase" && font === "fontb") {
+      translate(animOffsetX,0)
    }
 
    //translate to (lower) midline
    translate(0,fontSize-0.5*animSize)
-   if (font === "fontb") translate(0, animStretchY - animAscenders)
+   if (font === "fontb") translate(0, animStretchY + 1)
 
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
@@ -1673,9 +1675,6 @@ function drawTextAt (lineNum) {
                   drawLine(style, 1, 1, 0, 0, "v", animAscenders)
                   drawLine(style, 4, 4, 0, 0, "v", animAscenders)
                   break;
-               case " ":
-                  style.spaceSpots
-                  break;
                default:
                   style.sizes = [letterOuter]
                   style.opacity = 0.5
@@ -1740,7 +1739,7 @@ function drawTextAt (lineNum) {
                   drawLine(style, 4, 4, 0, 0, "v", 0)
                   style.stack = 0
                   drawLine(style, 1, 1, 0, 0, "v", 0)
-                  if (charInSet(nextLetter, ["dl", "gap"])) {
+                  if (charInSet(nextLetter, ["dl", "gap"]) || "tj".includes(nextLetter)) {
                      drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
                   } else {
                      drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
@@ -2075,13 +2074,13 @@ function drawTextAt (lineNum) {
       if (font === "fontb") {
          push()
          translate(0, -animSize+(animRings-1)- animStretchY)
-         drawMidlineEffects(lineStyle.midlineSpots[1], lineStyle.caretSpots, lineStyle.spaceSpots)
+         drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
          pop()
       }
-      drawMidlineEffects(lineStyle.midlineSpots[0], lineStyle.caretSpots, lineStyle.spaceSpots)
+      drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
    }
 
-   function drawMidlineEffects (midlineSpots, caretSpots, spaceSpots) {
+   function drawMidlineEffects (layer, midlineSpots, caretSpots, spaceSpots) {
       push()
          stroke(palette.fg)
          translate(0, (Math.abs(animOffsetY) + animStretchY)*0.5 + lineNum * totalHeight[lineNum])
@@ -2093,9 +2092,9 @@ function drawTextAt (lineNum) {
 
          const wordSpots = []
          let untilSpaceIndex = 0
-         midlineSpots.forEach((pos) => {
-            if (pos > spaceSpots[untilSpaceIndex] && 
-                  untilSpaceIndex < spaceSpots.length) {
+         midlineSpots[layer].forEach((pos) => {
+            const spaceSpot = spaceSpots[untilSpaceIndex] - animOffsetX*layer
+            if (pos > spaceSpot && untilSpaceIndex < spaceSpots.length) {
                // check in the next word now
                untilSpaceIndex++
             }
@@ -2570,6 +2569,15 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          }
          else if ("z".includes(char) && nextchar === "x") {
             spaceBefore = weight -outer/2 - animStretchX/2
+            beforeConnect = true
+         }
+      } else if (font === "fontb") {
+         if ("lct".includes(char) && "tj".includes(nextchar)) {
+            spaceBefore = -outer+weight*2+1-animStretchX
+            beforeConnect = true
+         }
+         if ("ef".includes(char) && "tj".includes(nextchar)) {
+            spaceBefore = -outer+weight*2+2-animStretchX
             beforeConnect = true
          }
       }
