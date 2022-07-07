@@ -1837,15 +1837,15 @@ function drawText (lineNum) {
                   drawLine(style, 4, 4, 0, 0, "v", 0)
                   // right side
                   drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-                  drawCorner(style, "diagonal", 2, 1, wideOffset, 0, "", "", "flipped")
+                  drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
                   drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                   drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
                   style.stack = 0
                   drawLine(style, 1, 1, 0, 0, "v", 0)
                   drawLine(style, 4, 4, 0, 0, "v", 0)
                   // right side
-                  drawLine(style, 1, 2, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 2, 1, wideOffset, 0, "v", 0, undefined, "flipped")
+                  drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
+                  drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                   drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
                   drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
                   break;
@@ -1865,6 +1865,7 @@ function drawText (lineNum) {
                case "ö":
                case "q":
                   style.stack = 1
+                  if (letter === "q") drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawLine(style, 3, 3, 0, 0, "v", 0)
@@ -1874,6 +1875,10 @@ function drawText (lineNum) {
                   drawLine(style, 2, 2, 0, 0, "v", 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
+                  if (letter === "q") {
+                     drawLine(style, 3, 3, 0, 0, "v", 0)
+                     drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
+                  }
                   break;
                case "s":
                   style.stack = 1
@@ -1911,10 +1916,10 @@ function drawText (lineNum) {
                   drawLine(style, 4, 4, 0, 0, "v", 0)
                   if (letter === "w") {
                      //right side
-                     drawLine(style, 1, 1, wideOffset, 0, "v", 0)
-                     drawLine(style, 2, 2, wideOffset, 0, "v", 0)
-                     drawLine(style, 3, 3, wideOffset, 0, "v", 0)
-                     drawLine(style, 4, 4, wideOffset, 0, "v", 0)
+                     drawLine(style, 1, 1, wideOffset  + animStretchX, 0, "v", 0)
+                     drawLine(style, 2, 2, wideOffset  + animStretchX, 0, "v", 0)
+                     drawLine(style, 3, 3, wideOffset  + animStretchX, 0, "v", 0)
+                     drawLine(style, 4, 4, wideOffset  + animStretchX, 0, "v", 0)
                   }
                   style.stack = 0
                   drawLine(style, 1, 1, 0, 0, "v", 0)
@@ -1928,10 +1933,10 @@ function drawText (lineNum) {
                   }
                   if (letter === "w") {
                      // right side
-                     drawLine(style, 1, 1, wideOffset, 0, "v", 0)
-                     drawLine(style, 2, 2, wideOffset, 0, "v", 0)
-                     drawCorner(style, "diagonal", 3, 3, wideOffset, 0, "", "")
-                     drawCorner(style, "diagonal", 4, 4, wideOffset, 0, "", "")
+                     drawLine(style, 1, 1, wideOffset + animStretchX, 0, "v", 0)
+                     drawLine(style, 2, 2, wideOffset + animStretchX, 0, "v", 0)
+                     drawCorner(style, "diagonal", 3, 3, wideOffset + animStretchX, 0, "", "")
+                     drawCorner(style, "diagonal", 4, 4, wideOffset + animStretchX, 0, "", "")
                   }
                   break;
                case "x":
