@@ -1768,9 +1768,11 @@ function drawText (lineNum) {
                   drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                   drawLine(style, 2, 2, 0, 0, "h", -style.weight-1)
                   if (letter === "e") {
-                     drawLine(style, 3, 3, 0, 0, "h", -style.weight-1)
+                     if (!"j".includes(nextLetter)) {
+                        drawLine(style, 3, 3, 0, 0, "h", -style.weight-1)
+                     }
                      drawCorner(style, "square", 4, 4, 0, 0, "", "")
-                  } else {
+                  } else if (letter === "f"){
                      drawLine(style, 4, 4, 0, 0, "v", 0)
                   }
                   break;
@@ -1816,6 +1818,7 @@ function drawText (lineNum) {
                   drawLine(style, 2, 2, -style.weight-1, 0, "v", 0)
                   drawCorner(style, "round", 3, 3, -style.weight-1, 0, "", "")
                   //wip sometimes round
+                  if (!"e".includes(prevLetter))
                   drawCorner(style, "round", 4, 4, -style.weight-1, 0, "linecut", "end")
                   break;
                case "k":
@@ -1895,10 +1898,9 @@ function drawText (lineNum) {
                case "t":
                   style.stack = 1
                   drawLine(style, 1, 1, -style.weight-1, 0, "h", -style.weight-1)
-                  drawLine(style, 1, 2, wideOffset-style.weight-1, 0, "h", 0)
+                  drawLine(style, 1, 2, wideOffset-style.weight-1, 0, "h", 0, -animSize/2+style.weight+1-style.stretchX, "flipped")
                   drawCorner(style, "square", 2, 2, -style.weight-1, 0, "branch", "end")
                   drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
-                  drawLine(style, 2, 2, wideOffset - style.weight-1, 0, "h", -style.weight-1)
                   style.stack = 0
                   drawLine(style, 2, 2, -style.weight-1, 0, "v", 0)
                   drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
@@ -2219,17 +2221,24 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       if (animRings > 1) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
             ("dgi".includes(char) && "i".includes(nextchar))) {
-         spacing = max(spacing, 1)
+            spacing = max(spacing, 1)
          }
       } else {
          if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
             ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
             ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
             ("nm".includes(char) && "nm".includes(nextchar))) {
-         spacing = max(spacing, 1)
+            spacing = max(spacing, 1)
+         }
+      }
+   } else if (font === "fontb") {
+      if (animRings <= 1) {
+         if ("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar)) {
+            spacing = max(spacing, 1)
          }
       }
    }
+
    if ("|".includes(char)) spacing = max(spacing, 1)
    if ("|".includes(nextchar)) spacing = max(spacing, 1)
 
@@ -2530,7 +2539,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          } else if (font === "fontb") {
             switch(nextchar) {
                case "j":
-                  if (charInSet(char,["dl"])) {
+                  if (charInSet(char,["dr"])) {
                      spaceBefore = 1
                      beforeConnect = true
                   }
@@ -2652,6 +2661,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          case ",":
          case "!":
          case " ":
+         case "‸": //caret
             stretchWidth = 0
             break;
          default:
@@ -2661,6 +2671,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       switch (char) {
          case "m":
          case "w":
+         case "t":
             stretchWidth = animStretchX * 2
             break;
          case "i":
@@ -2668,6 +2679,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          case ",":
          case "!":
          case " ":
+         case "‸": //caret
             stretchWidth = 0
             break;
          default:
