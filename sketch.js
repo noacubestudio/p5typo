@@ -1728,10 +1728,12 @@ function drawText (lineNum) {
                   style.stack = 1
                   if (letter === "c") {
                      drawCorner(style, "round", 1, 1, 0, 0, "", "")
-                     if (charInSet(nextLetter, ["ul", "gap"])) {
-                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
-                     } else {
-                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                     if (!"t".includes(nextLetter)) {
+                        if (charInSet(nextLetter, ["ul", "gap"])) {
+                           drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                        } else {
+                           drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                        }
                      }
                   } else {
                      drawLine(style, 1, 1, 0, 0, "v", 0)
@@ -1897,7 +1899,9 @@ function drawText (lineNum) {
                   break;
                case "t":
                   style.stack = 1
-                  drawLine(style, 1, 1, -style.weight-1, 0, "h", -style.weight-1)
+                  if (!"c".includes(prevLetter)) {
+                     drawLine(style, 1, 1, -style.weight-1, 0, "h", -style.weight-1)
+                  }
                   drawLine(style, 1, 2, wideOffset-style.weight-1, 0, "h", 0, -animSize/2+style.weight+1-style.stretchX, "flipped")
                   drawCorner(style, "square", 2, 2, -style.weight-1, 0, "branch", "end")
                   drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
@@ -2233,7 +2237,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
       }
    } else if (font === "fontb") {
       if (animRings <= 1) {
-         if ("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar)) {
+         if (("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar))
+            || ("i".includes(char) && "abdefhiklnpruvwxz".includes(nextchar))
+            || ("aghijkmnouvwxyz".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1)
          }
       }
