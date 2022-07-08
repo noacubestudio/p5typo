@@ -60,8 +60,8 @@ const totalWidth = [0, 0, 0, 0]
 const totalHeight = [0, 0, 0, 0]
 
 let values = {
-   hueDark: {from: undefined, to: undefined, lerp: 0},
-   hueLight: {from: undefined, to: undefined, lerp: 0},
+   hueDark: {from: 210, to: undefined, lerp: 0},
+   hueLight: {from: 130, to: undefined, lerp: 0},
    rings: {from: 3, to: undefined, lerp: 0},
    size: {from: 9, to: undefined, lerp: 0},
    spacing: {from: 0, to: undefined, lerp: 0},
@@ -84,7 +84,7 @@ let fillCornerLayers = {}
 
 function windowResized() {
    if (!mode.svg) {
-      resizeCanvas(windowWidth-100, windowHeight)
+      resizeCanvas(windowWidth-300, windowHeight)
    }
 }
 
@@ -92,7 +92,7 @@ function setup () {
    loadFromURL()
    createGUI()
 
-   canvasEl = createCanvas(windowWidth-100, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
+   canvasEl = createCanvas(windowWidth-300, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
    canvasEl.parent('sketch-holder')
    if (!webglEffects.includes(effect)) {
       strokeCap(ROUND)
@@ -104,9 +104,6 @@ function setup () {
       strokeScaleFactor = values.zoom.from
    }
    rectMode(CORNERS)
-
-   values.hueDark.from = 270
-   values.hueLight.from = 340
 
    writeToURL("noReload")
 }
@@ -795,8 +792,8 @@ function draw () {
 function drawElements() {
    push()
    if (webglEffects.includes(effect)) translate(-width/2, -height/2)
+   translate(40, 40)
    scale(animZoom)
-   translate(3, 3)
 
    if (font === "fonta") translate(0, animAscenders)
 
@@ -825,7 +822,7 @@ function drawElements() {
          let fontSize = animSize
          if (font === "fontb") fontSize = animSize*2 - min(animRings, animSize/2) + 1
          const gridHeight = fontSize + Math.abs(animOffsetY) + ((font === "fontb") ? animStretchY*2 : animStretchY)
-         const gridWidth = (width/animZoom) - 6
+         const gridWidth = (width-60)/animZoom
          const asc = (font === "fontb") ? 0 : animAscenders
    
          if (type === "xray") {
@@ -886,13 +883,13 @@ function drawElements() {
             push()
             translate(0,-asc)
             if (type === "vstripes") {
-               const totalGridHeight = (gridHeight+asc*2)*linesArray.length //+ (1)*(linesArray.length-1)
+               const totalGridHeight = (height-80)/animZoom //+ (1)*(linesArray.length-1)
                for (let j = 0; j <= gridWidth; j++) {
                  lineType(j, 0, j, totalGridHeight)
                }
             }
             if (type === "hstripes") {
-               const totalGridHeight = (gridHeight+asc*2)*linesArray.length
+               const totalGridHeight = (height-80)/animZoom
                for (let k = 0; k <= totalGridHeight; k++) {
                  lineType(0, k, gridWidth, k)
                }
@@ -1145,7 +1142,8 @@ function drawText (lineNum) {
          stretchX: animStretchX,
          stretchY: animStretchY,
          letter: letter,
-         stack: 0, //for letters with more than 1 level
+         stack: 0, // for letters with more than 1 level
+         flipped: false, // for gradients
          // convenient values
          weight: (letterOuter-letterInner)*0.5,
       }
@@ -1154,7 +1152,7 @@ function drawText (lineNum) {
 
       ;(function drawLetter () {
          if (font === "fonta") {
-            const isFlipped = ("cktfe".includes(letter)) ? "" : "flipped"
+            const isFlipped = (!"cktfe".includes(letter))
             // draw chars
             switch(letter) {
                case "o":
@@ -1171,25 +1169,25 @@ function drawText (lineNum) {
    
                   // SECOND LAYER
                   if (letter === "d") {
-                     drawLine(style, 2, 2, 0, 0, "v", ascenders)
+                     drawLine(style, "vert", 2, 2, 0, 0, ascenders)
                   }
                   else if (letter === "b") {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders)
                   }
                   else if (letter === "q") {
-                     drawLine(style, 3, 3, 0, 0, "v", descenders)
+                     drawLine(style, "vert", 3, 3, 0, 0, descenders)
                   } else if (letter === "p") {
-                     drawLine(style, 4, 4, 0, 0, "v", descenders)
+                     drawLine(style, "vert", 4, 4, 0, 0, descenders)
                   } else if (letter === "ö") {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 2, 2, 0, 0, ascenders, letterOuter*0.5 + 1)
                   }
                   break;
                case "ß":
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
    
                   if (ascenders >= style.weight+letterInner-1) {
                      const modifiedStyle = {...style}
@@ -1197,16 +1195,16 @@ function drawText (lineNum) {
                      for (let s = 0; s < style.sizes.length; s++) {
                         modifiedStyle.sizes.push(style.sizes[s]-1)
                      }
-                     drawLine(style, 1, 1, 0, 0, "h", -letterOuter*0.5+0.5)
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5+0.5)
-                     drawCorner(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, "", "", undefined, false, false, true)
-                     drawCorner(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, "", "", undefined, false, false, true)
-                     drawCorner(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, "", "", undefined, false, false, true)
-                     drawLine(style, 3, 2, -1, -ascenders -0.5, "v", -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, false, true)
+                     drawLine(style, "hori", 1, 1, 0, 0, -letterOuter*0.5+0.5)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders-letterOuter*0.5+0.5)
+                     drawCorner(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, "", "", false, false, true)
+                     drawCorner(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, "", "", false, false, true)
+                     drawCorner(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, "", "", false, false, true)
+                     drawLine(style, "vert", 3, 2, -1, -ascenders -0.5, -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, 0, true)
                   } else {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders-letterOuter*0.5)
-                     drawCorner(style, "square", 1, 1, 0, -ascenders, "", "", undefined, false, false, true)
-                     drawLine(style, 2, 2, 0, -ascenders, "h", -1)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders-letterOuter*0.5)
+                     drawCorner(style, "square", 1, 1, 0, -ascenders, "", "", false, false, true)
+                     drawLine(style, "hori", 2, 2, 0, -ascenders, -1)
                   }
                   break;
                case "g":
@@ -1218,41 +1216,40 @@ function drawText (lineNum) {
                      const extragap = (letterOuter > letterInner) ? 0:1
                      const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
    
-                     drawLine(style, 2, 3, 0, letterOuter + lineOffset, "h", 0)
-                     drawLine(style, 1, 4, 0, letterOuter + lineOffset, "h", 0)
+                     drawLine(style, "hori", 2, 3, 0, letterOuter + lineOffset, 0)
+                     drawLine(style, "hori", 1, 4, 0, letterOuter + lineOffset, 0)
                   } else if (letterOuter*0.5 + 1 <= descenders) {
                      // enough room for a proper g
-                     drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                     drawLine(style, 4, 4, 0, 0, "v", descenders - letterOuter*0.5, letterOuter*0.5+1)
-                     drawCorner(style, "round", 3, 3, 0, descenders, "", "", undefined, false, false, true)
-                     drawCorner(style, "round", 4, 4, 0, descenders, "", "", undefined, false, false, true)
+                     drawLine(style, "vert", 3, 3, 0, 0, descenders - letterOuter*0.5)
+                     drawLine(style, "vert", 4, 4, 0, 0, descenders - letterOuter*0.5, letterOuter*0.5+1)
+                     drawCorner(style, "round", 3, 3, 0, descenders, "", "", false, false, true)
+                     drawCorner(style, "round", 4, 4, 0, descenders, "", "", false, false, true)
                   } else {
                      // square corner g
-                     drawLine(style, 3, 3, 0, 0, "v", descenders - letterOuter*0.5)
-                     drawCorner(style, "square", 3, 3, 0, descenders-1, "", "", undefined, false, false, true)
-                     drawLine(style, 4, 4, 0, descenders-1, "h", -1)
+                     drawLine(style, "vert", 3, 3, 0, 0, descenders - letterOuter*0.5)
+                     drawCorner(style, "square", 3, 3, 0, descenders-1, "", "", false, false, true)
+                     drawLine(style, "hori", 4, 4, 0, descenders-1, -1)
                   }
    
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
    
-                  drawLine(style, 2, 2, 0, 0, "h", 0)
-                  //drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, "hori", 2, 2, 0, 0, 0)
                   break;
                case "c":
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter, ["ul", "gap"])) {
-                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", true)
                      } else {
-                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", false)
                      }
                   }
                   if (!"sz".includes(nextLetter)) {
                      if (charInSet(nextLetter, ["dl", "gap"])) {
-                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", true)
                      } else {
-                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", false)
                      }
                   }
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
@@ -1263,27 +1260,27 @@ function drawText (lineNum) {
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
                      drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "end")
                   } else {
-                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", undefined, true)
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", true)
                   }
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
    
                   // SECOND LAYER
                   if ("s".includes(nextLetter)) {
-                     drawLine(style, 3, 3, 0, 0, "h", 1)
+                     drawLine(style, "hori", 3, 3, 0, 0, 1)
                   } else if (charInSet(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
-                     drawLine(style, 3, 3, 0, 0, "h", 0)
+                     drawLine(style, "hori", 3, 3, 0, 0, 0)
                   } else if (!charInSet(nextLetter,["dl", "gap"]) && letterInner <= 2) {
-                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX)
+                     drawLine(style, "hori", 3, 3, 0, 0, letterOuter*0.5 + animStretchX)
                   } else if ("x".includes(nextLetter)) {
-                     drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5 + animStretchX-style.weight)
+                     drawLine(style, "hori", 3, 3, 0, 0, letterOuter*0.5 + animStretchX-style.weight)
                   } else if (!charInSet(nextLetter,["dl"])) {
-                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
+                     drawLine(style, "hori", 3, 3, 0, 0, -oneoffset+max(animSpacing, -style.weight))
                   } else if (animSpacing < 0) {
-                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset+max(animSpacing, -style.weight))
+                     drawLine(style, "hori", 3, 3, 0, 0, -oneoffset+max(animSpacing, -style.weight))
                   } else if (animSpacing > 0){
-                     drawLine(style, 3, 3, 0, 0, "h", 0)
+                     drawLine(style, "hori", 3, 3, 0, 0, 0)
                   } else {
-                     drawLine(style, 3, 3, 0, 0, "h", -oneoffset)
+                     drawLine(style, "hori", 3, 3, 0, 0, -oneoffset)
                   }
                   break;
                case "a":
@@ -1293,16 +1290,16 @@ function drawText (lineNum) {
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
                      drawCorner(style, "diagonal", 3, 3, 0, 0, "linecut", "start")
                   } else {
-                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", true)
                   }
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
    
                   // SECOND LAYER
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
    
                   if (letter === "ä") {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 2, 2, 0, 0, ascenders, letterOuter*0.5 + 1)
                   }
                   break;
                case "n":
@@ -1313,55 +1310,53 @@ function drawText (lineNum) {
                      drawCorner(style, "round", 1, 1, 0, 0, "", "")
                      drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   }
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "m":
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   if (mode.altM) {
                      drawCorner(style, "square", 1, 1, 0, 0, "", "")
                      drawCorner(style, "square", 2, 2, 0, 0, "", "")
-                     drawLine(style, 3, 3, 0, 0, "v", 0)
-                     drawLine(style, 4, 4, 0, 0, "v", 0)
                      // SECOND LAYER
-                     drawCorner(style, "square", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                     drawCorner(style, "square", 1, 2, wideOffset, 0, "branch", "start", "flipped")
-                     drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                     drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                     style.flipped = true
+                     drawCorner(style, "square", 2, 1, wideOffset + animStretchX*2, 0, "", "")
+                     drawCorner(style, "square", 1, 2, wideOffset, 0, "branch", "start")
                   } else {
                      drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
                      drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                     drawLine(style, 3, 3, 0, 0, "v", 0)
-                     drawLine(style, 4, 4, 0, 0, "v", 0)
                      // SECOND LAYER
-                     drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                     drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-                     drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
-                     drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
+                     style.flipped = true
+                     drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "")
+                     drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "")
                   }
+                  drawLine(style, "vert", 4, 3, wideOffset, 0, 0)
+                  drawLine(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0)
                   break;
                case "s":
                   if (!mode.altS) {
                      //LEFT OVERLAP
+                     style.flipped = isFlipped
                      if (prevLetter === "s") {
-                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
                      } else if (prevLetter === "r") {
-                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
                      } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fkz".includes(prevLetter)) {
-                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
                      }
                      let xOffset = 0
                      //start further left if not connecting left
                      if (charInSet(prevLetter,["gap", "dr"])) {
                         xOffset = -letterOuter*0.5 + extendOffset -animStretchX
-                        drawCorner(style, "round", 3, 3, xOffset, 0, "extend", "end", isFlipped)
+                        drawCorner(style, "round", 3, 3, xOffset, 0, "extend", "end")
                      } else {
-                        drawCorner(style, "round", 3, 3, xOffset, 0, "", "", isFlipped)
+                        drawCorner(style, "round", 3, 3, xOffset, 0, "", "")
                      }
                      if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
-                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "", "", isFlipped)
-                        drawCorner(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end", isFlipped)
+                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "", "")
+                        drawCorner(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, "roundcut", "end")
                      } else {
-                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "extend", "end", isFlipped)
+                        drawCorner(style, "round", 1, 2, wideOffset + xOffset, 0, "extend", "end")
                      }
                   } else {
                      // alternative cursive s
@@ -1373,7 +1368,6 @@ function drawText (lineNum) {
                      } else if (prevLetter !== "t") {
                         drawCorner(style, "round", 4, 4, gapPos, 0, "roundcut", "end")
                      }
-                     //drawLine(style, 1, 1, 0, 0, "h", -style.weight-1)
    
                      drawCorner(style, "round", 2, 2, gapPos, 0, "", "")
                      drawCorner(style, "round", 3, 3, gapPos, 0, "", "")
@@ -1395,18 +1389,19 @@ function drawText (lineNum) {
                      }
                   }
                   // bottom connection
+                  style.flipped = isFlipped
                   if (!"zxef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
                      if (prevLetter === "s" && !mode.altS) {
-                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
                      } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
-                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
                      } else {
-                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end", isFlipped)
+                        drawCorner(style, "round", 4, 4, 0, 0, "roundcut", "end")
                      }
                   }
-   
+                  style.flipped = false
                   if (charInSet(prevLetter, ["gap"])) {
-                     drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start", undefined, true)
+                     drawCorner(style, "round", 1, 1, 0, 0, "linecut", "start", true)
                   }
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawCorner(style, "round", 4, 3, wideOffset, 0, "", "")
@@ -1415,86 +1410,87 @@ function drawText (lineNum) {
                      if (!charInSet(nextLetter,["dl", "gap"])) {
                         drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "roundcut", "start")
                      } else {
-                        drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", undefined, true)
+                        drawCorner(style, "round", 3, 4, wideOffset + animStretchX*2, 0, "linecut", "start", true)
                      }
                   }
    
                   // SECOND LAYER
-                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
+                  style.flipped = true
+                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "")
                   if (!"xz".includes(nextLetter)) {
                      if (!charInSet(nextLetter,["gap", "ul"])) {
-                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end", "flipped")
+                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "roundcut", "end")
                      } else {
-                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", "flipped", true)
+                        drawCorner(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, "linecut", "end", true)
                      }
                   }
-                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "", "flipped")
+                  drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
                   if (charInSet(prevLetter,["gap"])) {
-                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", "flipped", true)
+                     drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end", true)
                   }
                   pop()
                   break;
                case "u":
                case "ü":
                case "y":
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
    
                   // SECOND LAYER
                   if (letter === "y") {
-                     drawLine(style, 3, 3, 0, 0, "v", descenders)
+                     drawLine(style, "vert", 3, 3, 0, 0, descenders)
                   } else if (letter === "ü") {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                     drawLine(style, 2, 2, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders, letterOuter*0.5 + 1)
+                     drawLine(style, "vert", 2, 2, 0, 0, ascenders, letterOuter*0.5 + 1)
                   }
                   break;
                case "w":
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
                   drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
-   
-                  drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawCorner(style, "diagonal", 4, 3, wideOffset, 0, "", "", "flipped")
-                  drawCorner(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, "", "", "flipped")
+
+                  style.flipped = true
+                  drawLine(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, 0)
+                  drawLine(style, "vert", 1, 2, wideOffset, 0, 0)
+                  drawCorner(style, "diagonal", 4, 3, wideOffset, 0, "", "")
+                  drawCorner(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, "", "")
                   break;
                case "r":
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["ul", "gap"])) {
-                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", true)
                      } else {
                         drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end")
                      }
                   }
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "l":
                case "t":
    
                   if (letter === "t") {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders)
                      drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                      if (!"zx".includes(nextLetter)) {
                         if (charInSet(nextLetter,["ul", "gap"]) || letterInner > 2) {
-                           drawLine(style, 2, 2, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
+                           drawLine(style, "hori", 2, 2, 0, 0, -style.weight-1 + ((letterInner<2) ? 1 : 0))
                         } else {
-                           drawLine(style, 2, 2, 0, 0, "h", letterOuter*0.5-style.weight)
+                           drawLine(style, "hori", 2, 2, 0, 0, letterOuter*0.5-style.weight)
                         }
                      }
                   } else {
-                     drawLine(style, 1, 1, 0, 0, "v", ascenders)
+                     drawLine(style, "vert", 1, 1, 0, 0, ascenders)
                   }
    
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"])) {
-                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                        drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", true)
                      } else {
-                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                        drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", false)
                      }
                   }  
                   break;
@@ -1502,41 +1498,41 @@ function drawText (lineNum) {
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["ul", "gap"])) {
-                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                        drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", true)
                      } else {
-                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                        drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", false)
                      }
                   }
-                  drawLine(style, 4, 4, 0, 0, "v", descenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, descenders)
                   drawCorner(style, "square", 4, 4, 0, 0, "branch", "start")
    
                   // SECOND LAYER
                   if (!"sxz".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
-                        drawLine(style, 3, 3, 0, 0, "h", -style.weight-1 + ((letterInner<2) ? 1 : 0))
+                        drawLine(style, "hori", 3, 3, 0, 0, -style.weight-1 + ((letterInner<2) ? 1 : 0))
                      } else {
-                        drawLine(style, 3, 3, 0, 0, "h", letterOuter*0.5-style.weight)
+                        drawLine(style, "hori", 3, 3, 0, 0, letterOuter*0.5-style.weight)
                      }
                   }
                   break;
                case "k":
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, ascenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   drawCorner(style, "diagonal", 1, 1, style.weight, 0, "", "")
                   drawCorner(style, "diagonal", 4, 4, style.weight, 0, "", "")
                   if (!"zx".includes(nextLetter)) {
-                     drawLine(style, 2, 2, style.weight, 0, "h", -oneoffset-style.weight)
+                     drawLine(style, "hori", 2, 2, style.weight, 0, -oneoffset-style.weight)
                   }
                   if (!"sxz".includes(nextLetter)) {
                      if (!(charInSet(nextLetter,["dl", "gap"]))) {
                         drawCorner(style, "round", 3, 3, style.weight, 0, "roundcut", "start")
                      } else {
-                        drawLine(style, 3, 3, style.weight, 0, "h", -oneoffset-style.weight)
+                        drawLine(style, "hori", 3, 3, style.weight, 0, -oneoffset-style.weight)
                      }
                   }
                   break;
                case "h":
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders, 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, ascenders, 0)
    
                   // SECOND LAYER
                   if (mode.altNH) {
@@ -1546,12 +1542,12 @@ function drawText (lineNum) {
                      drawCorner(style, "round", 1, 1, 0, 0, "", "")
                      drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   }
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "v":
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
                      drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
                      drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
@@ -1561,16 +1557,16 @@ function drawText (lineNum) {
                   }
                   break;
                case ".":
-                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, 0, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case ",":
-                  drawLine(style, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, descenders, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case "!":
                   // wip
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders,)
-                  drawLine(style, 4, 4, 0, 0, "v", -style.weight-1.5)
-                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 1, 1, 0, 0, ascenders,)
+                  drawLine(style, "vert", 4, 4, 0, 0, -style.weight-1.5)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case "?":
                   // wip
@@ -1578,12 +1574,12 @@ function drawText (lineNum) {
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
-                  drawLine(style, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, ascenders, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case "i":
-                  drawLine(style, 1, 1, 0, 0, "v", ascenders, letterOuter*0.5 + 1)
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "j":
                   let leftOffset = 0
@@ -1595,21 +1591,21 @@ function drawText (lineNum) {
                   if (prevLetter !== undefined) {
                      if (!"tkz".includes(prevLetter)) {
                         if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                           drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", undefined, true)
+                           drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end", true)
                         } else {
                            drawCorner(style, "round", 4, 4, leftOffset, 0, "roundcut", "end")
                         }
                      }
                      if (!charInSet(prevLetter,["tr"]) && !"ckrsxz".includes(prevLetter)) {
-                        drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
+                        drawLine(style, "hori", 1, 1, leftOffset, 0, -style.weight-1)
                      }
                   }
                   
-                  drawLine(style, 2, 2, leftOffset, 0, "v", ascenders, letterOuter*0.5 + 1)
+                  drawLine(style, "vert", 2, 2, leftOffset, 0, ascenders, letterOuter*0.5 + 1)
                   drawCorner(style, "square", 2, 2, leftOffset, 0, "", "")
                   drawCorner(style, "round", 3, 3, leftOffset, 0, "", "")
                   if (prevLetter === undefined) {
-                     drawLine(style, 1, 1, leftOffset, 0, "h", -style.weight-1)
+                     drawLine(style, "hori", 1, 1, leftOffset, 0, -style.weight-1)
                      drawCorner(style, "round", 4, 4, leftOffset, 0, "linecut", "end")
                   }
                   break;
@@ -1625,40 +1621,40 @@ function drawText (lineNum) {
                   // TOP LEFT OVERLAP
                   if (!"czfkxt".includes(prevLetter)) {
                      if (charInSet(prevLetter,["ur", "gap"])) {
-                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "linecut", "start")
+                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "linecut", "start", true)
                      } else {
-                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "roundcut", "start")
+                        drawCorner(style, "round", 1, 1, leftZoffset, 0, "roundcut", "start", true)
                      }
                   } else {
-                     drawLine(style, 1, 1, leftZoffset, 0, "h", -(style.weight+1))
+                     drawLine(style, "hori", 1, 1, leftZoffset, 0, -(style.weight+1))
                   }
    
-                  drawLine(style, 2, 2, leftZoffset, 0, "h", 1+oddOffset*2)
-                  drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, "", "", "flipped")
+                  drawLine(style, "hori", 2, 2, leftZoffset, 0, 1+oddOffset*2)
+                  style.flipped = true
+                  drawCorner(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, "", "")
    
                   // BOTTOM RIGHT OVERLAP
-                  drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, "", "", "flipped")
-                  drawLine(style, 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, "h", 1+oddOffset*2)
+                  drawCorner(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, "", "")
+                  style.flipped = false
+                  drawLine(style, "hori", 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, 1+oddOffset*2)
    
                   if (!"zxj".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"])) {
-                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "linecut", "start")
+                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "linecut", "start", true)
                      } else {
-                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "roundcut", "start")
+                        drawCorner(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "roundcut", "start", true)
                      }
-                  } else {
-                     //drawLine(style, 4, 3, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, "h", 0)
                   }
                   break;
                case "-":
                   style.sizes = [letterOuter]
-                  drawLine(style, 1, 1, 0, +letterOuter*0.5, "h", -1)
-                  drawLine(style, 2, 2, 0, +letterOuter*0.5, "h", -1)
+                  drawLine(style, "hori", 1, 1, 0, +letterOuter*0.5, -1)
+                  drawLine(style, "hori", 2, 2, 0, +letterOuter*0.5, -1)
                   break;
                case "_":
                   style.sizes = [letterOuter]
-                  drawLine(style, 3, 3, 0, 0, "h", -1)
-                  drawLine(style, 4, 4, 0, 0, "h", -1)
+                  drawLine(style, "hori", 3, 3, 0, 0, -1)
+                  drawLine(style, "hori", 4, 4, 0, 0, -1)
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -1667,13 +1663,13 @@ function drawText (lineNum) {
                   //caret symbol
                   style.opacity = 0.5
                   style.sizes = [letterOuter]
-                  drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-                  drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  drawLine(style, "vert", 1, 1, 0, 0, animAscenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, animAscenders)
                   break;
                case "|":
                   style.sizes = [letterOuter]
-                  drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-                  drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  drawLine(style, "vert", 1, 1, 0, 0, animAscenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, animAscenders)
                   break;
                default:
                   style.sizes = [letterOuter]
@@ -1691,13 +1687,13 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
                   drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
                   drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                   drawCorner(style, "square", 2, 2, 0, 0, "branch", "start")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "b":
                case "p":
@@ -1706,7 +1702,7 @@ function drawText (lineNum) {
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
                   if (letter === "b") {
                      drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
@@ -1714,13 +1710,15 @@ function drawText (lineNum) {
                      drawCorner(style, "round", 3, 3, 0, 0, "", "")
                      drawCorner(style, "square", 4, 4, 0, 0, "", "")
                   } else if (letter === "p") {
-                     drawCorner(style, "square", 1, 1, 0, 0, "branch", "end", "flipped")
-                     drawLine(style, 4, 4, 0, 0, "v", 0)
+                     style.flipped = true
+                     drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
+                     style.flipped = false
+                     drawLine(style, "vert", 4, 4, 0, 0, 0)
                   } else {
                      drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                      drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                     drawLine(style, 3, 3, 0, 0, "v", 0)
-                     drawLine(style, 4, 4, 0, 0, "v", 0)
+                     drawLine(style, "vert", 3, 3, 0, 0, 0)
+                     drawLine(style, "vert", 4, 4, 0, 0, 0)
                   }
                   break;
                case "c":
@@ -1730,21 +1728,21 @@ function drawText (lineNum) {
                      drawCorner(style, "round", 1, 1, 0, 0, "", "")
                      if (!"t".includes(nextLetter)) {
                         if (charInSet(nextLetter, ["ul", "gap"])) {
-                           drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", undefined, true)
+                           drawCorner(style, "round", 2, 2, 0, 0, "linecut", "end", true)
                         } else {
-                           drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", undefined, false)
+                           drawCorner(style, "round", 2, 2, 0, 0, "roundcut", "end", false)
                         }
                      }
                   } else {
-                     drawLine(style, 1, 1, 0, 0, "v", 0)
+                     drawLine(style, "vert", 1, 1, 0, 0, 0)
                   }
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   if (charInSet(nextLetter, ["dl", "gap"]) || "tj".includes(nextLetter)) {
-                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", undefined, true)
+                     drawCorner(style, "round", 3, 3, 0, 0, "linecut", "start", true)
                   } else {
-                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", undefined, false)
+                     drawCorner(style, "round", 3, 3, 0, 0, "roundcut", "start", false)
                   }
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   break;
@@ -1752,11 +1750,11 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "square", 4, 4, 0, 0, "", "")
                   break;
@@ -1764,124 +1762,137 @@ function drawText (lineNum) {
                case "f":
                   style.stack = 1
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
-                  drawLine(style, 2, 2, 0, 0, "h", -style.weight-1)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "hori", 2, 2, 0, 0, -style.weight-1)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
                   drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
-                  drawLine(style, 2, 2, 0, 0, "h", -style.weight-1)
+                  drawLine(style, "hori", 2, 2, 0, 0, -style.weight-1)
                   if (letter === "e") {
                      if (!"j".includes(nextLetter)) {
-                        drawLine(style, 3, 3, 0, 0, "h", -style.weight-1)
+                        drawLine(style, "hori", 3, 3, 0, 0, -style.weight-1)
                      }
                      drawCorner(style, "square", 4, 4, 0, 0, "", "")
                   } else if (letter === "f"){
-                     drawLine(style, 4, 4, 0, 0, "v", 0)
+                     drawLine(style, "vert", 4, 4, 0, 0, 0)
                   }
                   break;
                case "g":
                   style.stack = 1
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", -style.weight-1)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, -style.weight-1)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "h", -style.weight-1)
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, "hori", 1, 1, 0, 0, -style.weight-1)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
                   drawCorner(style, "square", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   break;
                case "h":
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
                   drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                   drawCorner(style, "square", 2, 2, 0, 0, "branch", "start")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "i":
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "j":
                   style.stack = 1
-                  drawLine(style, 1, 1, -style.weight-1, 0, "h", -style.weight-1)
+                  drawLine(style, "hori", 1, 1, -style.weight-1, 0, -style.weight-1)
                   drawCorner(style, "square", 2, 2, -style.weight-1, 0, "", "")
-                  drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, -style.weight-1, 0, 0)
                   style.stack = 0
-                  drawLine(style, 2, 2, -style.weight-1, 0, "v", 0)
+                  drawLine(style, "vert", 2, 2, -style.weight-1, 0, 0)
                   drawCorner(style, "round", 3, 3, -style.weight-1, 0, "", "")
                   //wip sometimes round
-                  if (!"e".includes(prevLetter))
-                  drawCorner(style, "round", 4, 4, -style.weight-1, 0, "linecut", "end")
+                  if (!"e".includes(prevLetter)) {
+                     if (charInSet(prevLetter,["dr", "gap"])) {
+                        drawCorner(style, "round", 4, 4, -style.weight-1, 0, "linecut", "end")
+                     } else {
+                        drawCorner(style, "round", 4, 4, -style.weight-1, 0, "roundcut", "end")
+                     }
+                     
+                  }
                   break;
                case "k":
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
                   drawCorner(style, "square", 1, 1, 0, 0, "branch", "end")
                   drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "m":
                   style.stack = 1
                   drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
                   drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   // right side
-                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "", "flipped")
-                  drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "", "flipped")
-                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                  style.flipped = true
+                  drawCorner(style, "diagonal", 1, 2, wideOffset, 0, "", "")
+                  drawCorner(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, "", "")
+                  drawLine(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawLine(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  style.flipped = false
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   // right side
-                  drawLine(style, 1, 2, wideOffset, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 2, 1, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 3, 4, wideOffset + animStretchX*2, 0, "v", 0, undefined, "flipped")
-                  drawLine(style, 4, 3, wideOffset, 0, "v", 0, undefined, "flipped")
+                  style.flipped = true
+                  drawLine(style, "vert", 1, 2, wideOffset, 0, 0, undefined)
+                  drawLine(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawLine(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawLine(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
                   break;
                case "n":
                   style.stack = 1
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "o":
                case "ö":
                case "q":
                   style.stack = 1
-                  if (letter === "q") drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
+                  if (letter === "q") {
+                     style.flipped = true
+                     drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
+                     style.flipped = false
+                  }
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   if (letter === "q") {
-                     drawLine(style, 3, 3, 0, 0, "v", 0)
+                     drawLine(style, "vert", 3, 3, 0, 0, 0)
                      drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
                   }
                   break;
@@ -1889,47 +1900,50 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
-                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", undefined, true)
+                  drawCorner(style, "round", 3, 3, 0, 0, "linecut", "end", true)
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   style.stack = 0
-                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "end", "flipped", true)
-                  drawCorner(style, "round", 2, 2, 0, 0, "", "", "flipped")
-                  drawCorner(style, "round", 3, 3, 0, 0, "", "", "flipped")
-                  drawCorner(style, "round", 4, 4, 0, 0, "", "", "flipped")
+                  style.flipped = true
+                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "end", true)
+                  drawCorner(style, "round", 2, 2, 0, 0, "", "")
+                  drawCorner(style, "round", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   break;
                case "t":
                   style.stack = 1
                   if (!"c".includes(prevLetter)) {
-                     drawLine(style, 1, 1, -style.weight-1, 0, "h", -style.weight-1)
+                     drawLine(style, "hori", 1, 1, -style.weight-1, 0, -style.weight-1)
                   }
-                  drawLine(style, 1, 2, wideOffset-style.weight-1, 0, "h", 0, -animSize/2+style.weight+1-style.stretchX, "flipped")
+                  style.flipped = true
+                  drawLine(style, "hori", 1, 2, wideOffset-style.weight-1, 0, 0, -animSize/2+style.weight+1-style.stretchX)
+                  style.flipped = false
                   drawCorner(style, "square", 2, 2, -style.weight-1, 0, "branch", "end")
-                  drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, -style.weight-1, 0, 0)
                   style.stack = 0
-                  drawLine(style, 2, 2, -style.weight-1, 0, "v", 0)
-                  drawLine(style, 3, 3, -style.weight-1, 0, "v", 0)
+                  drawLine(style, "vert", 2, 2, -style.weight-1, 0, 0)
+                  drawLine(style, "vert", 3, 3, -style.weight-1, 0, 0)
                   break;
                case "u":
                case "ü":
                case "v":
                case "w":
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   if (letter !== "w") {
-                     drawLine(style, 2, 2, 0, 0, "v", 0)
-                     drawLine(style, 3, 3, 0, 0, "v", 0)
+                     drawLine(style, "vert", 2, 2, 0, 0, 0)
+                     drawLine(style, "vert", 3, 3, 0, 0, 0)
                   }
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   if (letter === "w") {
                      //right side
-                     drawLine(style, 1, 1, wideOffset  + animStretchX, 0, "v", 0)
-                     drawLine(style, 2, 2, wideOffset  + animStretchX, 0, "v", 0)
-                     drawLine(style, 3, 3, wideOffset  + animStretchX, 0, "v", 0)
-                     drawLine(style, 4, 4, wideOffset  + animStretchX, 0, "v", 0)
+                     drawLine(style, "vert", 1, 1, wideOffset  + animStretchX, 0, 0)
+                     drawLine(style, "vert", 2, 2, wideOffset  + animStretchX, 0, 0)
+                     drawLine(style, "vert", 3, 3, wideOffset  + animStretchX, 0, 0)
+                     drawLine(style, "vert", 4, 4, wideOffset  + animStretchX, 0, 0)
                   }
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  if (letter !== "w") drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  if (letter !== "w") drawLine(style, "vert", 2, 2, 0, 0, 0)
                   if ("uü".includes(letter)) {
                      drawCorner(style, "round", 3, 3, 0, 0, "", "")
                      drawCorner(style, "round", 4, 4, 0, 0, "", "")
@@ -1939,35 +1953,36 @@ function drawText (lineNum) {
                   }
                   if (letter === "w") {
                      // right side
-                     drawLine(style, 1, 1, wideOffset + animStretchX, 0, "v", 0)
-                     drawLine(style, 2, 2, wideOffset + animStretchX, 0, "v", 0)
+                     drawLine(style, "vert", 1, 1, wideOffset + animStretchX, 0, 0)
+                     drawLine(style, "vert", 2, 2, wideOffset + animStretchX, 0, 0)
                      drawCorner(style, "diagonal", 3, 3, wideOffset + animStretchX, 0, "", "")
                      drawCorner(style, "diagonal", 4, 4, wideOffset + animStretchX, 0, "", "")
                   }
                   break;
                case "x":
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   drawCorner(style, "diagonal", 4, 4, 0, 0, "", "")
                   style.stack = 0
                   drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
                   drawCorner(style, "diagonal", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 1
+                  style.flipped = true
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   break;
                case "y":
                   style.stack = 0
-                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "end", undefined, true)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawCorner(style, "round", 1, 1, 0, 0, "linecut", "end", true)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "", "")
                   break;
@@ -1976,60 +1991,61 @@ function drawText (lineNum) {
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
-                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "start", undefined, true)
+                  drawCorner(style, "round", 4, 4, 0, 0, "linecut", "start", true)
                   style.stack = 0
-                  drawCorner(style, "diagonal", 1, 1, 0, 0, "", "", "flipped")
-                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "start", "flipped", true)
-                  drawCorner(style, "square", 3, 3, 0, 0, "", "", "flipped")
-                  drawCorner(style, "square", 4, 4, 0, 0, "", "", "flipped")
+                  style.flipped = true
+                  drawCorner(style, "diagonal", 1, 1, 0, 0, "", "")
+                  drawCorner(style, "round", 2, 2, 0, 0, "linecut", "start", true)
+                  drawCorner(style, "square", 3, 3, 0, 0, "", "")
+                  drawCorner(style, "square", 4, 4, 0, 0, "", "")
                   break;
                case "ß":
                   style.stack = 1
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
                   drawCorner(style, "diagonal", 3, 3, 0, 0, "", "")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
                   drawCorner(style, "round", 2, 2, 0, 0, "", "")
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   drawCorner(style, "round", 4, 4, 0, 0, "linecut", "end")
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case "-":
                   style.sizes = [letterOuter]
-                  drawLine(style, 1, 1, 0, +letterOuter*0.5, "h", -1)
-                  drawLine(style, 2, 2, 0, +letterOuter*0.5, "h", -1)
+                  drawLine(style, "hori", 1, 1, 0, +letterOuter*0.5, -1)
+                  drawLine(style, "hori", 2, 2, 0, +letterOuter*0.5, -1)
                   break;
                case "_":
                   style.sizes = [letterOuter]
-                  drawLine(style, 3, 3, 0, 0, "h", -1)
-                  drawLine(style, 4, 4, 0, 0, "h", -1)
+                  drawLine(style, "hori", 3, 3, 0, 0, -1)
+                  drawLine(style, "hori", 4, 4, 0, 0, -1)
                   break;
                case "|":
                   style.sizes = [letterOuter]
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   break;
                case ".":
-                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, 0, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case ",":
-                  drawLine(style, 4, 4, 0, 0, "v", descenders, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, descenders, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case "!":
                   // wip
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", 0,)
-                  drawLine(style, 4, 4, 0, 0, "v", 0,)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0,)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0,)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0,)
-                  drawLine(style, 4, 4, 0, 0, "v", -style.weight-1.5)
-                  drawLine(style, 4, 4, 0, 0, "v", 0, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 1, 1, 0, 0, 0,)
+                  drawLine(style, "vert", 4, 4, 0, 0, -style.weight-1.5)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case "?":
                   // wip
@@ -2039,7 +2055,7 @@ function drawText (lineNum) {
                   drawCorner(style, "round", 3, 3, 0, 0, "", "")
                   style.stack = 0
                   drawCorner(style, "round", 1, 1, 0, 0, "", "")
-                  drawLine(style, 4, 4, 0, 0, "v", ascenders, letterOuter*0.5 - (style.weight+0.5))
+                  drawLine(style, "vert", 4, 4, 0, 0, 0, letterOuter*0.5 - (style.weight+0.5))
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -2049,11 +2065,11 @@ function drawText (lineNum) {
                   style.opacity = 0.5
                   style.sizes = [letterOuter]
                   style.stack = 1
-                  drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-                  drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  drawLine(style, "vert", 1, 1, 0, 0, animAscenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, animAscenders)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", animAscenders)
-                  drawLine(style, 4, 4, 0, 0, "v", animAscenders)
+                  drawLine(style, "vert", 1, 1, 0, 0, animAscenders)
+                  drawLine(style, "vert", 4, 4, 0, 0, animAscenders)
                   break;
                default:
                   style.opacity = 0.5
@@ -2061,11 +2077,11 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawCorner(style, "square", 1, 1, 0, 0, "", "")
                   drawCorner(style, "square", 2, 2, 0, 0, "", "")
-                  drawLine(style, 3, 3, 0, 0, "v", 0)
-                  drawLine(style, 4, 4, 0, 0, "v", 0)
+                  drawLine(style, "vert", 3, 3, 0, 0, 0)
+                  drawLine(style, "vert", 4, 4, 0, 0, 0)
                   style.stack = 0
-                  drawLine(style, 1, 1, 0, 0, "v", 0)
-                  drawLine(style, 2, 2, 0, 0, "v", 0)
+                  drawLine(style, "vert", 1, 1, 0, 0, 0)
+                  drawLine(style, "vert", 2, 2, 0, 0, 0)
                   drawCorner(style, "square", 3, 3, 0, 0, "", "")
                   drawCorner(style, "square", 4, 4, 0, 0, "", "")
                   break;
@@ -2238,7 +2254,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
    } else if (font === "fontb") {
       if (animRings <= 1) {
          if (("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar))
-            || ("i".includes(char) && "abdefhiklnpruvwxz".includes(nextchar))
+            || ("i".includes(char) && "abcdefhiklnpruvwxz".includes(nextchar))
             || ("aghijkmnouvwxyz".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1)
          }
@@ -2484,6 +2500,13 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             case "f":
                minSpaceAfter = 1
                break;
+            case ".":
+            case ",":
+            case "!":
+            case "?":
+               if (!charInSet(nextchar,["gap"])) {
+                  minSpaceAfter = 1
+               }
          }
       }
 
@@ -2552,6 +2575,12 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
                   minSpaceBefore = 1
                   break;
                case "t":
+                  minSpaceBefore = 1
+                  break;
+               case ",":
+               case ".":
+               case "!":
+               case "?":
                   minSpaceBefore = 1
                   break;
             }
@@ -2737,18 +2766,6 @@ function letterYOffsetCount (prevchar, char, nextchar) {
    return offsetSegments
 }
 
-function arcUntil (circleSize, y, altValue) {
-   //if too close
-   if (y <= 0) {
-      return altValue
-   }
-
-   const x = Math.sqrt(circleSize**2 - y**2)
-   const theta = (Math.atan2(y, x));
-   //const amount = (2*theta)/PI
-   return theta
-}
-
 function arcUntilArc (sizeCircle, sizeOther, dist, altValue) {
    //if too close
    // if (da <= 2 || db <= 2) {
@@ -2799,6 +2816,13 @@ function lineType (x1, y1, x2, y2) {
       pop()
       return
    }
+   // WIP
+   // for (let i = 0.1; i <= 1; i+=0.1) {
+   //    const partialX = x1+(x2-x1)*i
+   //    const partialY = y1+(y2-y1)*i
+   //    stroke("#FFFFFF30")
+   //    line(x1, y1, partialX, partialY)
+   // }
    line(x1, y1, x2, y2)
 }
 
@@ -2837,6 +2861,13 @@ function arcType (x, y, w, h, start, stop, layer) {
    if (layer !== undefined) {
       layer.arc(x, y, w, h, start, stop);
       return}
+   //wip
+   // WIP
+   // for (let i = 0.1; i <= 1; i+=0.1) {
+   //    const partialStop = start+(stop-start)*i
+   //    stroke("#FFFFFF30")
+   //    arc(x, y, w, h, start, partialStop)
+   // }
    arc(x, y, w, h, start, stop)
 }
 
@@ -3044,91 +3075,15 @@ function waveValue(input, low, high) {
 
 
 
+function drawCorner (style, shape, arcQ, offQ, tx, ty, cutType, cutSide, alwaysCut, noStretchX, noStretchY) {
 
-
-// function drawCornerFill (style, shape, arcQ, offQ, noStretchX, noStretchY) {
-//    //for entire line
-//    const size = style.sizes[0]
-//    const smallest = style.sizes[style.sizes.length-1]
-//    const fillsize = smallest+style.weight
-
-//    // base position
-//    let xpos = style.posFromLeft + size/2
-//    let ypos = style.posFromTop
-//    // offset based on quarter and prev vertical offset
-//    let offx = (offQ === 3 || offQ === 4) ? 1:0
-//    let offy = (offQ === 2 || offQ === 3) ? 1:0
-//    xpos += (offx > 0) ? style.offsetX : 0
-//    ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
-//    xpos += (offy > 0) ? style.stretchX : 0
-//    ypos += (offx > 0) ? style.stretchY : 0
-
-//    if (shape === "round") {
-//       // angles
-//       let startAngle = PI + (arcQ-1)*HALF_PI
-//       let endAngle = startAngle + HALF_PI
-//       arcType(xpos, ypos, fillsize, fillsize, startAngle, endAngle)
-//    } else if (shape === "square") {
-//       const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-//       const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-//       beginShape()
-//       vertex(xpos+dirX*fillsize/2, ypos)
-//       vertex(xpos+dirX*fillsize/2, ypos+dirY*fillsize/2)
-//       vertex(xpos, ypos+dirY*fillsize/2)
-//       endShape()
-//    } else if (shape === "diagonal") {
-//       const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-//       const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-//       const step = (fillsize-smallest)/2 + 1
-//       const stepslope = step*tan(HALF_PI/4)
-//       beginShape()
-//       vertex(xpos+dirX*fillsize/2, ypos)
-//       vertex(xpos+dirX*fillsize/2, ypos+dirY*stepslope)
-//       vertex(xpos+dirX*stepslope, ypos+dirY*fillsize/2)
-//       vertex(xpos, ypos+dirY*fillsize/2)
-//       endShape()
-//    }
-
-//    if (style.stretchX > 0 && !noStretchX) {
-//       stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-//       const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-//       let stretchXPos = xpos
-//       let stretchYPos = ypos + fillsize*toSideX*0.5
-//       const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
-
-//       // the offset can be in between the regular lines vertically if it would staircase nicely
-//       let offsetShift = 0
-//       let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-//       if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-//          offsetShift = (style.offsetY/3)*stairDir
-//       } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-//          offsetShift = (style.offsetY/2)*stairDir
-//       }
-
-//      lineType(stretchXPos, stretchYPos+offsetShift,
-//          stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
-//    }
-//    if (style.stretchY > 0 && !noStretchY) {
-//       stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-//       const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-//       let stretchXPos = xpos + fillsize*toSideY*0.5
-//       let stretchYPos = ypos
-//       const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
-
-//       // the offset can be in between the regular lines horizontally if it would staircase nicely
-//       let offsetShift = 0
-//       if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-//          offsetShift = style.offsetX/3*dirY
-//       } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-//          offsetShift = style.offsetX/2*dirY
-//       }
-
-//       lineType(stretchXPos+offsetShift, stretchYPos,
-//          stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
-//    }
-// }
-
-function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped, noSmol, noStretchX, noStretchY) {
+   const corner = {
+      cutType: cutType,
+      cutSide: cutSide,
+      alwaysCut: alwaysCut,
+      noStretchX: noStretchX,
+      noStretchY: noStretchY,
+   }
 
    push()
    ty -= style.stack * (style.sizes[0] - style.weight + style.stretchY)
@@ -3136,55 +3091,54 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
    translate(tx, ty)
    noFill()
 
-   const smallest = style.sizes[style.sizes.length-1]
-   const biggest = style.sizes[0]
+   const innerSize = style.sizes[style.sizes.length-1]
+   const outerSize = style.sizes[0]
 
+   // base position
    const offx = (offQ === 3 || offQ === 4) ? 1:0
    const offy = (offQ === 2 || offQ === 3) ? 1:0
-   const basePos = getQuarterPos(offx, offy, biggest)
 
-   function getQuarterPos(offx, offy, biggest) {
-      // base position
-      let xpos = style.posFromLeft + (biggest/2)
-      let ypos = style.posFromTop
-      // offset based on quarter and prev vertical offset
-      xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
-      xpos += (offy > 0) ? style.stretchX : 0
-      ypos += (offx > 0) ? style.stretchY : 0
-      return {x: xpos, y:ypos}
-   }
+   //position based on quarter
+   let basePos = {x: style.posFromLeft + (outerSize/2), y:style.posFromTop}
+   // offset based on quarter and previous vertical offset
+   basePos.x += (offx > 0) ? style.offsetX : 0
+   basePos.y += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
+   // offset based on quarter and stretch
+   basePos.x += (offy > 0) ? style.stretchX : 0
+   basePos.y += (offx > 0) ? style.stretchY : 0
 
-   //draw fills
-   stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
-   strokeCap(SQUARE)
-   strokeWeight(style.weight*strokeScaleFactor)
-   strokeJoin(MITER)
-   // only if corner can be drawn at all
+
+   //first, draw the background
    if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
-      draw(smallest+style.weight, "bg")
+      stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
+      strokeWeight(style.weight*strokeScaleFactor)
+      strokeCap(SQUARE)
+      strokeJoin(MITER)
+      drawModule(innerSize+style.weight, "bg")
+
+      // old corner fill requirements:
       //drawCornerFill(style, shape, arcQ, offQ, noStretchX, noStretchY)
       // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
       //if (cutMode === "" || cutMode === "branch") {}
    }
 
+   // draw the foreground
    strokeCap(ROUND)
    strokeJoin(ROUND)
    strokeWeight((style.stroke/10)*strokeScaleFactor)
    if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
-   let innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-   let outerColor = palette.fg
+   const innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   const outerColor = palette.fg
 
    style.sizes.forEach((size) => {
-      draw(size, "fg")
+      drawModule(size, "fg")
    })
-   
 
-   function draw(size, layer) {
+   function drawModule(size, layer) {
 
       if (layer === "fg") {
          // gradient from inside to outside - color or weight
-         ringStyle(size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+         ringStyle(size, innerSize, outerSize, innerColor, outerColor, style.flipped, arcQ, offQ, style.opacity, style.stroke)
       }
 
       let xpos = basePos.x
@@ -3198,18 +3152,36 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
          let cutDifference = 0
          let drawCurve = true
 
-         if (cutMode === "linecut") {
-            if (smallest-2 <= 0 && noSmol) {
-               drawCurve = false
-            }
-            if (layer === "fg") cutDifference = HALF_PI-arcUntil(size, smallest-2, HALF_PI)
-         } else if (cutMode === "roundcut") {
-            if ((smallest <= 2 || biggest+2 <= 2) && noSmol) {
+         if (corner.cutType === "linecut") {
+            if (innerSize-2 <= 0 && corner.alwaysCut) {
                drawCurve = false
             }
             if (layer === "fg") {
-               if (smallest > 2) {
-                  cutDifference = HALF_PI-arcUntilArc(size, biggest+2, smallest+style.weight, HALF_PI)
+               function arcUntil (y) {
+                  const altValue = HALF_PI
+                  //if too close
+                  if (y <= 0) {
+                     return altValue
+                  }
+                  const x = Math.sqrt(size**2 - y**2)
+                  const dangerousOverlap = ((size - x) < 0.6)
+                  const vertical = (corner.cutSide === "end" && (arcQ%2===1)
+                     || corner.cutSide === "start" && arcQ%2===0)
+                  if(dangerousOverlap && vertical && size === outerSize && animSpacing <=0) return 0
+                  //if (frameCount === 1) print(dangerousOverlap)
+                  const theta = (Math.atan2(y, x));
+                  //const amount = (2*theta)/PI
+                  return theta
+               }
+               cutDifference = HALF_PI-arcUntil(innerSize-2)
+            }
+         } else if (corner.cutType === "roundcut") {
+            if ((innerSize <= 2 || outerSize+2 <= 2) && corner.alwaysCut) {
+               drawCurve = false
+            }
+            if (layer === "fg") {
+               if (innerSize > 2) {
+                  cutDifference = HALF_PI-arcUntilArc(size, outerSize+2, innerSize+style.weight, HALF_PI)
                } else {
                   cutDifference = 0
                }
@@ -3217,18 +3189,18 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
          }
 
          //angle
-         if (cutSide === "start") {
+         if (corner.cutSide === "start") {
             startAngle += cutDifference
-         } else if (cutSide === "end") {
+         } else if (corner.cutSide === "end") {
             endAngle -= cutDifference
          }
 
          // draw the line (until the cut angle if fg)
          if (drawCurve) {
-            if (layer === "fg" || cutMode === "" || cutMode === "extend") {
+            if (layer === "fg" || corner.cutType === "" || corner.cutType === "extend") {
                arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
             } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
-               const layerGroup = (cutMode === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
+               const layerGroup = (corner.cutType === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                if (layerGroup[size] === undefined) {
                   layerGroup[size] = createGraphics((size)*animZoom, (size)*animZoom)
                   if (mode.xray) layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010")
@@ -3238,7 +3210,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
                   layerGroup[size].strokeCap(SQUARE)
                   layerGroup[size].strokeWeight(style.weight*strokeScaleFactor)
                   arcType(size,size,size,size,HALF_PI*2,HALF_PI*3, layerGroup[size])
-                  if (cutMode === "linecut") {
+                  if (corner.cutType === "linecut") {
                      for (let x = 0; x < size*animZoom; x++) {
                         const lineUntil = (size+style.weight)*0.5+1+(style.stroke/10)*0.5
                         for (let y = 0; y < lineUntil*animZoom; y++) {
@@ -3258,7 +3230,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
                if (arcQ === 2) {rotate(HALF_PI)}
                else if (arcQ === 3) {rotate(HALF_PI*2)}
                else if (arcQ === 4) {rotate(HALF_PI*3)}
-               if (cutSide === 'start') {scale(-1,1); rotate(HALF_PI)}
+               if (corner.cutSide === 'start') {scale(-1,1); rotate(HALF_PI)}
                image(layerGroup[size], -size, -size, size, size);
                pop()
             }
@@ -3266,16 +3238,16 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
       } else if (shape === "square") {
          const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
          const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-         if (cutMode === "branch" && layer === "fg") {
+         if (corner.cutType === "branch" && layer === "fg") {
             let branchLength = size
-            let revSize = (biggest+smallest)-size
-            if (size > (biggest+smallest)/2) branchLength = biggest-(size-smallest)
+            let revSize = (outerSize+innerSize)-size
+            if (size > (outerSize+innerSize)/2) branchLength = outerSize-(size-innerSize)
             lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
             lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
-            if ((arcQ % 2 === 1) === (cutSide === "start")) {
-               lineType(xpos+dirX*biggest/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
+            if ((arcQ % 2 === 1) === (corner.cutSide === "start")) {
+               lineType(xpos+dirX*outerSize/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
             } else {
-               lineType(xpos+dirX*size/2, ypos+dirY*biggest/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
+               lineType(xpos+dirX*size/2, ypos+dirY*outerSize/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
             }
          } else {
             beginShape()
@@ -3287,26 +3259,26 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
       } else if (shape === "diagonal") {
          const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
          const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
-         const step = (size-smallest)/2 + 1
+         const step = (size-innerSize)/2 + 1
          const stepslope = step*tan(HALF_PI/4)
          let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
          let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
 
          if (layer === "fg") {
-            if (cutMode === "linecut" && ((biggest-smallest)/2+1)*tan(HALF_PI/4) < smallest/2-2) {
+            if (corner.cutType === "linecut" && ((outerSize-innerSize)/2+1)*tan(HALF_PI/4) < innerSize/2-2) {
                let changeAxis = ""
-               if (cutSide === "start") {
+               if (corner.cutSide === "start") {
                   changeAxis = (arcQ === 1 || arcQ === 3) ? "x" : "y"
-               } else if (cutSide === "end") {
+               } else if (corner.cutSide === "end") {
                   changeAxis = (arcQ === 1 || arcQ === 3) ? "y" : "x"
                }
                if (changeAxis === "x") {
-                  xPoint.x = xpos+dirX*(biggest/2 -style.weight -1)
-                  xPoint.y = yPoint.y - (biggest/2 - style.weight -1) + dirY*stepslope
+                  xPoint.x = xpos+dirX*(outerSize/2 -style.weight -1)
+                  xPoint.y = yPoint.y - (outerSize/2 - style.weight -1) + dirY*stepslope
                   lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
                } else if (changeAxis === "y") {
-                  yPoint.y = ypos+dirY*(biggest/2 -style.weight -1)
-                  yPoint.x = xPoint.x - (biggest/2 - style.weight -1) + dirX*stepslope
+                  yPoint.y = ypos+dirY*(outerSize/2 -style.weight -1)
+                  yPoint.x = xPoint.x - (outerSize/2 - style.weight -1) + dirX*stepslope
                   lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
                }
                lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
@@ -3328,10 +3300,10 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
       }
 
       // stretch
-      const cutX = (arcQ % 2 === 0) === (cutSide === "start")
-      if (style.stretchX > 0 && !noStretchX) {
+      const cutX = (arcQ % 2 === 0) === (corner.cutSide === "start")
+      if (style.stretchX > 0 && !corner.noStretchX) {
          // check if not cut off
-         if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && !cutX)) {
+         if (corner.cutType === "" || corner.cutType === "branch" || (corner.cutType!== "" && !cutX)) {
             if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
             let stretchXPos = xpos
@@ -3351,9 +3323,9 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
                stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
          }
       }
-      if (style.stretchY > 0 && !noStretchY) {
+      if (style.stretchY > 0 && !corner.noStretchY) {
          // check if not cut off
-         if (cutMode === "" || cutMode === "branch" || (cutMode!== "" && cutX)) {
+         if (corner.cutType === "" || corner.cutType === "branch" || (corner.cutType!== "" && cutX)) {
             if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
             const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
             let stretchXPos = xpos + size*toSideY*0.5
@@ -3383,8 +3355,8 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
             }
          }
       }
-      const extendamount = ((biggest % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
-      if (cutMode === "extend" && extendamount > 0) {
+      const extendamount = ((outerSize % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
+      if (corner.cutType === "extend" && extendamount > 0) {
          const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
          let extendXPos = xpos
          let extendYPos = ypos + size*toSideX*0.5
@@ -3395,7 +3367,7 @@ function drawCorner (style, shape, arcQ, offQ, tx, ty, cutMode, cutSide, flipped
    pop()
 }
 
-function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flipped, noStretch) {
+function drawLine (style, axis, arcQ, offQ, tx, ty, extension, startFrom, noStretch) {
 
    push()
    ty -= style.stack * (style.sizes[0] - style.weight + style.stretchY)
@@ -3407,49 +3379,47 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
    const outerSize = style.sizes[0]
 
    // base position
-   const basePos = getQuarterPos()
-   function getQuarterPos() {
-      // base position
-      const offx = (offQ === 3 || offQ === 4) ? 1:0
-      const offy = (offQ === 2 || offQ === 3) ? 1:0
-               //const topOffset = (outerSize < 0) ? -style.offsetX : 0
-      let xpos = style.posFromLeft + (outerSize/2)
-      let ypos = style.posFromTop
-      // offset based on quarter and prev vertical offset
-      xpos += (offx > 0) ? style.offsetX : 0
-      ypos += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
-      xpos += (offy > 0) ? style.stretchX : 0
-      ypos += (offx > 0) ? style.stretchY : 0
-      return {x: xpos, y:ypos}
-   }
+   const offx = (offQ === 3 || offQ === 4) ? 1:0
+   const offy = (offQ === 2 || offQ === 3) ? 1:0
+
+   //position based on quarter
+   let basePos = {x: style.posFromLeft + (outerSize/2), y:style.posFromTop}
+   // offset based on quarter and previous vertical offset
+   basePos.x += (offx > 0) ? style.offsetX : 0
+   basePos.y += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
+   // offset based on quarter and stretch
+   basePos.x += (offy > 0) ? style.stretchX : 0
+   basePos.y += (offx > 0) ? style.stretchY : 0
+
 
    //first, draw the background
    if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
       stroke((mode.xray)? palette.xrayBg : palette.bg)
       strokeWeight(style.weight*strokeScaleFactor)
       strokeCap(SQUARE)
-      draw(innerSize+style.weight, "bg")
+      strokeJoin(MITER)
+      drawModule(innerSize+style.weight, "bg")
    }
 
    // draw the foreground
    strokeCap(ROUND)
+   strokeJoin(ROUND)
    strokeWeight((style.stroke/10)*strokeScaleFactor)
    if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
    const innerColor = (mode.xray)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
    const outerColor = palette.fg
 
    style.sizes.forEach((size) => {
-      draw(size, "fg")
+      drawModule(size, "fg")
    })
-   
 
-   function draw(size, layer) {
+   function drawModule(size, layer) {
 
       let outerExt // to make the fill rectangles a little shorter at the end (?)
 
       if (layer === "fg") {
          // gradient from inside to outside - color or weight
-         ringStyle(size, innerSize, outerSize, innerColor, outerColor, flipped, arcQ, offQ, style.opacity, style.stroke)
+         ringStyle(size, innerSize, outerSize, innerColor, outerColor, style.flipped, arcQ, offQ, style.opacity, style.stroke)
          outerExt = 0
       } else {
          outerExt = ((mode.xray) ? 0.2*strokeScaleFactor : style.weight/10) *-0.5
@@ -3462,7 +3432,7 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
       const innerPosV = (startFrom !== undefined) ? startFrom - outerExt : 0
       const innerPosH = (startFrom !== undefined) ? startFrom - outerExt : 0
 
-      if (axis === "v") {
+      if (axis === "vert") {
          const toSideX = (arcQ === 1 || arcQ === 4) ? -1 : 1
          x1 += size*toSideX*0.5
          x2 += size*toSideX*0.5
@@ -3497,7 +3467,7 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
                }
             }
          }
-      } else if (axis === "h") {
+      } else if (axis === "hori") {
          const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
          y1 += size*toSideY*0.5
          y2 += size*toSideY*0.5
@@ -3526,106 +3496,11 @@ function drawLine (style, arcQ, offQ, tx, ty, axis, extension, startFrom, flippe
    pop()
 }
 
-// function drawLineFill (style, arcQ, offQ, axis, extension, startFrom) {
-
-//    stroke((mode.xray)? palette.xrayBg : palette.bg)
-//    strokeWeight(style.weight*strokeScaleFactor)
-//    strokeCap(SQUARE)
-
-//    const biggest = style.sizes[0]
-//    const smallest = style.sizes[style.sizes.length-1]
-//    const topOffset = (biggest < 0) ? -style.offsetX : 0
-
-//    // to make the rectangles a little shorter at the end (?)
-//    let strokeWeightReference = (style.weight/10)
-//    if (mode.xray) {
-//       strokeWeightReference = 0.2*strokeScaleFactor
-//    }
-//    const outerExt = strokeWeightReference*-0.5
-
-//    function getQuarterPos(offx, offy, biggest) {
-//       // base position
-//       let xpos = topOffset + style.posFromLeft + (biggest/2)
-//       let ypos = style.posFromTop
-//       // offset based on quarter and prev vertical offset
-//       xpos += (offx > 0) ? style.offsetX : 0
-//       ypos += (style.vOffset+offy) % 2==0 ? style.offsetY : 0
-//       xpos += (offy > 0) ? style.stretchX : 0
-//       ypos += (offx > 0) ? style.stretchY : 0
-//       return {x: xpos, y:ypos}
-//    }
-
-//    // base position
-//    const offx = (offQ === 3 || offQ === 4) ? 1:0
-//    const offy = (offQ === 2 || offQ === 3) ? 1:0
-//    const basePos = getQuarterPos(offx, offy, biggest)
-
-//    let x1 = basePos.x
-//    let x2 = basePos.x
-//    let y1 = basePos.y
-//    let y2 = basePos.y
-
-//    const innerPosV = (startFrom !== undefined) ? startFrom - outerExt: 0
-//    const innerPosH = (startFrom !== undefined) ? startFrom - outerExt: 0
-
-//    if (axis === "v") {
-//       const toSideX = (arcQ === 1 || arcQ === 4) ? -0.5 : 0.5
-//       x1 += (smallest+style.weight)*toSideX
-//       x2 += (smallest+style.weight)*toSideX
-//       const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-//       y1 += innerPosV * dirY
-//       y2 += (biggest*0.5 + extension + outerExt) * dirY
-//       //only draw the non-stretch part if it is long enough to be visible
-//       if (dirY*(y2-y1)>0.1) {
-//         lineType(x1, y1, x2, y2)
-//       }
-//       if (style.stretchY !== 0 && innerPosV === 0) {
-//          //stretch
-//          // the offset can be in between the regular lines horizontally if it would staircase nicely
-//          let offsetShift = 0
-//          if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-//             offsetShift = style.offsetX/3*dirY
-//          } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-//             offsetShift = style.offsetX/2*dirY
-//          }
-
-//          stroke((mode.xray)? palette.xrayStretch : palette.bg)
-//          lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
-//       }
-//    } else if (axis === "h") {
-//       const toSideY = (arcQ === 1 || arcQ === 2) ? -0.5 : 0.5
-//       y1 += (smallest+style.weight)*toSideY
-//       y2 += (smallest+style.weight)*toSideY
-//       const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
-//       x1 += innerPosH * dirX
-//       x2 += (biggest*0.5 + extension + outerExt) * dirX
-//       //only draw the non-stretch part if it is long enough to be visible
-//       if (dirX*(x2-x1)>0.1) {
-//         lineType(x1, y1, x2, y2)
-//       }
-//       if (style.stretchX !== 0 && innerPosH === 0) {
-//          //stretch
-
-//          // the offset can be in between the regular lines vertically if it would staircase nicely
-//          let offsetShift = 0
-//          let stairDir = (style.vOffset+offy) % 2===0 ? -1 : 1
-//          if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-//             offsetShift = (style.offsetY/3)*stairDir
-//          } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-//             offsetShift = (style.offsetY/2)*stairDir
-//          }
-
-//          stroke((mode.xray)? palette.xrayStretch : palette.bg)
-//          lineType(x1-style.stretchX*0.5*dirX, y1+offsetShift, x1, y2+offsetShift)
-//       }
-//    }
-// }
-
-function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, arcQ, offQ, opacity, strokeWidth) {
+function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
    //strokeweight
    if ((effect==="weightgradient") && !mode.xray) {
       strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
-      if ((arcQ !== offQ) !== (flipped === "flipped")) {
+      if ((arcQ !== offQ) !== isFlipped) {
          strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
       }
    }
@@ -3637,7 +3512,7 @@ function ringStyle (size, smallest, biggest, innerColor, outerColor, flipped, ar
       innerEdgeReference = biggest-2
    }
    let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
-   if ((arcQ !== offQ) !== (flipped === "flipped")) {
+   if ((arcQ !== offQ) !== isFlipped ) {
       lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
    }
    lerpedColor = lerpColor(palette.bg, lerpedColor, opacity)
