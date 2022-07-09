@@ -3023,7 +3023,6 @@ function dropdownTextToEffect (text) {
       case "stretch outer (wip)":
          effect = "outerstretch"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
-         values.stretchX.to = 0
          break;
       case "spheres (test)":
          effect = "spheres"
@@ -3089,83 +3088,98 @@ function waveValue(input, low, high) {
 function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    push()
-   ty -= style.stack * (style.sizes[0] - style.weight + style.stretchY)
-   if (effect !== "staircase") tx -= style.stack * style.offsetX
-   translate(tx, ty)
    noFill()
 
-   const innerSize = style.sizes[style.sizes.length-1]
-   const outerSize = style.sizes[0]
+   // useful numbers
+   const INNERSIZE = style.sizes[style.sizes.length-1]
+   const OUTERSIZE = style.sizes[0]
+   const outerStretchScale = (style.stretchY/2) / ((style.weight))/2
 
-   //position based on quarter
+
+   // position
+   let basePos = {
+      x: style.posFromLeft + tx + (OUTERSIZE/2), 
+      y:style.posFromTop + ty
+   }
+   //based on quarter
    const bottomHalf = (offQ === 3 || offQ === 4) ? 1:0
    const rightHalf = (offQ === 2 || offQ === 3) ? 1:0
-   let basePos = {x: style.posFromLeft + (outerSize/2), y:style.posFromTop}
    // offset based on quarter and previous vertical offset
    basePos.x += bottomHalf * style.offsetX
    basePos.y += (style.vOffset+rightHalf) *style.offsetY //% 2==0 ? style.offsetY : 0
    // offset based on quarter and stretch
    basePos.x += rightHalf * style.stretchX
    basePos.y += bottomHalf * style.stretchY
+   // modify based on stack (top half)
+   basePos.y -= style.stack * (OUTERSIZE - style.weight + style.stretchY)
+   // modify based on offset
+   if (effect !== "staircase") basePos.x -= style.stack * style.offsetX
 
-   //for effect
-   let outerStretchScale = (style.stretchY/2) / ((style.weight))/2
 
-   //first, draw the background
-   if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
+   ;(function drawModuleBG() {
+      if (webglEffects.includes(effect)) return
+      if (style.sizes.length <= 1) return
+      if (style.weight <= 0) return
+      if (!mode.drawFills) return
+
+      // old corner fill requirements:
+      // ! ((smallest <= 2 || letterOuter+2 <= 2) && noSmol)
+
+      // fill style
       stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
       strokeWeight(style.weight*strokeScaleFactor)
       strokeCap(SQUARE)
       strokeJoin(MITER)
-      
-      drawLineOfModule(innerSize+style.weight, "bg", 0)
-      if (effect === "outerstretch" && style.weight > 0 && style.stretchY > 0 && shapeParams.noStretchY === undefined) {
-         if (font === "fonta" 
-         || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
-      
-            let outerStretch = -(outerSize-innerSize)*outerStretchScale
-            for (let betweenStep = 0; betweenStep > outerStretch; betweenStep-=style.weight) {
-               drawLineOfModule(innerSize+style.weight, "bg", betweenStep)
+
+      // draw fill for moduleonce
+      drawSinglePathOfModule(INNERSIZE+style.weight, "bg", 0)
+
+      // only keep going if there are more fills to draw, shifted inwards
+      if (effect !== "outerstretch") return
+      if (style.stretchY <= 0) return
+      if (shapeParams.noStretchY) return
+
+      if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
+   
+         let outerStretch = -(OUTERSIZE-INNERSIZE)*outerStretchScale
+         if (font === "fontb") outerStretch *= 2
+         for (let betweenStep = 0; betweenStep > outerStretch; betweenStep-=style.weight) {
+            drawSinglePathOfModule(INNERSIZE+style.weight, "bg", betweenStep)
+         }
+         drawSinglePathOfModule(INNERSIZE+style.weight, "bg", outerStretch)
+      }
+   })()
+
+   // colors
+   const INNERCOLOR = (mode.xray) ? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   const OUTERCOLOR = palette.fg
+
+   ;(function drawModuleFG() {
+      // draw the foreground
+      strokeCap(ROUND)
+      strokeJoin(ROUND)
+      strokeWeight((style.stroke/10)*strokeScaleFactor)
+      if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
+
+      style.sizes.forEach((size) => {
+         let outerStretch = 0
+         if (effect === "outerstretch" && style.weight > 0 && style.stretchY > 0 && shapeParams.noStretchY === undefined) {
+            if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
+            outerStretch = -(OUTERSIZE-size)*outerStretchScale
+            if (font === "fontb") outerStretch *= 2
             }
-            drawLineOfModule(innerSize+style.weight, "bg", outerStretch)
          }
-      }
-
-      // old corner fill requirements:
-      //drawShapeFill(style, shape, arcQ, offQ, noStretchX, noStretchY)
-      // || !((smallest <= 2 || letterOuter+2 <= 2)&&noSmol)
-      //if (cutMode === "" || cutMode === "branch") {}
-   }
-
-   // draw the foreground
-   strokeCap(ROUND)
-   strokeJoin(ROUND)
-   strokeWeight((style.stroke/10)*strokeScaleFactor)
-   if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
-   const innerColor = (mode.xray)? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-   const outerColor = palette.fg
-
-   style.sizes.forEach((size) => {
-      // wip effect test
-      // move inwards vertically
-      // (style.weight) = stretchV/2 + 1
-      let outerStretch = 0
-      if (effect === "outerstretch" && style.weight > 0 && style.stretchY > 0 && shapeParams.noStretchY === undefined) {
-         if (font === "fonta" 
-         || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
-         outerStretch = -(outerSize-size)*outerStretchScale
-         }
-      }
-      drawLineOfModule(size, "fg", outerStretch)
-   })
+         drawSinglePathOfModule(size, "fg", outerStretch)
+      })
+   })()
 
 
-   function drawLineOfModule(size, layer, outerStretch) {
+   function drawSinglePathOfModule(size, layer, outerStretch) {
 
-      // style should change per ring if it's in the foreground
       if (layer === "fg") {
+         // style should change per ring if it's in the foreground
          // gradient from inside to outside - color or weight
-         ringStyle(size, innerSize, outerSize, innerColor, outerColor, style.flipped, arcQ, offQ, style.opacity, style.stroke)
+         ringStyle(size, INNERSIZE, OUTERSIZE, INNERCOLOR, OUTERCOLOR, style.flipped, arcQ, offQ, style.opacity, style.stroke)
       }
 
       // LINE
@@ -3191,7 +3205,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             x2 += size*toSideX*0.5
             const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
             y1 += (innerPosV) * dirY
-            y2 += (outerSize*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirY
+            y2 += (OUTERSIZE*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirY
             //only draw the non-stretch part if it is long enough to be visible
             if (dirY*(y2-y1)>=0) {
                lineType(x1, y1, x2, y2)
@@ -3206,9 +3220,17 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
                   offsetShift = style.offsetX/2*dirY
                }
+
                if (!midlineEffects.includes(effect)) {
                   if (layer === "bg") stroke((mode.xray)? palette.xrayStretch : palette.bg)
-                  lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+                  if (effect === "outerstretch" && font === "fontb") {
+                     if ((style.stack === 1 && dirY === -1) || (style.stack === 0 && dirY === 1)) {
+                        lineType(x1-offsetShift, y1-style.stretchY*dirY, x2-offsetShift, y1)
+                     }
+                  } else {
+                     lineType(x1-offsetShift, y1-style.stretchY*0.5*dirY, x2-offsetShift, y1)
+                  }
+                  
                }
                
                // if vertical line goes down, set those connection spots in the array
@@ -3227,7 +3249,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             y2 += (size*0.5+outerStretch)*toSideY
             const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
             x1 += innerPosH * dirX
-            x2 += (outerSize*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirX
+            x2 += (OUTERSIZE*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirX
             //only draw the non-stretch part if it is long enough to be visible
             if (dirX*(x2-x1)>=0) {
                lineType(x1, y1, x2, y2)
@@ -3257,47 +3279,54 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
 
          if (shape === "round") {
+
             // angles
             let startAngle = PI + (arcQ-1)*HALF_PI
             let endAngle = startAngle + HALF_PI
 
-            let cutDifference = 0
-            let drawCurve = true
+            let cutDifference = shortenAngleBy()
+            let drawCurve = true // gets updated in function
 
-            if (shapeParams.type === "linecut") {
-               if (innerSize-2 <= 0 && shapeParams.alwaysCut) {
-                  drawCurve = false
-               }
-               if (layer === "fg") {
 
-                  const vertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
+            function shortenAngleBy() {
+               let cutDifference = 0
 
-                  function arcUntil (y) {
-                     const altValue = HALF_PI
-                     //if too close
-                     if (y <= 0) {
-                        return altValue
-                     }
-                     const x = Math.sqrt(size**2 - y**2)
-                     const dangerousOverlap = ((size - x) < 0.6)
-                     if(dangerousOverlap && vertical && size === outerSize && animSpacing <=0) return 0
-                     //if (frameCount === 1) print(dangerousOverlap)
-                     const theta = (Math.atan2(y, x));
-                     //const amount = (2*theta)/PI
-                     return theta
+               if (shapeParams.type === "linecut") {
+
+                  if (INNERSIZE-2 <= 0 && shapeParams.alwaysCut) {
+                     drawCurve = false
                   }
-                  let overlapWeight = outerSize-innerSize
-                  //wip inside e
-                  if (outerStretch !== 0 && vertical) overlapWeight += style.stretchY/2 + outerStretch
-                  //if (frameCount === 1) print(outerStretch)
-                  cutDifference = HALF_PI-arcUntil(outerSize-(overlapWeight)-2)
-               }
-            } else if (shapeParams.type === "roundcut") {
-               if ((innerSize <= 2 || outerSize+2 <= 2) && shapeParams.alwaysCut) {
-                  drawCurve = false
-               }
-               if (layer === "fg") {
-                  if (innerSize > 2) {
+                  if (layer === "fg") {
+
+                     const vertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
+
+                     function arcUntil (y) {
+                        const altValue = HALF_PI
+                        //if too close
+                        if (y <= 0) {
+                           return altValue
+                        }
+                        const x = Math.sqrt(size**2 - y**2)
+                        const dangerousOverlap = ((size - x) < 0.6)
+                        if(dangerousOverlap && vertical && size === OUTERSIZE && animSpacing <=0) return 0
+                        //if (frameCount === 1) print(dangerousOverlap)
+                        const theta = (Math.atan2(y, x));
+                        //const amount = (2*theta)/PI
+                        return theta
+                     }
+                     let overlapWeight = OUTERSIZE-INNERSIZE
+                     //wip inside e
+                     if (outerStretch !== 0 && vertical) overlapWeight += style.stretchY/2 + outerStretch
+                     //if (frameCount === 1) print(outerStretch)
+                     cutDifference = HALF_PI-arcUntil(OUTERSIZE-(overlapWeight)-2)
+                  }
+
+               } else if (shapeParams.type === "roundcut") {
+
+                  if ((INNERSIZE <= 2 || OUTERSIZE+2 <= 2) && shapeParams.alwaysCut) {
+                     drawCurve = false
+                  }
+                  if (layer === "fg" && INNERSIZE > 2) {
 
                      function arcUntilArc (sizeCircle, sizeOther, dist) {
                         //if too close
@@ -3320,21 +3349,21 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         return theta
                      }
 
-                     cutDifference = HALF_PI-arcUntilArc(size, outerSize+2, innerSize+style.weight)
-                  } else {
-                     cutDifference = 0
+                     cutDifference = HALF_PI-arcUntilArc(size, OUTERSIZE+2, INNERSIZE+style.weight)
                   }
                }
+               return cutDifference
             }
 
-            //angle
+
+            // pick which end to cut
             if (shapeParams.at === "start") {
                startAngle += cutDifference
             } else if (shapeParams.at === "end") {
                endAngle -= cutDifference
             }
 
-            // draw the line (until the cut angle if fg)
+            // draw the line (until the cut angle if foreground)
             if (drawCurve) {
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
                   arcType(basePos.x,basePos.y + outerStretch*dirY,size,size,startAngle,endAngle)
@@ -3374,20 +3403,22 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   pop()
                }
             }
+
          } else if (shape === "square") {
+
             if (shapeParams.type === "branch" && layer === "fg") {
                let branchLength = size
-               let revSize = (outerSize+innerSize)-size
-               if (size > (outerSize+innerSize)/2) {
-                  branchLength = outerSize-(size-innerSize)
+               let revSize = (OUTERSIZE+INNERSIZE)-size
+               if (size > (OUTERSIZE+INNERSIZE)/2) {
+                  branchLength = OUTERSIZE-(size-INNERSIZE)//+outerStretch*dirY*1
                   //outerStretch = -(outerSize-size)*outerStretchScale
                }
                lineType(xpos+dirX*size/2, ypos+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*branchLength/2+outerStretch*dirY)
                lineType(xpos, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*branchLength/2, ypos+dirY*size/2+outerStretch*dirY)
                if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  lineType(xpos+dirX*outerSize/2, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*revSize/2, ypos+dirY*size/2+outerStretch*dirY)
+                  lineType(xpos+dirX*OUTERSIZE/2, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*revSize/2, ypos+dirY*size/2+outerStretch*dirY)
                } else {
-                  lineType(xpos+dirX*size/2, ypos+dirY*outerSize/2+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*revSize/2+outerStretch*dirY)
+                  lineType(xpos+dirX*size/2, ypos+dirY*OUTERSIZE/2+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*revSize/2+outerStretch*dirY)
                }
             } else {
                beginShape()
@@ -3396,14 +3427,16 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                vertex(xpos, ypos+dirY*size/2+outerStretch*dirY)
                endShape()
             }
+
          } else if (shape === "diagonal") {
-            const step = (size-innerSize)/2 + 1
+
+            const step = (size-INNERSIZE)/2 + 1
             const stepslope = step*tan(HALF_PI/4)
             let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
             let yPoint = createVector(xpos+dirX*stepslope, ypos+dirY*size/2)
 
             if (layer === "fg") {
-               if (shapeParams.type === "linecut" && ((outerSize-innerSize)/2+1)*tan(HALF_PI/4) < innerSize/2-2) {
+               if (shapeParams.type === "linecut" && ((OUTERSIZE-INNERSIZE)/2+1)*tan(HALF_PI/4) < INNERSIZE/2-2) {
                   let changeAxis = ""
                   if (shapeParams.at === "start") {
                      changeAxis = (arcQ === 1 || arcQ === 3) ? "x" : "y"
@@ -3411,12 +3444,12 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      changeAxis = (arcQ === 1 || arcQ === 3) ? "y" : "x"
                   }
                   if (changeAxis === "x") {
-                     xPoint.x = xpos+dirX*(outerSize/2 -style.weight -1)
-                     xPoint.y = yPoint.y - (outerSize/2 - style.weight -1) + dirY*stepslope
+                     xPoint.x = xpos+dirX*(OUTERSIZE/2 -style.weight -1)
+                     xPoint.y = yPoint.y - (OUTERSIZE/2 - style.weight -1) + dirY*stepslope
                      lineType(xpos, yPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
                   } else if (changeAxis === "y") {
-                     yPoint.y = ypos+dirY*(outerSize/2 -style.weight -1)
-                     yPoint.x = xPoint.x - (outerSize/2 - style.weight -1) + dirX*stepslope
+                     yPoint.y = ypos+dirY*(OUTERSIZE/2 -style.weight -1)
+                     yPoint.x = xPoint.x - (OUTERSIZE/2 - style.weight -1) + dirX*stepslope
                      lineType(xPoint.x, ypos+outerStretch*dirY, xPoint.x, xPoint.y+outerStretch*dirY)
                   }
                   lineType(xPoint.x, xPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
@@ -3438,66 +3471,90 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          }
 
          // stretch
-         const cutX = (arcQ % 2 === 0) === (shapeParams.at === "start")
-         if (style.stretchX > 0 && shapeParams.noStretchX === undefined) {
-            // check if not cut off
-            if (shapeParams.type === undefined || shapeParams.type === "branch" || (shapeParams.type!== undefined && !cutX)) {
-               if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-               const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-               let stretchXPos = xpos
-               let stretchYPos = ypos + ((outerStretch===0)? size : outerStretch) *toSideX*0.5
-               const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
 
-               // the offset can be in between the regular lines vertically if it would staircase nicely
-               let offsetShift = 0
-               let stairDir = (style.vOffset+(offQ === 2 || offQ === 3) ? 1:0) % 2===0 ? -1 : 1
-               if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-                  offsetShift = (style.offsetY/3)*stairDir
-               } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-                  offsetShift = (style.offsetY/2)*stairDir
-               }
+         // cut in direction of stretch?
+         function isCutInDir (type, dir) {
 
-               lineType(stretchXPos, stretchYPos+offsetShift,
-                  stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
-            }
+            if (type === undefined) return false
+            if (type === "branch") return false
+            //if (type === "extend") return false
+
+            const cutX = (arcQ % 2 === 0) === (shapeParams.at === "start")
+            if (dir === "x") return cutX
+            return !cutX
          }
-         if (style.stretchY > 0 && shapeParams.noStretchY === undefined 
-            && (layer === "fg" || (outerStretch===0))) {
-            // check if not cut off
-            if (shapeParams.type === undefined || shapeParams.type === "branch" || (shapeParams.type!== undefined && cutX)) {
-               if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-               const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-               let stretchXPos = xpos + size*toSideY*0.5
-               let stretchYPos = ypos
-               const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
 
-               // the offset can be in between the regular lines horizontally if it would staircase nicely
-               let offsetShift = 0
-               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-                  offsetShift = style.offsetX/3*dirY
-               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-                  offsetShift = style.offsetX/2*dirY
+         if (style.stretchX > 0 && shapeParams.noStretchX === undefined && !isCutInDir(shapeParams.type, "x")) {
+
+            if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+            const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
+            let stretchXPos = xpos
+            let stretchYPos = ypos + ((outerStretch===0)? size*0.5 : size*0.5+outerStretch) *toSideX
+            const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
+
+            // the offset can be in between the regular lines vertically if it would staircase nicely
+            let offsetShift = 0
+            let stairDir = (style.vOffset+(offQ === 2 || offQ === 3) ? 1:0) % 2===0 ? -1 : 1
+            if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
+               offsetShift = (style.offsetY/3)*stairDir
+            } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
+               offsetShift = (style.offsetY/2)*stairDir
+            }
+
+            const lineX = stretchXPos
+            const lineY = stretchYPos+offsetShift
+            lineType(lineX, lineY, lineX + dirX*0.5*style.stretchX, lineY)
+         }
+
+         if (style.stretchY > 0 && shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || (outerStretch===0))) {
+
+            if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
+            const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
+            let stretchXPos = xpos + size*toSideY*0.5
+            let stretchYPos = ypos
+            const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
+
+            // the offset can be in between the regular lines horizontally if it would staircase nicely
+            let offsetShift = 0
+            if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+               offsetShift = style.offsetX/3*dirY
+            } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+               offsetShift = style.offsetX/2*dirY
+            }
+
+            if (!midlineEffects.includes(effect)) {
+               let stretchLength = 0.5*style.stretchY
+               if (font === "fontb") {
+                  stretchLength = style.stretchY
+                  if (style.stack > 0 && dirY === -1) outerStretch = outerStretch-style.stretchY
+                  //if (dirY === -1) stretchLength = 0
                }
-
-               if (!midlineEffects.includes(effect)) {
-                  let stretchLength = 0.5*style.stretchY
-                  //if (outerStretch !== 0) stretchLength = 0
-                  lineType(stretchXPos+offsetShift, stretchYPos -outerStretch*dirY, 
+               //if (outerStretch !== 0) stretchLength = 0
+               if (font === "fontb" && effect === "outerstretch") {
+                  if ((style.stack === 1 && dirY === 1) || (style.stack === 0 && dirY === -1)) {
+                     lineType(stretchXPos+offsetShift, stretchYPos -outerStretch*dirY, 
+                        stretchXPos+offsetShift, stretchYPos + dirY*stretchLength)
+                  }
+               } else {
+                  if (font === "fontb") stretchLength /= 2
+                  lineType(stretchXPos+offsetShift, stretchYPos, 
                      stretchXPos+offsetShift, stretchYPos + dirY*stretchLength)
                }
+               
+            }
 
-               // if vertical line goes down, set those connection spots in the array
-               if (dirY === 1 && midlineEffects.includes(effect) && layer === "fg") {
-                  if (style.letter === "‸") {
-                     //caret counts separately
-                     style.caretSpots[0] = stretchXPos + tx
-                  } else {
-                     sortIntoArray(style.midlineSpots[style.stack], stretchXPos + tx)
-                  }
+            // if vertical line goes down, set those connection spots in the array
+            if (dirY === 1 && midlineEffects.includes(effect) && layer === "fg") {
+               if (style.letter === "‸") {
+                  //caret counts separately
+                  style.caretSpots[0] = stretchXPos
+               } else {
+                  sortIntoArray(style.midlineSpots[style.stack], stretchXPos)
                }
             }
          }
-         const extendamount = ((outerSize % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
+
+         const extendamount = ((OUTERSIZE % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
          if (shapeParams.type === "extend" && extendamount > 0) {
             const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
             let extendXPos = xpos
@@ -3510,58 +3567,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    pop()
 }
 
-// function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
-
-//    push()
-//    ty -= style.stack * (style.sizes[0] - style.weight + style.stretchY)
-//    if (effect !== "staircase") tx -= style.stack * style.offsetX
-//    translate(tx, ty)
-//    noFill()
-
-//    const innerSize = style.sizes[style.sizes.length-1]
-//    const outerSize = style.sizes[0]
-
-//    // base position
-//    const offx = (offQ === 3 || offQ === 4) ? 1:0
-//    const offy = (offQ === 2 || offQ === 3) ? 1:0
-
-//    //position based on quarter
-//    let basePos = {x: style.posFromLeft + (outerSize/2), y:style.posFromTop}
-//    // offset based on quarter and previous vertical offset
-//    basePos.x += (offx > 0) ? style.offsetX : 0
-//    basePos.y += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
-//    // offset based on quarter and stretch
-//    basePos.x += (offy > 0) ? style.stretchX : 0
-//    basePos.y += (offx > 0) ? style.stretchY : 0
-
-
-//    //first, draw the background
-//    if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
-//       stroke((mode.xray)? palette.xrayBg : palette.bg)
-//       strokeWeight(style.weight*strokeScaleFactor)
-//       strokeCap(SQUARE)
-//       strokeJoin(MITER)
-//       drawModule(innerSize+style.weight, "bg")
-//    }
-
-//    // draw the foreground
-//    strokeCap(ROUND)
-//    strokeJoin(ROUND)
-//    strokeWeight((style.stroke/10)*strokeScaleFactor)
-//    if (mode.xray) {strokeWeight(0.2*strokeScaleFactor)}
-//    const innerColor = (mode.xray)? palette.xrayFg : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
-//    const outerColor = palette.fg
-
-//    style.sizes.forEach((size) => {
-//       drawModule(size, "fg")
-//    })
-
-//    function drawModule(size, layer) {
-
-//       //nothing for now
-//    }
-//    pop()
-// }
 
 function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
    //strokeweight
