@@ -1162,32 +1162,32 @@ function drawText (lineNum) {
                case "p":
                case "q":
                   // circle
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
    
                   // SECOND LAYER
                   if (letter === "d") {
-                     drawShape(style, "vert", 2, 2, 0, 0, {extend: ascenders})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders})
                   }
                   else if (letter === "b") {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   }
                   else if (letter === "q") {
-                     drawShape(style, "vert", 3, 3, 0, 0, {extend: descenders})
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders})
                   } else if (letter === "p") {
-                     drawShape(style, "vert", 4, 4, 0, 0, {extend: descenders})
+                     drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders})
                   } else if (letter === "ö") {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawShape(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
                   }
                   break;
                case "ß":
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {type:"linecut", at:"end"})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {type:"linecut", at:"end"})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
    
                   if (ascenders >= style.weight+letterInner-1) {
                      const modifiedStyle = {...style}
@@ -1195,168 +1195,168 @@ function drawText (lineNum) {
                      for (let s = 0; s < style.sizes.length; s++) {
                         modifiedStyle.sizes.push(style.sizes[s]-1)
                      }
-                     drawShape(style, "hori", 1, 1, 0, 0, {extend: -letterOuter*0.5+0.5})
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders-letterOuter*0.5+0.5})
-                     drawShape(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, {noStretchY: true})
-                     drawShape(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, {noStretchY: true})
-                     drawShape(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, {noStretchY: true})
-                     drawShape(style, "vert", 3, 2, -1, -ascenders -0.5, {extend: -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, noStretch: true})
+                     drawModule(style, "hori", 1, 1, 0, 0, {extend: -letterOuter*0.5+0.5})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders-letterOuter*0.5+0.5})
+                     drawModule(modifiedStyle, "round", 1, 1, 0, -ascenders -0.5, {noStretchY: true})
+                     drawModule(modifiedStyle, "round", 2, 2, 0, -ascenders -0.5, {noStretchY: true})
+                     drawModule(modifiedStyle, "round", 3, 2, 0, -style.weight-letterInner +0.5, {noStretchY: true})
+                     drawModule(style, "vert", 3, 2, -1, -ascenders -0.5, {extend: -letterOuter*0.5+(ascenders-(style.weight+letterInner))+1, noStretch: true})
                   } else {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend:ascenders-letterOuter*0.5})
-                     drawShape(style, "square", 1, 1, 0, -ascenders, {noStretchY: true})
-                     drawShape(style, "hori", 2, 2, 0, -ascenders, {extend:-1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend:ascenders-letterOuter*0.5})
+                     drawModule(style, "square", 1, 1, 0, -ascenders, {noStretchY: true})
+                     drawModule(style, "hori", 2, 2, 0, -ascenders, {extend:-1})
                   }
                   break;
                case "g":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start"})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start"})
    
                   if (descenders <= style.weight + 1) {
                      // if only one ring, move line down so there is a gap
                      const extragap = (letterOuter > letterInner) ? 0:1
                      const lineOffset = (extragap+style.weight > {extend: descenders}) ? -(style.weight-{extend: descenders}) : extragap
    
-                     drawShape(style, "hori", 2, 3, 0, letterOuter + lineOffset, {})
-                     drawShape(style, "hori", 1, 4, 0, letterOuter + lineOffset, {})
+                     drawModule(style, "hori", 2, 3, 0, letterOuter + lineOffset, {})
+                     drawModule(style, "hori", 1, 4, 0, letterOuter + lineOffset, {})
                   } else if (letterOuter*0.5 + 1 <= {extend: descenders}) {
                      // enough room for a proper g
-                     drawShape(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
-                     drawShape(style, "vert", 4, 4, 0, 0, {extend: descenders - letterOuter*0.5, from: letterOuter*0.5+1})
-                     drawShape(style, "round", 3, 3, 0, descenders, {noStretchY: true})
-                     drawShape(style, "round", 4, 4, 0, descenders, {noStretchY: true})
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
+                     drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders - letterOuter*0.5, from: letterOuter*0.5+1})
+                     drawModule(style, "round", 3, 3, 0, descenders, {noStretchY: true})
+                     drawModule(style, "round", 4, 4, 0, descenders, {noStretchY: true})
                   } else {
                      // square corner g
-                     drawShape(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
-                     drawShape(style, "square", 3, 3, 0, descenders-1, {noStretchY: true})
-                     drawShape(style, "hori", 4, 4, 0, descenders-1, {extend: -1})
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
+                     drawModule(style, "square", 3, 3, 0, descenders-1, {noStretchY: true})
+                     drawModule(style, "hori", 4, 4, 0, descenders-1, {extend: -1})
                   }
    
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
    
-                  drawShape(style, "hori", 2, 2, 0, 0, {})
+                  drawModule(style, "hori", 2, 2, 0, 0, {})
                   break;
                case "c":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter, ["ul", "gap"])) {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                      }
                   }
                   if (!"sz".includes(nextLetter)) {
                      if (charInSet(nextLetter, ["dl", "gap"])) {
-                        drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
                      }
                   }
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "e":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                     drawShape(style, "diagonal", 3, 3, 0, 0, {type: "linecut", at:"end"})
+                     drawModule(style, "diagonal", 3, 3, 0, 0, {type: "linecut", at:"end"})
                   } else {
-                     drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                     drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                   }
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
    
                   // SECOND LAYER
                   if ("s".includes(nextLetter)) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: 1})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: 1})
                   } else if (charInSet(nextLetter,["gap"]) || "gz".includes(nextLetter)) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {})
+                     drawModule(style, "hori", 3, 3, 0, 0, {})
                   } else if (!charInSet(nextLetter,["dl", "gap"]) && letterInner <= 2) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5 + animStretchX})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5 + animStretchX})
                   } else if ("x".includes(nextLetter)) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5 + animStretchX-style.weight})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5 + animStretchX-style.weight})
                   } else if (!charInSet(nextLetter,["dl"])) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: -oneoffset+max(animSpacing, -style.weight)})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: -oneoffset+max(animSpacing, -style.weight)})
                   } else if (animSpacing < 0) {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: -oneoffset+max(animSpacing, -style.weight)})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: -oneoffset+max(animSpacing, -style.weight)})
                   } else if (animSpacing > 0){
-                     drawShape(style, "hori", 3, 3, 0, 0, {})
+                     drawModule(style, "hori", 3, 3, 0, 0, {})
                   } else {
-                     drawShape(style, "hori", 3, 3, 0, 0, {extend: -oneoffset})
+                     drawModule(style, "hori", 3, 3, 0, 0, {extend: -oneoffset})
                   }
                   break;
                case "a":
                case "ä":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                     drawShape(style, "diagonal", 3, 3, 0, 0, {type: "linecut", at:"start"})
+                     drawModule(style, "diagonal", 3, 3, 0, 0, {type: "linecut", at:"start"})
                   } else {
-                     drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                     drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                   }
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
    
                   // SECOND LAYER
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
    
                   if (letter === "ä") {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawShape(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
                   }
                   break;
                case "n":
                   if (mode.altNH) {
-                     drawShape(style, "square", 1, 1, 0, 0, {})
-                     drawShape(style, "square", 2, 2, 0, 0, {})
+                     drawModule(style, "square", 1, 1, 0, 0, {})
+                     drawModule(style, "square", 2, 2, 0, 0, {})
                   } else {
-                     drawShape(style, "round", 1, 1, 0, 0, {})
-                     drawShape(style, "round", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 1, 1, 0, 0, {})
+                     drawModule(style, "round", 2, 2, 0, 0, {})
                   }
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "m":
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   if (mode.altM) {
-                     drawShape(style, "square", 1, 1, 0, 0, {})
-                     drawShape(style, "square", 2, 2, 0, 0, {})
+                     drawModule(style, "square", 1, 1, 0, 0, {})
+                     drawModule(style, "square", 2, 2, 0, 0, {})
                      // SECOND LAYER
                      style.flipped = true
-                     drawShape(style, "square", 2, 1, wideOffset + animStretchX*2, 0, {})
-                     drawShape(style, "square", 1, 2, wideOffset, 0, {type: "branch", at:"start"})
+                     drawModule(style, "square", 2, 1, wideOffset + animStretchX*2, 0, {})
+                     drawModule(style, "square", 1, 2, wideOffset, 0, {type: "branch", at:"start"})
                   } else {
-                     drawShape(style, "diagonal", 1, 1, 0, 0, {})
-                     drawShape(style, "diagonal", 2, 2, 0, 0, {})
+                     drawModule(style, "diagonal", 1, 1, 0, 0, {})
+                     drawModule(style, "diagonal", 2, 2, 0, 0, {})
                      // SECOND LAYER
                      style.flipped = true
-                     drawShape(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
-                     drawShape(style, "diagonal", 1, 2, wideOffset, 0, {})
+                     drawModule(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
+                     drawModule(style, "diagonal", 1, 2, wideOffset, 0, {})
                   }
-                  drawShape(style, "vert", 4, 3, wideOffset, 0, {})
-                  drawShape(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
                   break;
                case "s":
                   if (!mode.altS) {
                      //LEFT OVERLAP
                      style.flipped = isFlipped
                      if (prevLetter === "s") {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
                      } else if (prevLetter === "r") {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
+                        drawModule(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
                      } else if (!charInSet(prevLetter,["gap", "dr"]) && !"fkz".includes(prevLetter)) {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
                      }
                      let xOffset = 0
                      //start further left if not connecting left
                      if (charInSet(prevLetter,["gap", "dr"])) {
                         xOffset = -letterOuter*0.5 + extendOffset -animStretchX
-                        drawShape(style, "round", 3, 3, xOffset, 0, {type: "extend", at:"end"})
+                        drawModule(style, "round", 3, 3, xOffset, 0, {type: "extend", at:"end"})
                      } else {
-                        drawShape(style, "round", 3, 3, xOffset, 0, {})
+                        drawModule(style, "round", 3, 3, xOffset, 0, {})
                      }
                      if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
-                        drawShape(style, "round", 1, 2, wideOffset + xOffset, 0, {})
-                        drawShape(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 1, 2, wideOffset + xOffset, 0, {})
+                        drawModule(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, {type: "roundcut", at:"end"})
                      } else {
-                        drawShape(style, "round", 1, 2, wideOffset + xOffset, 0, {type: "extend", at:"end"})
+                        drawModule(style, "round", 1, 2, wideOffset + xOffset, 0, {type: "extend", at:"end"})
                      }
                   } else {
                      // alternative cursive s
@@ -1364,222 +1364,221 @@ function drawText (lineNum) {
    
                      //LEFT OVERLAP
                      if (charInSet(prevLetter,["dr", "gap"])) {
-                        drawShape(style, "round", 4, 4, gapPos, 0, {type: "linecut", at:"end"})
+                        drawModule(style, "round", 4, 4, gapPos, 0, {type: "linecut", at:"end"})
                      } else if (prevLetter !== "t") {
-                        drawShape(style, "round", 4, 4, gapPos, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 4, 4, gapPos, 0, {type: "roundcut", at:"end"})
                      }
    
-                     drawShape(style, "round", 2, 2, gapPos, 0, {})
-                     drawShape(style, "round", 3, 3, gapPos, 0, {})
+                     drawModule(style, "round", 2, 2, gapPos, 0, {})
+                     drawModule(style, "round", 3, 3, gapPos, 0, {})
                   }
                   break;
                case "x":
-                  push()
+                  let leftXoffset = 0
                   if (charInSet(prevLetter,["gap","ur"]) && charInSet(prevLetter,["gap","dr"])) {
-                     translate(-style.weight-1,0)
+                     leftXoffset = -style.weight-1
                   }
    
                   //LEFT OVERLAP
                   // top connection
                   if (!charInSet(prevLetter,["gap"]) && !"xz".includes(prevLetter)) {
                      if (charInSet(prevLetter,["ur"]) || "l".includes(prevLetter)) {
-                        drawShape(style, "round", 1, 1, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 1, 1, leftXoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      } else if (prevLetter !== "t"){
-                        drawShape(style, "round", 1, 1, 0, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 1, 1, leftXoffset, 0, {type: "roundcut", at:"start"})
                      }
                   }
                   // bottom connection
                   style.flipped = isFlipped
                   if (!"zxef".includes(prevLetter) && !charInSet(prevLetter,["gap"])) {
                      if (prevLetter === "s" && !mode.altS) {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 4, 4, leftXoffset, 0, {type: "roundcut", at:"end"})
                      } else if (prevLetter === "r" || charInSet(prevLetter,["dr"])) {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
+                        drawModule(style, "round", 4, 4, leftXoffset, 0, {type: "linecut", at:"end"})
                      } else {
-                        drawShape(style, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 4, 4, leftXoffset, 0, {type: "roundcut", at:"end"})
                      }
                   }
                   style.flipped = false
                   if (charInSet(prevLetter, ["gap"])) {
-                     drawShape(style, "round", 1, 1, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                     drawModule(style, "round", 1, 1, leftXoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                   }
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 4, 3, wideOffset, 0, {})
+                  drawModule(style, "round", 2, 2, leftXoffset, 0, {})
+                  drawModule(style, "round", 4, 3, leftXoffset + wideOffset, 0, {})
    
                   if (!"xz".includes(nextLetter)) {
                      if (!charInSet(nextLetter,["dl", "gap"])) {
-                        drawShape(style, "round", 3, 4, wideOffset + animStretchX*2, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 3, 4, leftXoffset + wideOffset + animStretchX*2, 0, {type: "roundcut", at:"start"})
                      } else {
-                        drawShape(style, "round", 3, 4, wideOffset + animStretchX*2, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 3, 4, leftXoffset + wideOffset + animStretchX*2, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      }
                   }
    
                   // SECOND LAYER
                   style.flipped = true
-                  drawShape(style, "diagonal", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "diagonal", 1, 2, leftXoffset + wideOffset, 0, {})
                   if (!"xz".includes(nextLetter)) {
                      if (!charInSet(nextLetter,["gap", "ul"])) {
-                        drawShape(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 2, 1, leftXoffset + wideOffset+ animStretchX*2, 0, {type: "roundcut", at:"end"})
                      } else {
-                        drawShape(style, "round", 2, 1, wideOffset+ animStretchX*2, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                        drawModule(style, "round", 2, 1, leftXoffset + wideOffset+ animStretchX*2, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                      }
                   }
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, leftXoffset, 0, {})
                   if (charInSet(prevLetter,["gap"])) {
-                     drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                     drawModule(style, "round", 4, 4, leftXoffset, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                   }
-                  pop()
                   break;
                case "u":
                case "ü":
                case "y":
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
    
                   // SECOND LAYER
                   if (letter === "y") {
-                     drawShape(style, "vert", 3, 3, 0, 0, {extend: descenders})
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders})
                   } else if (letter === "ü") {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawShape(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
                   }
                   break;
                case "w":
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                  drawShape(style, "diagonal", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "diagonal", 4, 4, 0, 0, {})
 
                   style.flipped = true
-                  drawShape(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
-                  drawShape(style, "vert", 1, 2, wideOffset, 0, {})
-                  drawShape(style, "diagonal", 4, 3, wideOffset, 0, {})
-                  drawShape(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "diagonal", 4, 3, wideOffset, 0, {})
+                  drawModule(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, {})
                   break;
                case "r":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["ul", "gap"])) {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                      }
                   }
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "l":
                case "t":
    
                   if (letter === "t") {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
-                     drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                      if (!"zx".includes(nextLetter)) {
                         if (charInSet(nextLetter,["ul", "gap"]) || letterInner > 2) {
-                           drawShape(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1 + ((letterInner<2) ? 1 : 0)})
+                           drawModule(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1 + ((letterInner<2) ? 1 : 0)})
                         } else {
-                           drawShape(style, "hori", 2, 2, 0, 0, {extend: letterOuter*0.5-style.weight})
+                           drawModule(style, "hori", 2, 2, 0, 0, {extend: letterOuter*0.5-style.weight})
                         }
                      }
                   } else {
-                     drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   }
    
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"])) {
-                        drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
                      }
                   }  
                   break;
                case "f":
-                  drawShape(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
                   if (!"z".includes(nextLetter)) {
                      if (charInSet(nextLetter,["ul", "gap"])) {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                      }
                   }
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: descenders})
-                  drawShape(style, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders})
+                  drawModule(style, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
    
                   // SECOND LAYER
                   if (!"sxz".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"]) || letterInner > 2) {
-                        drawShape(style, "hori", 3, 3, 0, 0, {extend: -style.weight-1 + ((letterInner<2) ? 1 : 0)})
+                        drawModule(style, "hori", 3, 3, 0, 0, {extend: -style.weight-1 + ((letterInner<2) ? 1 : 0)})
                      } else {
-                        drawShape(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5-style.weight})
+                        drawModule(style, "hori", 3, 3, 0, 0, {extend: letterOuter*0.5-style.weight})
                      }
                   }
                   break;
                case "k":
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
-                  drawShape(style, "diagonal", 1, 1, style.weight, 0, {})
-                  drawShape(style, "diagonal", 4, 4, style.weight, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "diagonal", 1, 1, style.weight, 0, {})
+                  drawModule(style, "diagonal", 4, 4, style.weight, 0, {})
                   if (!"zx".includes(nextLetter)) {
-                     drawShape(style, "hori", 2, 2, style.weight, 0, {extend: -oneoffset-style.weight})
+                     drawModule(style, "hori", 2, 2, style.weight, 0, {extend: -oneoffset-style.weight})
                   }
                   if (!"sxz".includes(nextLetter)) {
                      if (!(charInSet(nextLetter,["dl", "gap"]))) {
-                        drawShape(style, "round", 3, 3, style.weight, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 3, 3, style.weight, 0, {type: "roundcut", at:"start"})
                      } else {
-                        drawShape(style, "hori", 3, 3, style.weight, 0, {extend: -oneoffset-style.weight})
+                        drawModule(style, "hori", 3, 3, style.weight, 0, {extend: -oneoffset-style.weight})
                      }
                   }
                   break;
                case "h":
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
    
                   // SECOND LAYER
                   if (mode.altNH) {
-                     drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                     drawShape(style, "square", 2, 2, 0, 0, {})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "square", 2, 2, 0, 0, {})
                   } else {
-                     drawShape(style, "round", 1, 1, 0, 0, {})
-                     drawShape(style, "round", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 1, 1, 0, 0, {})
+                     drawModule(style, "round", 2, 2, 0, 0, {})
                   }
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "v":
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
                   if (((letterOuter-letterInner)/2+1)*tan(HALF_PI/4) < letterInner/2-2){
-                     drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                     drawShape(style, "diagonal", 4, 4, 0, 0, {})
+                     drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                     drawModule(style, "diagonal", 4, 4, 0, 0, {})
                   } else {
-                     drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                     drawShape(style, "square", 4, 4, 0, 0, {})
+                     drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                     drawModule(style, "square", 4, 4, 0, 0, {})
                   }
                   break;
                case ".":
-                  drawShape(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case ",":
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: descenders, from:letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from:letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "!":
                   // wip
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
-                  drawShape(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "?":
                   // wip
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end", alwaysCut: true})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: ascenders, from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end", alwaysCut: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders, from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "i":
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "j":
                   let leftOffset = 0
@@ -1591,22 +1590,22 @@ function drawText (lineNum) {
                   if (prevLetter !== undefined) {
                      if (!"tkz".includes(prevLetter)) {
                         if (charInSet(prevLetter,["dr", "gap"]) || "r".includes(prevLetter)) {
-                           drawShape(style, "round", 4, 4, leftOffset, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                           drawModule(style, "round", 4, 4, leftOffset, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                         } else {
-                           drawShape(style, "round", 4, 4, leftOffset, 0, {type: "roundcut", at:"end"})
+                           drawModule(style, "round", 4, 4, leftOffset, 0, {type: "roundcut", at:"end"})
                         }
                      }
                      if (!charInSet(prevLetter,["tr"]) && !"ckrsxz".includes(prevLetter)) {
-                        drawShape(style, "hori", 1, 1, leftOffset, 0, {extend: -style.weight-1})
+                        drawModule(style, "hori", 1, 1, leftOffset, 0, {extend: -style.weight-1})
                      }
                   }
                   
-                  drawShape(style, "vert", 2, 2, leftOffset, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                  drawShape(style, "square", 2, 2, leftOffset, 0, {})
-                  drawShape(style, "round", 3, 3, leftOffset, 0, {})
+                  drawModule(style, "vert", 2, 2, leftOffset, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                  drawModule(style, "square", 2, 2, leftOffset, 0, {})
+                  drawModule(style, "round", 3, 3, leftOffset, 0, {})
                   if (prevLetter === undefined) {
-                     drawShape(style, "hori", 1, 1, leftOffset, 0, {extend: -style.weight-1})
-                     drawShape(style, "round", 4, 4, leftOffset, 0, {type: "linecut", at:"end"})
+                     drawModule(style, "hori", 1, 1, leftOffset, 0, {extend: -style.weight-1})
+                     drawModule(style, "round", 4, 4, leftOffset, 0, {type: "linecut", at:"end"})
                   }
                   break;
                case "z":
@@ -1621,41 +1620,41 @@ function drawText (lineNum) {
                   // TOP LEFT OVERLAP
                   if (!"czfkxt".includes(prevLetter)) {
                      if (charInSet(prevLetter,["ur", "gap"])) {
-                        drawShape(style, "round", 1, 1, leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 1, 1, leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 1, 1, leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 1, 1, leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
                      }
                   } else {
-                     drawShape(style, "hori", 1, 1, leftZoffset, 0, {extend:-(style.weight+1)})
+                     drawModule(style, "hori", 1, 1, leftZoffset, 0, {extend:-(style.weight+1)})
                   }
    
-                  drawShape(style, "hori", 2, 2, leftZoffset, 0, {extend: 1+oddOffset*2})
+                  drawModule(style, "hori", 2, 2, leftZoffset, 0, {extend: 1+oddOffset*2})
                   style.flipped = true
-                  drawShape(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, {})
+                  drawModule(style, "diagonal", 1, 2, letterOuter*0.5 +1+oddOffset+leftZoffset, 0, {})
    
                   // BOTTOM RIGHT OVERLAP
-                  drawShape(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, {})
+                  drawModule(style, "diagonal", 3, 3, style.weight+1-letterOuter*0.5+oddOffset+leftZoffset, 0, {})
                   style.flipped = false
-                  drawShape(style, "hori", 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, {extend: 1+oddOffset*2})
+                  drawModule(style, "hori", 4, 3, style.weight+2+oddOffset*2+leftZoffset, 0, {extend: 1+oddOffset*2})
    
                   if (!"zxj".includes(nextLetter)) {
                      if (charInSet(nextLetter,["dl", "gap"])) {
-                        drawShape(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                      } else {
-                        drawShape(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
+                        drawModule(style, "round", 3, 4, style.weight+2+animStretchX*2+oddOffset*2+leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
                      }
                   }
                   break;
                case "-":
                   style.sizes = [letterOuter]
-                  drawShape(style, "hori", 1, 1, 0, +letterOuter*0.5, {extend: -1})
-                  drawShape(style, "hori", 2, 2, 0, +letterOuter*0.5, {extend: -1})
+                  drawModule(style, "hori", 1, 1, 0, +letterOuter*0.5, {extend: -1})
+                  drawModule(style, "hori", 2, 2, 0, +letterOuter*0.5, {extend: -1})
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
                   break;
                case "_":
                   style.sizes = [letterOuter]
-                  drawShape(style, "hori", 3, 3, 0, 0, {extend: -1})
-                  drawShape(style, "hori", 4, 4, 0, 0, {extend: -1})
+                  drawModule(style, "hori", 3, 3, 0, 0, {extend: -1})
+                  drawModule(style, "hori", 4, 4, 0, 0, {extend: -1})
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
                   break;
                case " ":
@@ -1665,21 +1664,21 @@ function drawText (lineNum) {
                   //caret symbol
                   style.opacity = 0.5
                   style.sizes = [letterOuter]
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   break;
                case "|":
                   style.sizes = [letterOuter]
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   break;
                default:
                   style.sizes = [letterOuter]
                   style.opacity = 0.5
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "square", 3, 3, 0, 0, {})
-                  drawShape(style, "square", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
             }
          } else if (font === "fontb") {
@@ -1687,192 +1686,192 @@ function drawText (lineNum) {
                case "a":
                case "ä":
                   style.stack = 1
-                  drawShape(style, "diagonal", 1, 1, 0, 0, {})
-                  drawShape(style, "diagonal", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "diagonal", 1, 1, 0, 0, {})
+                  drawModule(style, "diagonal", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                  drawShape(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "b":
                case "p":
                case "r":
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   if (letter === "b") {
-                     drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                     drawShape(style, "round", 2, 2, 0, 0, {})
-                     drawShape(style, "round", 3, 3, 0, 0, {})
-                     drawShape(style, "square", 4, 4, 0, 0, {})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "round", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "square", 4, 4, 0, 0, {})
                   } else if (letter === "p") {
                      style.flipped = true
-                     drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                      style.flipped = false
-                     drawShape(style, "vert", 4, 4, 0, 0, {})
+                     drawModule(style, "vert", 4, 4, 0, 0, {})
                   } else {
-                     drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                     drawShape(style, "diagonal", 2, 2, 0, 0, {})
-                     drawShape(style, "vert", 3, 3, 0, 0, {})
-                     drawShape(style, "vert", 4, 4, 0, 0, {})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "diagonal", 2, 2, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     drawModule(style, "vert", 4, 4, 0, 0, {})
                   }
                   break;
                case "c":
                case "l":
                   style.stack = 1
                   if (letter === "c") {
-                     drawShape(style, "round", 1, 1, 0, 0, {})
+                     drawModule(style, "round", 1, 1, 0, 0, {})
                      if (!"t".includes(nextLetter)) {
                         if (charInSet(nextLetter, ["ul", "gap"])) {
-                           drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                           drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
                         } else {
-                           drawShape(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+                           drawModule(style, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                         }
                      }
                   } else {
-                     drawShape(style, "vert", 1, 1, 0, 0, {})
+                     drawModule(style, "vert", 1, 1, 0, 0, {})
                   }
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
                   if (charInSet(nextLetter, ["dl", "gap"]) || "tj".includes(nextLetter)) {
-                     drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                     drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                   } else {
-                     drawShape(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
+                     drawModule(style, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
                   }
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "d":
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "square", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
                case "e":
                case "f":
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                  drawShape(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "hori", 2, 2, 0, 0, {extend: -style.weight-1})
                   if (letter === "e") {
                      if (!"j".includes(nextLetter)) {
-                        drawShape(style, "hori", 3, 3, 0, 0, {extend: -style.weight-1})
+                        drawModule(style, "hori", 3, 3, 0, 0, {extend: -style.weight-1})
                      }
-                     drawShape(style, "square", 4, 4, 0, 0, {})
+                     drawModule(style, "square", 4, 4, 0, 0, {})
                   } else if (letter === "f"){
-                     drawShape(style, "vert", 4, 4, 0, 0, {})
+                     drawModule(style, "vert", 4, 4, 0, 0, {})
                   }
                   break;
                case "g":
                   style.stack = 1
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {extend: -style.weight-1})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {extend: -style.weight-1})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "hori", 1, 1, 0, 0, {extend: -style.weight-1})
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "square", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "hori", 1, 1, 0, 0, {extend: -style.weight-1})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "h":
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                  drawShape(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "i":
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "j":
                   style.stack = 1
-                  drawShape(style, "hori", 1, 1, -style.weight-1, 0, {extend: -style.weight-1})
-                  drawShape(style, "square", 2, 2, -style.weight-1, 0, {})
-                  drawShape(style, "vert", 3, 3, -style.weight-1, 0, {})
+                  drawModule(style, "hori", 1, 1, -style.weight-1, 0, {extend: -style.weight-1})
+                  drawModule(style, "square", 2, 2, -style.weight-1, 0, {})
+                  drawModule(style, "vert", 3, 3, -style.weight-1, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 2, 2, -style.weight-1, 0, {})
-                  drawShape(style, "round", 3, 3, -style.weight-1, 0, {})
+                  drawModule(style, "vert", 2, 2, -style.weight-1, 0, {})
+                  drawModule(style, "round", 3, 3, -style.weight-1, 0, {})
                   //wip sometimes round
                   if (!"e".includes(prevLetter)) {
                      if (charInSet(prevLetter,["dr", "gap"])) {
-                        drawShape(style, "round", 4, 4, -style.weight-1, 0, {type: "linecut", at:"end", alwaysCut:true})
+                        drawModule(style, "round", 4, 4, -style.weight-1, 0, {type: "linecut", at:"end", alwaysCut:true})
                      } else {
-                        drawShape(style, "round", 4, 4, -style.weight-1, 0, {type: "roundcut", at:"end", alwaysCut:true})
+                        drawModule(style, "round", 4, 4, -style.weight-1, 0, {type: "roundcut", at:"end", alwaysCut:true})
                      }
                   }
                   break;
                case "k":
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-                  drawShape(style, "diagonal", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "diagonal", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "m":
                   style.stack = 1
-                  drawShape(style, "diagonal", 1, 1, 0, 0, {})
-                  drawShape(style, "diagonal", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "diagonal", 1, 1, 0, 0, {})
+                  drawModule(style, "diagonal", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   // right side
                   style.flipped = true
-                  drawShape(style, "diagonal", 1, 2, wideOffset, 0, {})
-                  drawShape(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
-                  drawShape(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawShape(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
+                  drawModule(style, "diagonal", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
                   style.stack = 0
                   style.flipped = false
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   // right side
                   style.flipped = true
-                  drawShape(style, "vert", 1, 2, wideOffset, 0, 0, undefined)
-                  drawShape(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawShape(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawShape(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, 0, undefined)
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
                   break;
                case "n":
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "o":
                case "ö":
@@ -1880,185 +1879,185 @@ function drawText (lineNum) {
                   style.stack = 1
                   if (letter === "q") {
                      style.flipped = true
-                     drawShape(style, "diagonal", 4, 4, 0, 0, {})
+                     drawModule(style, "diagonal", 4, 4, 0, 0, {})
                      style.flipped = false
                   }
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   if (letter === "q") {
-                     drawShape(style, "vert", 3, 3, 0, 0, {})
-                     drawShape(style, "diagonal", 2, 2, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     drawModule(style, "diagonal", 2, 2, 0, 0, {})
                   }
                   break;
                case "s":
                   style.stack = 1
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   style.stack = 0
                   style.flipped = true
-                  drawShape(style, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "t":
                   style.stack = 1
                   if (!"c".includes(prevLetter)) {
-                     drawShape(style, "hori", 1, 1, -style.weight-1, 0, {extend: -style.weight-1})
+                     drawModule(style, "hori", 1, 1, -style.weight-1, 0, {extend: -style.weight-1})
                   }
                   style.flipped = true
-                  drawShape(style, "hori", 1, 2, wideOffset-style.weight-1, 0, {from: -animSize/2+style.weight+1-style.stretchX})
+                  drawModule(style, "hori", 1, 2, wideOffset-style.weight-1, 0, {from: -animSize/2+style.weight+1-style.stretchX})
                   style.flipped = false
-                  drawShape(style, "square", 2, 2, -style.weight-1, 0, {type: "branch", at:"end"})
-                  drawShape(style, "vert", 3, 3, -style.weight-1, 0, {})
+                  drawModule(style, "square", 2, 2, -style.weight-1, 0, {type: "branch", at:"end"})
+                  drawModule(style, "vert", 3, 3, -style.weight-1, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 2, 2, -style.weight-1, 0, {})
-                  drawShape(style, "vert", 3, 3, -style.weight-1, 0, {})
+                  drawModule(style, "vert", 2, 2, -style.weight-1, 0, {})
+                  drawModule(style, "vert", 3, 3, -style.weight-1, 0, {})
                   break;
                case "u":
                case "ü":
                case "v":
                case "w":
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
                   if (letter !== "w") {
-                     drawShape(style, "vert", 2, 2, 0, 0, {})
-                     drawShape(style, "vert", 3, 3, 0, 0, {})
+                     drawModule(style, "vert", 2, 2, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
                   }
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   if (letter === "w") {
                      //right side
-                     drawShape(style, "vert", 1, 1, wideOffset  + animStretchX, 0, {})
-                     drawShape(style, "vert", 2, 2, wideOffset  + animStretchX, 0, {})
-                     drawShape(style, "vert", 3, 3, wideOffset  + animStretchX, 0, {})
-                     drawShape(style, "vert", 4, 4, wideOffset  + animStretchX, 0, {})
+                     drawModule(style, "vert", 1, 1, wideOffset  + animStretchX, 0, {})
+                     drawModule(style, "vert", 2, 2, wideOffset  + animStretchX, 0, {})
+                     drawModule(style, "vert", 3, 3, wideOffset  + animStretchX, 0, {})
+                     drawModule(style, "vert", 4, 4, wideOffset  + animStretchX, 0, {})
                   }
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  if (letter !== "w") drawShape(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  if (letter !== "w") drawModule(style, "vert", 2, 2, 0, 0, {})
                   if ("uü".includes(letter)) {
-                     drawShape(style, "round", 3, 3, 0, 0, {})
-                     drawShape(style, "round", 4, 4, 0, 0, {})
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
                   } else {
-                     drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                     drawShape(style, "diagonal", 4, 4, 0, 0, {})
+                     drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                     drawModule(style, "diagonal", 4, 4, 0, 0, {})
                   }
                   if (letter === "w") {
                      // right side
-                     drawShape(style, "vert", 1, 1, wideOffset + animStretchX, 0, {})
-                     drawShape(style, "vert", 2, 2, wideOffset + animStretchX, 0, {})
-                     drawShape(style, "diagonal", 3, 3, wideOffset + animStretchX, 0, {})
-                     drawShape(style, "diagonal", 4, 4, wideOffset + animStretchX, 0, {})
+                     drawModule(style, "vert", 1, 1, wideOffset + animStretchX, 0, {})
+                     drawModule(style, "vert", 2, 2, wideOffset + animStretchX, 0, {})
+                     drawModule(style, "diagonal", 3, 3, wideOffset + animStretchX, 0, {})
+                     drawModule(style, "diagonal", 4, 4, wideOffset + animStretchX, 0, {})
                   }
                   break;
                case "x":
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "diagonal", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "diagonal", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "diagonal", 1, 1, 0, 0, {})
-                  drawShape(style, "diagonal", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "diagonal", 1, 1, 0, 0, {})
+                  drawModule(style, "diagonal", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 1
                   style.flipped = true
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
                   break;
                case "y":
                   style.stack = 0
-                  drawShape(style, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "z":
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                   style.stack = 0
                   style.flipped = true
-                  drawShape(style, "diagonal", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
-                  drawShape(style, "square", 3, 3, 0, 0, {})
-                  drawShape(style, "square", 4, 4, 0, 0, {})
+                  drawModule(style, "diagonal", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
                case "ß":
                   style.stack = 1
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "diagonal", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "diagonal", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
-                  drawShape(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case "-":
                   style.sizes = [letterOuter]
-                  drawShape(style, "hori", 1, 1, 0, +letterOuter*0.5, {extend: -1})
-                  drawShape(style, "hori", 2, 2, 0, +letterOuter*0.5, {extend: -1})
+                  drawModule(style, "hori", 1, 1, 0, +letterOuter*0.5, {extend: -1})
+                  drawModule(style, "hori", 2, 2, 0, +letterOuter*0.5, {extend: -1})
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
                   break;
                case "_":
                   style.sizes = [letterOuter]
-                  drawShape(style, "hori", 3, 3, 0, 0, {extend: -1})
-                  drawShape(style, "hori", 4, 4, 0, 0, {extend: -1})
+                  drawModule(style, "hori", 3, 3, 0, 0, {extend: -1})
+                  drawModule(style, "hori", 4, 4, 0, 0, {extend: -1})
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
                   break;
                case "|":
                   style.sizes = [letterOuter]
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case ".":
-                  drawShape(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case ",":
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: descenders, from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "!":
                   // wip
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
-                  drawShape(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "?":
                   // wip
                   style.stack = 1
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "round", 2, 2, 0, 0, {})
-                  drawShape(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "round", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -2068,25 +2067,25 @@ function drawText (lineNum) {
                   style.opacity = 0.5
                   style.sizes = [letterOuter]
                   style.stack = 1
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
-                  drawShape(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   break;
                default:
                   style.opacity = 0.5
                   style.sizes = [letterOuter]
                   style.stack = 1
-                  drawShape(style, "square", 1, 1, 0, 0, {})
-                  drawShape(style, "square", 2, 2, 0, 0, {})
-                  drawShape(style, "vert", 3, 3, 0, 0, {})
-                  drawShape(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawShape(style, "vert", 1, 1, 0, 0, {})
-                  drawShape(style, "vert", 2, 2, 0, 0, {})
-                  drawShape(style, "square", 3, 3, 0, 0, {})
-                  drawShape(style, "square", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
             }
          }
@@ -3017,6 +3016,11 @@ function dropdownTextToEffect (text) {
          effect = "teeth"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
+      case "stretch outer (wip)":
+         effect = "outerstretch"
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
+         values.stretchX.to = 0
+         break;
       case "spheres (test)":
          effect = "spheres"
          break;
@@ -3078,7 +3082,7 @@ function waveValue(input, low, high) {
 
 
 
-function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
+function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    push()
    ty -= style.stack * (style.sizes[0] - style.weight + style.stretchY)
@@ -3089,19 +3093,19 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const innerSize = style.sizes[style.sizes.length-1]
    const outerSize = style.sizes[0]
 
-   // base position
-   const offx = (offQ === 3 || offQ === 4) ? 1:0
-   const offy = (offQ === 2 || offQ === 3) ? 1:0
-
    //position based on quarter
+   const bottomHalf = (offQ === 3 || offQ === 4) ? 1:0
+   const rightHalf = (offQ === 2 || offQ === 3) ? 1:0
    let basePos = {x: style.posFromLeft + (outerSize/2), y:style.posFromTop}
    // offset based on quarter and previous vertical offset
-   basePos.x += (offx > 0) ? style.offsetX : 0
-   basePos.y += (style.vOffset+offy) *style.offsetY //% 2==0 ? style.offsetY : 0
+   basePos.x += bottomHalf * style.offsetX
+   basePos.y += (style.vOffset+rightHalf) *style.offsetY //% 2==0 ? style.offsetY : 0
    // offset based on quarter and stretch
-   basePos.x += (offy > 0) ? style.stretchX : 0
-   basePos.y += (offx > 0) ? style.stretchY : 0
+   basePos.x += rightHalf * style.stretchX
+   basePos.y += bottomHalf * style.stretchY
 
+   //for effect
+   let outerStretchScale = (style.stretchY/2) / ((style.weight))/2
 
    //first, draw the background
    if (!webglEffects.includes(effect) && style.sizes.length > 1 && style.weight > 0 && mode.drawFills) {
@@ -3109,7 +3113,15 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       strokeWeight(style.weight*strokeScaleFactor)
       strokeCap(SQUARE)
       strokeJoin(MITER)
-      drawModule(innerSize+style.weight, "bg")
+      let outerStretch = 0
+      drawLineOfModule(innerSize+style.weight, "bg", outerStretch)
+      if (effect === "outerstretch" && style.weight > 0) {
+         if (font === "fontb" && ((bottomHalf===1 && style.stack === 1) || (bottomHalf===0 && style.stack===0))){
+            outerStretch = 0
+         }
+         outerStretch = -(outerSize-innerSize)*outerStretchScale
+         drawLineOfModule(innerSize+style.weight, "bg", outerStretch)
+      }
 
       // old corner fill requirements:
       //drawShapeFill(style, shape, arcQ, offQ, noStretchX, noStretchY)
@@ -3126,12 +3138,21 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const outerColor = palette.fg
 
    style.sizes.forEach((size) => {
-      drawModule(size, "fg")
+      // wip effect test
+      // move inwards vertically
+      // (style.weight) = stretchV/2 + 1
+      let outerStretch = 0
+      if (effect === "outerstretch" && style.weight > 0) {
+         if (font === "fonta" 
+         || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
+         outerStretch = -(outerSize-size)*outerStretchScale
+         }
+      }
+      drawLineOfModule(size, "fg", outerStretch)
    })
 
-   function drawModule(size, layer) {
 
-
+   function drawLineOfModule(size, layer, outerStretch) {
       if (shape === "vert" || shape === "hori") {  // LINE
 
 
@@ -3157,13 +3178,14 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             x1 += size*toSideX*0.5
             x2 += size*toSideX*0.5
             const dirY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            y1 += innerPosV * dirY
+            y1 += (innerPosV) * dirY
             y2 += (outerSize*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirY
             //only draw the non-stretch part if it is long enough to be visible
             if (dirY*(y2-y1)>=0) {
                lineType(x1, y1, x2, y2)
             }
-            if (style.stretchY !== 0 && innerPosV === 0 && shapeParams.noStretch === undefined) {
+            if (style.stretchY !== 0 && innerPosV === 0 && shapeParams.noStretch === undefined
+               && (layer === "fg" || (outerStretch===0))) {
                //stretch
                // the offset can be in between the regular lines horizontally if it would staircase nicely
                let offsetShift = 0
@@ -3189,8 +3211,8 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
          } else if (shape === "hori") {
             const toSideY = (arcQ === 1 || arcQ === 2) ? -1 : 1
-            y1 += size*toSideY*0.5
-            y2 += size*toSideY*0.5
+            y1 += (size*0.5+outerStretch)*toSideY
+            y2 += (size*0.5+outerStretch)*toSideY
             const dirX = (arcQ === 1 || arcQ === 4) ? -1 : 1
             x1 += innerPosH * dirX
             x2 += (outerSize*0.5 + ((shapeParams.extend !== undefined) ? shapeParams.extend :0) + outerExt) * dirX
@@ -3198,7 +3220,8 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (dirX*(x2-x1)>=0) {
                lineType(x1, y1, x2, y2)
             }
-            if (style.stretchX !== 0 && innerPosH === 0 && shapeParams.noStretch === undefined) {
+            if (style.stretchX !== 0 && innerPosH === 0 && shapeParams.noStretch === undefined
+               && (layer === "fg" || (outerStretch===0))) {
                //stretch
                // the offset can be in between the regular lines vertically if it would staircase nicely
                let offsetShift = 0
@@ -3222,8 +3245,10 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             ringStyle(size, innerSize, outerSize, innerColor, outerColor, style.flipped, arcQ, offQ, style.opacity, style.stroke)
          }
 
-         let xpos = basePos.x
-         let ypos = basePos.y
+         const xpos = basePos.x
+         const ypos = basePos.y
+         const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
+         const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
 
          if (shape === "round") {
             // angles
@@ -3281,7 +3306,7 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             // draw the line (until the cut angle if fg)
             if (drawCurve) {
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
-                  arcType(basePos.x,basePos.y,size,size,startAngle,endAngle)
+                  arcType(basePos.x,basePos.y + outerStretch*dirY,size,size,startAngle,endAngle)
                } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
                   const layerGroup = (shapeParams.type === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                   if (layerGroup[size] === undefined) {
@@ -3319,29 +3344,28 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
             }
          } else if (shape === "square") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
             if (shapeParams.type === "branch" && layer === "fg") {
                let branchLength = size
                let revSize = (outerSize+innerSize)-size
-               if (size > (outerSize+innerSize)/2) branchLength = outerSize-(size-innerSize)
-               lineType(xpos+dirX*size/2, ypos, xpos+dirX*size/2, ypos+dirY*branchLength/2)
-               lineType(xpos, ypos+dirY*size/2, xpos+dirX*branchLength/2, ypos+dirY*size/2)
+               if (size > (outerSize+innerSize)/2) {
+                  branchLength = outerSize-(size-innerSize)
+                  //outerStretch = -(outerSize-size)*outerStretchScale
+               }
+               lineType(xpos+dirX*size/2, ypos+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*branchLength/2+outerStretch*dirY)
+               lineType(xpos, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*branchLength/2, ypos+dirY*size/2+outerStretch*dirY)
                if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  lineType(xpos+dirX*outerSize/2, ypos+dirY*size/2, xpos+dirX*revSize/2, ypos+dirY*size/2)
+                  lineType(xpos+dirX*outerSize/2, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*revSize/2, ypos+dirY*size/2+outerStretch*dirY)
                } else {
-                  lineType(xpos+dirX*size/2, ypos+dirY*outerSize/2, xpos+dirX*size/2, ypos+dirY*revSize/2)
+                  lineType(xpos+dirX*size/2, ypos+dirY*outerSize/2+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*revSize/2+outerStretch*dirY)
                }
             } else {
                beginShape()
-               vertex(xpos+dirX*size/2, ypos)
-               vertex(xpos+dirX*size/2, ypos+dirY*size/2)
-               vertex(xpos, ypos+dirY*size/2)
+               vertex(xpos+dirX*size/2, ypos+outerStretch*dirY)
+               vertex(xpos+dirX*size/2, ypos+dirY*size/2+outerStretch*dirY)
+               vertex(xpos, ypos+dirY*size/2+outerStretch*dirY)
                endShape()
             }
          } else if (shape === "diagonal") {
-            const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
-            const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
             const step = (size-innerSize)/2 + 1
             const stepslope = step*tan(HALF_PI/4)
             let xPoint = createVector(xpos+dirX*size/2,ypos+dirY*stepslope)
@@ -3358,18 +3382,18 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (changeAxis === "x") {
                      xPoint.x = xpos+dirX*(outerSize/2 -style.weight -1)
                      xPoint.y = yPoint.y - (outerSize/2 - style.weight -1) + dirY*stepslope
-                     lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+                     lineType(xpos, yPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
                   } else if (changeAxis === "y") {
                      yPoint.y = ypos+dirY*(outerSize/2 -style.weight -1)
                      yPoint.x = xPoint.x - (outerSize/2 - style.weight -1) + dirX*stepslope
-                     lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
+                     lineType(xPoint.x, ypos+outerStretch*dirY, xPoint.x, xPoint.y+outerStretch*dirY)
                   }
-                  lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+                  lineType(xPoint.x, xPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
                } else {
-                  lineType(xPoint.x, xPoint.y, yPoint.x, yPoint.y)
+                  lineType(xPoint.x, xPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
                   if (step > 0) {
-                     lineType(xPoint.x, ypos, xPoint.x, xPoint.y)
-                     lineType(xpos, yPoint.y, yPoint.x, yPoint.y)
+                     lineType(xPoint.x, ypos+outerStretch*dirY, xPoint.x, xPoint.y+outerStretch*dirY)
+                     lineType(xpos, yPoint.y+outerStretch*dirY, yPoint.x, yPoint.y+outerStretch*dirY)
                   }
                }
             } else {
@@ -3406,7 +3430,8 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   stretchXPos + dirX*0.5*style.stretchX, stretchYPos+offsetShift)
             }
          }
-         if (style.stretchY > 0 && shapeParams.noStretchY === undefined) {
+         if (style.stretchY > 0 && shapeParams.noStretchY === undefined 
+            && (layer === "fg" || (outerStretch===0))) {
             // check if not cut off
             if (shapeParams.type === undefined || shapeParams.type === "branch" || (shapeParams.type!== undefined && cutX)) {
                if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
@@ -3424,7 +3449,7 @@ function drawShape (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
 
                if (!midlineEffects.includes(effect)) {
-                  lineType(stretchXPos+offsetShift, stretchYPos, stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
+                  lineType(stretchXPos+offsetShift, stretchYPos -outerStretch*dirY, stretchXPos+offsetShift, stretchYPos + dirY*0.5*style.stretchY)
                }
 
                // if vertical line goes down, set those connection spots in the array
