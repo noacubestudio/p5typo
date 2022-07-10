@@ -3416,17 +3416,17 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
               
                let baseX = xpos+dirX*size/2
-               let baseY =  ypos+dirY*(size/2+outerStretch)
+               let baseY = ypos+dirY*(size/2+outerStretch)
                lineType(xpos, baseY, xpos+dirX*branchLength/2, baseY)
 
-               if (effect === "outerstretch") branchLength = map(branchLength, INNERSIZE, OUTERSIZE+INNERSIZE, INNERSIZE-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
+               if (effect === "outerstretch" && outerStretch!==0) branchLength = map(branchLength, INNERSIZE, OUTERSIZE+INNERSIZE, INNERSIZE-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
                lineType(baseX, ypos+outerStretch*dirY, baseX, ypos+dirY*branchLength/2)
 
                //basic "triangle" of lines going into the branch directon (start or end)
                if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  //lineType(xpos+dirX*OUTERSIZE/2, baseY, xpos+dirX*revSize/2, baseY)
+                  lineType(xpos +dirX*OUTERSIZE/2, baseY, xpos+dirX*revSize/2, baseY)
                } else {
-                  if (effect === "outerstretch") revSize = map(revSize, INNERSIZE+1, OUTERSIZE+INNERSIZE, INNERSIZE+1-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
+                  if (effect === "outerstretch" && outerStretch!==0) revSize = map(revSize, INNERSIZE+1, OUTERSIZE+INNERSIZE, INNERSIZE+1-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
                   lineType(baseX, ypos +dirY*(OUTERSIZE/2), baseX, ypos +dirY*revSize/2)
                }
             } else {
