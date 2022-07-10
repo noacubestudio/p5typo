@@ -1071,12 +1071,15 @@ function drawText (lineNum) {
    translate(0,fontSize-0.5*animSize)
    if (font === "fontb") translate(0, animStretchY + 1)
 
+   let connectingUnderPrev = "sjzx"
+   if (font === "fontb") connectingUnderPrev = "j"
+
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
    let prevOverlapCharCount = 0
    for (let c = 0; c < lineText.length; c++) {
       const char = lineText[c]
-      if ("sjzx".includes(char)) {
+      if (connectingUnderPrev.includes(char)) {
          prevOverlapCharCount++
       }
    }
@@ -1087,7 +1090,7 @@ function drawText (lineNum) {
    let regularCharUntil = 0
    for (let c = 0; c < lineText.length; c++) {
       const char = lineText[c]
-      if ("sjzx".includes(char)) {
+      if (connectingUnderPrev.includes(char)) {
          prevOverlapCharUntil++
          layerArray.push(-prevOverlapCharUntil + prevOverlapCharCount)
       } else {
