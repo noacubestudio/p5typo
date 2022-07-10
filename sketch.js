@@ -1072,7 +1072,7 @@ function drawText (lineNum) {
    if (font === "fontb") translate(0, animStretchY + 1)
 
    let connectingUnderPrev = "sjzx"
-   if (font === "fontb") connectingUnderPrev = "j"
+   if (font === "fontb") connectingUnderPrev = "jt"
 
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
@@ -3275,10 +3275,17 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       } else { // CORNER
 
-         const xpos = basePos.x
-         const ypos = basePos.y
+         let xpos = basePos.x
+         let ypos = basePos.y
          const dirX = (arcQ === 2 || arcQ === 3) ? 1:-1
          const dirY = (arcQ === 3 || arcQ === 4) ? 1:-1
+
+         // move corner inwards if it's cut and facing to middle in style b
+         const isCutVertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
+         if (shapeParams.type === "linecut" && isCutVertical && font === "fonta" && effect === "outerstretch") {
+            outerStretch = 0
+            ypos -= dirY*style.stretchY/2
+         }
 
          if (shape === "round") {
 
@@ -3300,8 +3307,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg") {
 
-                     const vertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
-
                      function arcUntil (y) {
                         const altValue = HALF_PI
                         //if too close
@@ -3310,17 +3315,17 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         }
                         const x = Math.sqrt(size**2 - y**2)
                         const dangerousOverlap = ((size - x) < 0.6)
-                        if(dangerousOverlap && vertical && size === OUTERSIZE && animSpacing <=0) return 0
+                        if(dangerousOverlap && isCutVertical && size === OUTERSIZE && animSpacing <=0) return 0
                         //if (frameCount === 1) print(dangerousOverlap)
                         const theta = (Math.atan2(y, x));
                         //const amount = (2*theta)/PI
                         return theta
                      }
-                     let overlapWeight = OUTERSIZE-INNERSIZE
+                     let overlapWeight = INNERSIZE
                      //wip inside e
-                     if (outerStretch !== 0 && vertical) overlapWeight += style.stretchY/2 + outerStretch
-                     //if (frameCount === 1) print(outerStretch)
-                     cutDifference = HALF_PI-arcUntil(OUTERSIZE-(overlapWeight)-2)
+                     if (outerStretch !== 0 && isCutVertical) overlapWeight = INNERSIZE + outerStretch + style.stretchY/2
+                     if (frameCount === 1) print(INNERSIZE, outerStretch, style.stretchY)
+                     cutDifference = HALF_PI-arcUntil(overlapWeight-2)
                   }
 
                } else if (shapeParams.type === "roundcut") {
@@ -3367,9 +3372,18 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             // draw the line (until the cut angle if foreground)
             if (drawCurve) {
+
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
-                  arcType(basePos.x,basePos.y + outerStretch*dirY,size,size,startAngle,endAngle)
+
+                  // basic curve for lines, shortened if needed
+                  arcType(xpos, ypos + outerStretch*dirY,size,size,startAngle,endAngle)
+
                } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
+
+                  // background segment with cutoff is displayed as an image instead
+                  // this only happens in svg mode or while xray view is on
+                  // slow, try to optimize...
+
                   const layerGroup = (shapeParams.type === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut
                   if (layerGroup[size] === undefined) {
                      layerGroup[size] = createGraphics((size)*animZoom, (size)*animZoom)
@@ -3396,7 +3410,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      layerGroup[size].updatePixels()
                   }
                   push()
-                  translate(basePos.x, basePos.y)
+                  translate(xpos, ypos)
                   if (arcQ === 2) {rotate(HALF_PI)}
                   else if (arcQ === 3) {rotate(HALF_PI*2)}
                   else if (arcQ === 4) {rotate(HALF_PI*3)}
@@ -3556,7 +3570,9 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      lineType(lineX, lineY, lineX, lineY + dirY*stretchLength*0.5)
                   }
                } else if (font === "fonta") {
-                  lineType(lineX, lineY - dirY*outerStretch, lineX, lineY + dirY*stretchLength)
+                  if (!(shapeParams.type === "linecut" && isCutVertical)) {
+                     lineType(lineX, lineY - dirY*outerStretch, lineX, lineY + dirY*stretchLength)
+                  }
                }
             }
 
