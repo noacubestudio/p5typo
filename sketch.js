@@ -3270,7 +3270,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
          }
 
-
       } else { // CORNER
 
          const xpos = basePos.x
@@ -3284,8 +3283,8 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             let startAngle = PI + (arcQ-1)*HALF_PI
             let endAngle = startAngle + HALF_PI
 
-            let cutDifference = shortenAngleBy()
             let drawCurve = true // gets updated in function
+            let cutDifference = shortenAngleBy()
 
 
             function shortenAngleBy() {
@@ -3408,17 +3407,27 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (shapeParams.type === "branch" && layer === "fg") {
                let branchLength = size
-               let revSize = (OUTERSIZE+INNERSIZE)-size
+
+               // for triangle of lines that branches off
+               let revSize = OUTERSIZE+INNERSIZE-size
+
                if (size > (OUTERSIZE+INNERSIZE)/2) {
-                  branchLength = OUTERSIZE-(size-INNERSIZE)//+outerStretch*dirY*1
-                  //outerStretch = -(outerSize-size)*outerStretchScale
+                  branchLength = revSize
                }
-               lineType(xpos+dirX*size/2, ypos+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*branchLength/2+outerStretch*dirY)
-               lineType(xpos, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*branchLength/2, ypos+dirY*size/2+outerStretch*dirY)
+              
+               let baseX = xpos+dirX*size/2
+               let baseY =  ypos+dirY*(size/2+outerStretch)
+               lineType(xpos, baseY, xpos+dirX*branchLength/2, baseY)
+
+               if (effect === "outerstretch") branchLength = map(branchLength, INNERSIZE, OUTERSIZE+INNERSIZE, INNERSIZE-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
+               lineType(baseX, ypos+outerStretch*dirY, baseX, ypos+dirY*branchLength/2)
+
+               //basic "triangle" of lines going into the branch directon (start or end)
                if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  lineType(xpos+dirX*OUTERSIZE/2, ypos+dirY*size/2+outerStretch*dirY, xpos+dirX*revSize/2, ypos+dirY*size/2+outerStretch*dirY)
+                  //lineType(xpos+dirX*OUTERSIZE/2, baseY, xpos+dirX*revSize/2, baseY)
                } else {
-                  lineType(xpos+dirX*size/2, ypos+dirY*OUTERSIZE/2+outerStretch*dirY, xpos+dirX*size/2, ypos+dirY*revSize/2+outerStretch*dirY)
+                  if (effect === "outerstretch") revSize = map(revSize, INNERSIZE+1, OUTERSIZE+INNERSIZE, INNERSIZE+1-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
+                  lineType(baseX, ypos +dirY*(OUTERSIZE/2), baseX, ypos +dirY*revSize/2)
                }
             } else {
                beginShape()
@@ -3508,6 +3517,9 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          if (style.stretchY > 0 && shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || (outerStretch===0))) {
 
+            // vertical stretch between shapes 
+            // and remaining stretch to connect corners moved by outerstretch effect
+
             if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
             const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
             let stretchXPos = xpos + size*toSideY*0.5
@@ -3522,25 +3534,27 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                offsetShift = style.offsetX/2*dirY
             }
 
+            //base position
+            const lineX = stretchXPos+offsetShift
+            const lineY = stretchYPos
+
             if (!midlineEffects.includes(effect)) {
+
                let stretchLength = 0.5*style.stretchY
                if (font === "fontb") {
                   stretchLength = style.stretchY
                   if (style.stack > 0 && dirY === -1) outerStretch = outerStretch-style.stretchY
-                  //if (dirY === -1) stretchLength = 0
-               }
-               //if (outerStretch !== 0) stretchLength = 0
-               if (font === "fontb" && effect === "outerstretch") {
-                  if ((style.stack === 1 && dirY === 1) || (style.stack === 0 && dirY === -1)) {
-                     lineType(stretchXPos+offsetShift, stretchYPos -outerStretch*dirY, 
-                        stretchXPos+offsetShift, stretchYPos + dirY*stretchLength)
+
+                  if (effect === "outerstretch") {
+                     if ((style.stack === 1 && dirY === 1) || (style.stack === 0 && dirY === -1)) {
+                        lineType(lineX, lineY -outerStretch*dirY, lineX, lineY + dirY*stretchLength)
+                     }
+                  } else {
+                     lineType(lineX, lineY, lineX, lineY + dirY*stretchLength*0.5)
                   }
-               } else {
-                  if (font === "fontb") stretchLength /= 2
-                  lineType(stretchXPos+offsetShift, stretchYPos, 
-                     stretchXPos+offsetShift, stretchYPos + dirY*stretchLength)
+               } else if (font === "fonta") {
+                  lineType(lineX, lineY - dirY*outerStretch, lineX, lineY + dirY*stretchLength)
                }
-               
             }
 
             // if vertical line goes down, set those connection spots in the array
