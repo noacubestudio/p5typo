@@ -966,8 +966,12 @@ function charInSet (char, sets) {
                   found ||= !validLetters.includes(char)
                   break;
                case "gap":
-                   //separating regular letters
+                  //separating regular letters
                   found ||= "., :;-_!?‸|".includes(char)
+                  break;
+               case "ml":
+                  // letters that overlap with previous letter in the middle
+                  found ||= "abcdefghiklmnopqrtuvwy".includes(char)
                   break;
             }
          } else if (font === "fontb") {
@@ -991,6 +995,16 @@ function charInSet (char, sets) {
                case "gap":
                   //separating regular letters
                   found ||= "., :;-_!?‸|".includes(char)
+                  break;
+               case "ml":
+                  // letters that overlap with previous letter in the two centers
+                  // j s x ...y?
+                  found ||= "abcdefghiklmnopqrstuvwyz".includes(char)
+                  break;
+               case "mr":
+                  // letters that overlap with next letter in the two centers
+                  // doesn't include P for now... s? x z?
+                  found ||= "abdghijkmnoqsuvwyz".includes(char)
                   break;
             }
          }
@@ -1169,6 +1183,8 @@ function drawText (lineNum) {
          stretchX: animStretchX,
          stretchY: animStretchY,
          letter: letter,
+         nextLetter: nextLetter,
+         prevLetter: prevLetter,
          stack: 0, // for letters with more than 1 level
          flipped: false, // for gradients
          // convenient values
@@ -1235,17 +1251,17 @@ function drawText (lineNum) {
                   }
                   break;
                case "g":
+                  drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start", alwaysCut: true})
                   drawModule(style, "round", 1, 1, 0, 0, {})
-                  drawModule(style, "round", 2, 2, 0, 0, {type: "linecut", at:"start"})
-   
-                  if (descenders <= style.weight + 1) {
+
+                  if (descenders <= style.weight) {
                      // if only one ring, move line down so there is a gap
                      const extragap = (letterOuter > letterInner) ? 0:1
-                     const lineOffset = (extragap+style.weight > {extend: descenders}) ? -(style.weight-{extend: descenders}) : extragap
+                     const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
    
                      drawModule(style, "hori", 2, 3, 0, letterOuter + lineOffset, {noStretchY: true})
                      drawModule(style, "hori", 1, 4, 0, letterOuter + lineOffset, {noStretchY: true})
-                  } else if (letterOuter*0.5 + 1 <= {extend: descenders}) {
+                  } else if (letterOuter*0.5 + 1 <= descenders) {
                      // enough room for a proper g
                      drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
                      drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders - letterOuter*0.5, from: letterOuter*0.5+1})
@@ -1254,8 +1270,8 @@ function drawText (lineNum) {
                   } else {
                      // square corner g
                      drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders - letterOuter*0.5})
-                     drawModule(style, "square", 3, 3, 0, descenders-1, {noStretchY: true})
-                     drawModule(style, "hori", 4, 4, 0, descenders-1, {extend: -1, noStretchY: true})
+                     drawModule(style, "square", 3, 3, 0, descenders, {noStretchY: true})
+                     drawModule(style, "hori", 4, 4, 0, descenders, {extend: -1, noStretchY: true})
                   }
    
                   drawModule(style, "round", 3, 3, 0, 0, {})
@@ -3307,7 +3323,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg") {
 
-                     function arcUntil (y) {
+                     function arcUntilLineAt (y) {
                         const altValue = HALF_PI
                         //if too close
                         if (y <= 0) {
@@ -3315,7 +3331,19 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         }
                         const x = Math.sqrt(size**2 - y**2)
                         const dangerousOverlap = ((size - x) < 0.6)
-                        if(dangerousOverlap && isCutVertical && size === OUTERSIZE && animSpacing <=0) return 0
+                        const inNextLetter = (size >= (OUTERSIZE + animSpacing*2))
+                        if (dangerousOverlap && isCutVertical && inNextLetter) {
+                           // might have to be removed
+                           //but depends on what letter is adjacent
+                           if (font === "fonta") {
+                              // only really matters for e
+                              if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
+                           } else if (font === "fontb") {
+                              // matters for s,z,y
+                              if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
+                              if (charInSet(style.prevLetter, ["mr"]) && rightHalf === 0) return 0
+                           }
+                        }
                         //if (frameCount === 1) print(dangerousOverlap)
                         const theta = (Math.atan2(y, x));
                         //const amount = (2*theta)/PI
@@ -3324,8 +3352,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      let overlapWeight = INNERSIZE
                      //wip inside e
                      if (outerStretch !== 0 && isCutVertical) overlapWeight = INNERSIZE + outerStretch + style.stretchY/2
-                     if (frameCount === 1) print(INNERSIZE, outerStretch, style.stretchY)
-                     cutDifference = HALF_PI-arcUntil(overlapWeight-2)
+                     cutDifference = HALF_PI-arcUntilLineAt(overlapWeight-2)
                   }
 
                } else if (shapeParams.type === "roundcut") {
@@ -3545,10 +3572,12 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             // the offset can be in between the regular lines horizontally if it would staircase nicely
             let offsetShift = 0
-            if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-               offsetShift = style.offsetX/3*dirY
-            } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-               offsetShift = style.offsetX/2*dirY
+            if (effect !== "outerstretch") {
+               if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
+                  offsetShift = style.offsetX/3*dirY
+               } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
+                  offsetShift = style.offsetX/2*dirY
+               }
             }
 
             //base position
@@ -3559,18 +3588,16 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                let stretchLength = 0.5*style.stretchY
                if (font === "fontb") {
-                  stretchLength = style.stretchY
-                  if (style.stack > 0 && dirY === -1) outerStretch = outerStretch-style.stretchY
-
                   if (effect === "outerstretch") {
+                     if (style.stack > 0 && dirY === -1) outerStretch = outerStretch-style.stretchY
                      if ((style.stack === 1 && dirY === 1) || (style.stack === 0 && dirY === -1)) {
-                        lineType(lineX, lineY -outerStretch*dirY, lineX, lineY + dirY*stretchLength)
+                        lineType(lineX, lineY -outerStretch*dirY, lineX, lineY + dirY*stretchLength*2)
                      }
                   } else {
-                     lineType(lineX, lineY, lineX, lineY + dirY*stretchLength*0.5)
+                     lineType(lineX, lineY, lineX, lineY + dirY*stretchLength)
                   }
                } else if (font === "fonta") {
-                  if (!(shapeParams.type === "linecut" && isCutVertical)) {
+                  if (!(shapeParams.type === "linecut" && isCutVertical && effect === "outerstretch")) {
                      lineType(lineX, lineY - dirY*outerStretch, lineX, lineY + dirY*stretchLength)
                   }
                }
