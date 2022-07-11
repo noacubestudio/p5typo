@@ -812,7 +812,7 @@ function drawElements() {
          if (webglEffects.includes(effect)) translate(0,0,-1)
          let fontSize = animSize
          if (font === "fontb") fontSize = animSize*2 - min(animRings, animSize/2) + 1
-         const gridHeight = fontSize + Math.abs(animOffsetY) + ((font === "fontb") ? animStretchY*2 : animStretchY)
+         const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY + animSpreadY
          const gridWidth = (width-60)/animZoom
          const asc = (font === "fontb") ? 0 : animAscenders
    
@@ -1603,7 +1603,7 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders, from: letterOuter*0.5 - (style.weight+0.5)})
                   break;
                case "i":
-                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
@@ -2143,7 +2143,7 @@ function drawText (lineNum) {
 
          //style and caret
          stroke(lerpColor(palette.bg, palette.fg, 0.5))
-         rowLines("bezier", [caretSpots[0], caretSpots[0]+animOffsetX], animStretchY+animSpreadY)
+         rowLines("bezier", [caretSpots[0], caretSpots[0]+animOffsetX], animStretchY)
          stroke(palette.fg)
 
          const wordSpots = []
@@ -2175,36 +2175,36 @@ function drawText (lineNum) {
             word.forEach((pos) => {
                if (effect === "spread") {
                   const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY+animSpreadY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
                } else if (effect === "compress") {
                   const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY+animSpreadY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
                } else if (effect === "split") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY+animSpreadY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY+animSpreadY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                   }
                } else if (effect === "twist") {
                   if (counter % 2 === 1) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY+animSpreadY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY+animSpreadY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
                   } else if (counter === total) {
-                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY+animSpreadY)
+                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
                   }
                } else if (effect === "sway") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY+animSpreadY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
                   }
                } else if (effect === "teeth") {
                   if (counter % 2 === 1) {
                      const x = lastPos + (pos-lastPos)*0.5
                      const w = pos-lastPos
-                     arc(x, -(animStretchY+animSpreadY)*0.5,w,w, 0, PI)
+                     arc(x, -(animStretchY)*0.5,w,w, 0, PI)
                   } else {
                      //bottom
                      const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
                      const w = pos-lastPos
-                     arc(x, (animStretchY+animSpreadY)*0.5,w,w, PI, TWO_PI)
+                     arc(x, (animStretchY)*0.5,w,w, PI, TWO_PI)
                   }
                }
                lastPos = pos
@@ -3100,7 +3100,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const PLUSX = STRETCHX + SPREADX
    const PLUSY = STRETCHY + SPREADY
 
-
    // position
    const basePos = {
       x: style.posFromLeft + tx + (OUTERSIZE/2),
@@ -3167,7 +3166,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       style.sizes.forEach((size) => {
          let outerSpreadY = 0
          let outerSpreadX = 0 //wip doesn't get updated and no fills
-         if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined) {
+         if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
             if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
                outerSpreadY = -(OUTERSIZE-size)*spreadYScale
                //if (font === "fontb") outerSpreadY *= 2
@@ -3196,7 +3195,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       // specific modules:
 
       if (shape === "vert" || shape === "hori") {
-
 
          // first determine without needing to know direction
          const LINE_FROM = shapeParams.from || 0
@@ -3233,7 +3231,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (STRETCHY > 0) drawStretchLines("stretch", sideX, sideY, "vert")
                if (SPREADY > 0) drawStretchLines("spread", sideX, sideY, "vert")
             }
-            
 
          } else if (shape === "hori") {
             linePos.y1 += sideY * (size * 0.5 + outerSpreadY)
@@ -3257,11 +3254,11 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          let xpos = basePos.x
          let ypos = basePos.y
 
-         // move corner inwards if it's cut and facing to middle in Font B
+         // move corner inwards if it's cut and facing to middle in Font a
          const isCutVertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
          if (shapeParams.type === "linecut" && isCutVertical && font === "fonta" && SPREADY > 0) {
             outerSpreadY = 0
-            ypos -= sideY*SPREADY
+            ypos -= sideY*SPREADY/2
          }
 
          pickCornerModule(xpos, ypos)
@@ -3695,9 +3692,9 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (layer=== "fg" && sideY === -1 && midlineEffects.includes(effect)) {
                      if (style.letter === "‸") {
                         //caret counts separately
-                        style.caretSpots[0] = sPos.x + tx
+                        style.caretSpots[0] = sPos.x
                      } else {
-                        sortIntoArray(style.midlineSpots[style.stack], sPos.x + tx)
+                        sortIntoArray(style.midlineSpots[style.stack], sPos.x)
                      }
                   }
                }
