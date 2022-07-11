@@ -280,6 +280,7 @@ button {
   color: rgba(var(--fg-color), 0.8);
   padding: 0.6em 0.7em;
   line-height: 1;
+  border-radius: 0.5em;
 }
 
 .tertiary-button {
