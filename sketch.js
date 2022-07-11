@@ -3113,13 +3113,8 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    basePos.x += bottomHalf * style.offsetX
    basePos.y += (style.vOffset+rightHalf) *style.offsetY //% 2==0 ? style.offsetY : 0
    // offset based on quarter and stretch
-   if (font === "fonta") {
-      basePos.x += rightHalf * PLUSX
-      basePos.y += bottomHalf * PLUSY
-   } else if (font === "fontb") {
-      basePos.x += rightHalf * PLUSX * 0.5
-      basePos.y += bottomHalf * PLUSY * 0.5
-   }
+   basePos.x += rightHalf * PLUSX
+   basePos.y += bottomHalf * PLUSY * ((font === "fontb") ? 0.5 : 1)
    // modify based on stack (top half)
    basePos.y -= style.stack * (OUTERSIZE - style.weight + PLUSY * 0.5)
    // modify based on offset
@@ -3271,10 +3266,11 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          pickCornerModule(xpos, ypos)
 
-         if (size !== OUTERSIZE && outerSpreadY !== 0 && style.weight >= 1) {
-            let fillOffset = spreadYScale*2
-            pickCornerModule(xpos, ypos + fillOffset * sideY)
-         }
+         // offset effect
+         //if (size !== OUTERSIZE && outerSpreadY !== 0 && style.weight >= 1) {
+         //   let fillOffset = spreadYScale*2
+         //   pickCornerModule(xpos, ypos + fillOffset * sideY)
+         //}
 
          function pickCornerModule(xpos, ypos) {
             switch (shape) {
@@ -3558,8 +3554,12 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || outerSpreadY===0)) {
 
-               if (SPREADY > 0) drawStretchLines("spread",sideX, sideY, "vert")
+               // round shapes should get vertical spread effect, unless...
+               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutVertical) || font === "fontb") {
+                  if (SPREADY > 0) drawStretchLines("spread",sideX, sideY, "vert")
+               }
                if (STRETCHY > 0) drawStretchLines("stretch",sideX, sideY, "vert")
+
                // vertical stretch between shapes 
                // and remaining stretch to connect corners moved by outer spread effect
 
@@ -3627,13 +3627,18 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       }
 
       function drawStretchLines (mode, sideX, sideY, axis) {
+
+         if (font === "fontb" && axis === "vert") {
+            if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) return
+         }
+
          const sPos = {
             x: basePos.x,
             y: basePos.y,
          }
 
          if (axis === "hori") {
-            sPos.y += sideY * (size * 0.5 + outerSpreadY)
+            sPos.y += sideY * (size * 0.5 + outerSpreadY + SPREADY/2)
 
             if (mode === "stretch") {
                sPos.x -= sideX * SPREADX/2
@@ -3658,7 +3663,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
 
          } else if (axis === "vert") {
-            sPos.x += sideX * (size * 0.5 + outerSpreadX)
+            sPos.x += sideX * (size * 0.5 + outerSpreadX + SPREADX/2)
 
             if (mode === "stretch") {
                sPos.x -= sideX * SPREADX/2
@@ -3697,7 +3702,14 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                }
             } else if (mode === "spread") {
+               const spreadLength = outerSpreadY * -1
+               const maxSpreadLength = SPREADY / 2
 
+               if (layer === "fg" && spreadLength !== maxSpreadLength || layer === "bg" && spreadLength===0) {
+                  sPos.y += sideY * outerSpreadY
+                  const spreadDifference = -sideY * (maxSpreadLength - spreadLength)
+                  lineType(sPos.x, sPos.y, sPos.x, sPos.y+ spreadDifference)
+               }
             }
          }
       }
