@@ -1206,8 +1206,8 @@ function drawText (lineNum) {
                   } else if (letter === "p") {
                      drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders})
                   } else if (letter === "ö") {
-                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
                   }
                   break;
                case "ß":
@@ -1325,8 +1325,8 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 3, 3, 0, 0, {})
    
                   if (letter === "ä") {
-                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
                   }
                   break;
                case "n":
@@ -1468,8 +1468,8 @@ function drawText (lineNum) {
                   if (letter === "y") {
                      drawModule(style, "vert", 3, 3, 0, 0, {extend: descenders})
                   } else if (letter === "ü") {
-                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
-                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
                   }
                   break;
                case "w":
@@ -1583,16 +1583,16 @@ function drawText (lineNum) {
                   }
                   break;
                case ".":
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case ",":
-                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from:letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from:letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case "!":
                   // wip
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case "?":
                   // wip
@@ -1600,7 +1600,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {type: "linecut", at:"end", alwaysCut: true})
-                  drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders, from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders, from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case "i":
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
@@ -1627,7 +1627,7 @@ function drawText (lineNum) {
                      }
                   }
                   
-                  drawModule(style, "vert", 2, 2, leftOffset, 0, {extend: ascenders, from: letterOuter*0.5 + 1})
+                  drawModule(style, "vert", 2, 2, leftOffset, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
                   drawModule(style, "square", 2, 2, leftOffset, 0, {})
                   drawModule(style, "round", 3, 3, leftOffset, 0, {})
                   if (prevLetter === undefined) {
@@ -2061,10 +2061,10 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
                case ".":
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case ",":
-                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case "!":
                   // wip
@@ -2074,7 +2074,7 @@ function drawText (lineNum) {
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight-1.5})
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case "?":
                   // wip
@@ -2084,7 +2084,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "round", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5)})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -3141,6 +3141,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       // only keep going if there are more fills to draw, shifted inwards
       if (SPREADY <= 0) return
       if (shapeParams.noStretchY) return
+      if (shapeParams.noStretch) return
 
       if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
    
