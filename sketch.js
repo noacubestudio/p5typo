@@ -3267,6 +3267,8 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          //if (size !== OUTERSIZE && outerSpreadY !== 0 && style.weight >= 1) {
          //   let fillOffset = spreadYScale*2
          //   pickCornerModule(xpos, ypos + fillOffset * sideY)
+         //   fillOffset = spreadYScale*1
+         //   pickCornerModule(xpos, ypos + fillOffset * sideY)
          //}
 
          function pickCornerModule(xpos, ypos) {
@@ -3301,43 +3303,62 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             function shortenAngleBy() {
                let cutDifference = 0
 
+               function arcUntilLineAt (y) {
+                  const altValue = HALF_PI
+                  //if too close
+                  if (y <= 0) {
+                     return altValue
+                  }
+                  const x = Math.sqrt(size**2 - y**2)
+                  const dangerousOverlap = ((size - x) < 0.6)
+                  const inNextLetter = (size >= (OUTERSIZE + animSpacing*2))
+                  if (dangerousOverlap && isCutVertical && inNextLetter) {
+                     // might have to be removed
+                     //but depends on what letter is adjacent
+                     if (font === "fonta") {
+                        // only really matters for e
+                        if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
+                     } else if (font === "fontb") {
+                        // matters for s,z,y
+                        if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
+                        if (charInSet(style.prevLetter, ["mr"]) && rightHalf === 0) return 0
+                     }
+                  }
+                  const theta = (Math.atan2(y, x));
+                  return {angle: theta, position: x/2}
+               }
+               function arcUntilArc (sizeCircle, sizeOther, dist) {
+                  //if too close
+                  // if (da <= 2 || db <= 2) {
+                  //    return altValue
+                  // }
+                  
+                  const altValue = HALF_PI
+                  const ra = sizeCircle/2
+                  const rb = sizeOther/2
+               
+                  const x = (dist**2-rb**2+ra**2) / (2*dist)
+                  const y = Math.sqrt(ra**2 - x**2)
+                  const theta = (Math.atan2(x, y));
+                  //const amount = (2*theta)/PI
+               
+                  if (theta < 0) {
+                     return altValue
+                  }
+                  return theta
+               }
+
+
                if (shapeParams.type === "linecut") {
 
                   if (INNERSIZE-2 <= 0 && shapeParams.alwaysCut) {
                      drawCurve = false
                   }
                   if (layer === "fg") {
-
-                     function arcUntilLineAt (y) {
-                        const altValue = HALF_PI
-                        //if too close
-                        if (y <= 0) {
-                           return altValue
-                        }
-                        const x = Math.sqrt(size**2 - y**2)
-                        const dangerousOverlap = ((size - x) < 0.6)
-                        const inNextLetter = (size >= (OUTERSIZE + animSpacing*2))
-                        if (dangerousOverlap && isCutVertical && inNextLetter) {
-                           // might have to be removed
-                           //but depends on what letter is adjacent
-                           if (font === "fonta") {
-                              // only really matters for e
-                              if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
-                           } else if (font === "fontb") {
-                              // matters for s,z,y
-                              if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1) return 0
-                              if (charInSet(style.prevLetter, ["mr"]) && rightHalf === 0) return 0
-                           }
-                        }
-                        //if (frameCount === 1) print(dangerousOverlap)
-                        const theta = (Math.atan2(y, x));
-                        //const amount = (2*theta)/PI
-                        return theta
-                     }
                      let overlapWeight = INNERSIZE
                      //wip inside e
                      if (outerSpreadY !== 0 && isCutVertical) overlapWeight = INNERSIZE + outerSpreadY + style.stretchY/2
-                     cutDifference = HALF_PI-arcUntilLineAt(overlapWeight-2)
+                     cutDifference = HALF_PI-arcUntilLineAt(overlapWeight-2).angle
                   }
 
                } else if (shapeParams.type === "roundcut") {
@@ -3347,28 +3368,21 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg" && INNERSIZE > 2) {
 
-                     function arcUntilArc (sizeCircle, sizeOther, dist) {
-                        //if too close
-                        // if (da <= 2 || db <= 2) {
-                        //    return altValue
-                        // }
-                        
-                        const altValue = HALF_PI
-                        const ra = sizeCircle/2
-                        const rb = sizeOther/2
-                     
-                        const x = (dist**2-rb**2+ra**2) / (2*dist)
-                        const y = Math.sqrt(ra**2 - x**2)
-                        const theta = (Math.atan2(x, y));
-                        //const amount = (2*theta)/PI
-                     
-                        if (theta < 0) {
-                           return altValue
-                        }
-                        return theta
-                     }
+                     let heightDistance = Math.abs(outerSpreadY)
 
-                     cutDifference = HALF_PI-arcUntilArc(size, OUTERSIZE+2, INNERSIZE+style.weight)
+                     if (heightDistance > arcUntilLineAt(INNERSIZE-2).position) {
+                        // use if far enough inside letter
+                        cutDifference = HALF_PI-arcUntilLineAt(INNERSIZE-2).angle
+                     } else {
+                        // use round cut
+                        let circleDistance = INNERSIZE+style.weight
+                        // adjust angle to account for this diagonal because of spread...
+                        // if the circles are vertically offset, get the proper distance of the diagonal
+                        let rotationAngle = atan(heightDistance / circleDistance)
+                        circleDistance = Math.sqrt(circleDistance**2 + heightDistance**2)
+                        // get the result
+                        cutDifference = HALF_PI-arcUntilArc(size, OUTERSIZE+2, circleDistance) + rotationAngle
+                     }
                   }
                }
                return cutDifference
@@ -3448,10 +3462,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                let baseX = xpos+sideX*size/2
                let baseY = ypos+sideY*(size/2+outerSpreadY)
                lineType(xpos, baseY, xpos+sideX*branchLength/2, baseY)
-
-
-               
-               if (frameCount === 2) print(size, outerSpreadY)
 
                if (size < (OUTERSIZE+INNERSIZE)/2) {
 
