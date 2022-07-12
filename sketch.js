@@ -1129,7 +1129,7 @@ function drawText (lineNum) {
 
       // array with all ring sizes for that letter
       let ringSizes = []
-      for (let b = letterOuter; b >= letterInner-2; b-=2) {
+      for (let b = letterOuter; b >= letterInner-1; b-=2) {
          // smallest ring is animated
          let size = (b < letterInner) ? letterInner : b
          ringSizes.push(size)
@@ -3449,17 +3449,40 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                let baseY = ypos+sideY*(size/2+outerSpreadY)
                lineType(xpos, baseY, xpos+sideX*branchLength/2, baseY)
 
-               if (SPREADY>0 && outerSpreadY!==0) branchLength = map(branchLength, INNERSIZE, OUTERSIZE+INNERSIZE, INNERSIZE-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
-               lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*branchLength/2)
+
+               
+               if (frameCount === 2) print(size, outerSpreadY)
+
+               if (size < (OUTERSIZE+INNERSIZE)/2) {
+
+                  //from outside
+                  if (SPREADY === 0) {
+                     lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2))
+                  }
+                  if (Math.abs(outerSpreadY) !== SPREADY/2) {
+                     
+                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadY, 0, -SPREADY/2, -SPREADY/2, 0)
+                     lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(branchLength))
+                  }
+
+                  // from inside
+                  branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadY
+                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(branchLength))
+               } else {
+                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(OUTERSIZE/2))
+               }
+
 
                //basic "triangle" of lines going into the branch directon (start or end)
                if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  lineType(xpos +sideX*OUTERSIZE/2, baseY, xpos+sideX*revSize/2, baseY)
+                  //lineType(xpos +sideX*OUTERSIZE/2, baseY, xpos+sideX*revSize/2, baseY)
                } else {
                   if (SPREADY>0 && outerSpreadY!==0) revSize = map(revSize, INNERSIZE+1, OUTERSIZE+INNERSIZE, INNERSIZE+1-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
-                  lineType(baseX, ypos +sideY*(OUTERSIZE/2), baseX, ypos +sideY*revSize/2)
+                  //lineType(baseX, ypos +sideY*(OUTERSIZE/2), baseX, ypos +sideY*revSize/2)
                }
             } else {
+
+               // regular square corner
                beginShape()
                vertex(xpos+sideX*size/2, ypos+outerSpreadY*sideY)
                vertex(xpos+sideX*size/2, ypos+sideY*size/2+outerSpreadY*sideY)
