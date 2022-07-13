@@ -3111,8 +3111,8 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    // useful numbers
    const INNERSIZE = style.sizes[style.sizes.length-1]
    const OUTERSIZE = style.sizes[0]
-   const spreadXScale = (style.spreadX/2) / ((style.weight))/2
-   const spreadYScale = (style.spreadY/2) / ((style.weight))/2
+   const spreadXScale = (style.spreadX/2) / (style.weight) /2
+   const spreadYScale = (style.spreadY/2) / (style.weight) /2
 
    const SPREADX = style.spreadX
    const SPREADY = style.spreadY
@@ -3259,7 +3259,10 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          // vertical offset effect
          if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
-            const steps = 4
+            const minBetweenSteps = style.stroke/10
+            const fWidth = (SPREADX*0.5) / style.weight
+            const fHeight = (SPREADY*0.5) / style.weight
+            const steps = Math.ceil((Math.max(fWidth, fHeight))/minBetweenSteps + 0.01) //so it ALWAYS rounds up if it would be perfect
             for (let i = 1; i <= steps; i++) {
                let fillStep = (i/steps) * 2
                let movedPosX = basePos.x + ((SPREADX > 0 && shape === "vert") ? spreadXScale*fillStep*sideX : 0)
@@ -3338,8 +3341,13 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          // offset effect
          if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
-            const steps = 4
-            for (let i = 1; i <= steps; i++) {
+            const minBetweenSteps = style.stroke/10
+            const fWidth = (SPREADX*0.5) / style.weight
+            const fHeight = (SPREADY*0.5) / style.weight
+            const steps = Math.ceil((Math.max(fWidth, fHeight))/minBetweenSteps + 0.01) //so it ALWAYS rounds up if it would be perfect
+            if (frameCount == 1) print(steps, (Math.max(fWidth, fHeight))/minBetweenSteps, fHeight, "w", style.weight)
+
+            for (let i = 1; i <= steps; i++) { // dont draw first step again
                let fillStep = (i/steps) * 2
                let fillOffsetX = (SPREADX > 0) ? spreadXScale*fillStep*sideX : 0
                let fillOffsetY = (SPREADY > 0) ? spreadYScale*fillStep*sideY : 0
