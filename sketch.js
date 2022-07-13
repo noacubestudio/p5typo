@@ -22,6 +22,7 @@ const numberInputsObj = {
    stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
    stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
    offsetX: {element: document.getElementById('number-offset'), min:-10, max:10},
+   spreadX: {element: document.getElementById('number-spreadX'), min: 0, max: 50},
    spreadY: {element: document.getElementById('number-spreadY'), min: 0, max: 50},
 }
 let linesArray = ["the quick green","alien jumps over","the lazy dog."]
@@ -47,6 +48,7 @@ const mode = {
    mono: false,
    xray: false,
    drawFills: true,
+   spreadFills: true,
    wave: false,
    // use alt letters?
    altS: false,
@@ -70,6 +72,7 @@ let values = {
    stretchX: {from: 0, to: undefined, lerp: 0},
    offsetY: {from: 0, to: undefined, lerp: 0},
    stretchY: {from: 0, to: undefined, lerp: 0},
+   spreadX: {from: 0, to: undefined, lerp: 0},
    spreadY: {from: 0, to: undefined, lerp: 0},
    weight: {from: 7, to: undefined, lerp: 0},
    ascenders: {from: 2, to: undefined, lerp: 0},
@@ -77,7 +80,7 @@ let values = {
 }
 // calculated every frame based on current lerps
 let animSize, animRings, animSpacing, animWeight, animAscenders, animZoom
-let animOffsetX, animOffsetY, animStretchX, animStretchY, animSpreadY
+let animOffsetX, animOffsetY, animStretchX, animStretchY, animSpreadY, animSpreadX
 let animColorDark, animColorLight
 
 //drawfillcorner graphic layers
@@ -244,6 +247,12 @@ function createGUI () {
       mode.drawFills = fillsToggle.checked
       writeToURL()
    })
+   const spreadFillsToggle = document.getElementById('checkbox-spreadfills')
+   spreadFillsToggle.checked = mode.spreadFills
+   spreadFillsToggle.addEventListener('click', () => {
+      mode.spreadFills = spreadFillsToggle.checked
+      writeToURL()
+   })
 
    const clamp = (num, min, max) => Math.min(Math.max(num, min), max)
 
@@ -296,6 +305,10 @@ function loadFromURL () {
    if (params.fills === "false" || params.fills === "0") {
       mode.drawFills = false
       print("Loaded with URL Mode: Transparent overlaps")
+   }
+   if (params.spreadfill === "false" || params.spreadfill === "0") {
+      mode.spreadFills = false
+      print("Loaded with URL Mode: No fills for spread axes")
    }
    if (params.invert === "true" || params.invert === "1") {
       mode.dark = false
@@ -376,7 +389,7 @@ function loadFromURL () {
       const valString = String(params.values)
       const valArray = valString.split('_')
 
-      if (valString.match("[0-9_-]+") && valArray.length === 11) {
+      if (valString.match("[0-9_-]+") && valArray.length === 12) {
          print("Loaded with parameters", valArray)
          values.zoom.from = parseInt(valArray[0])
          values.size.from = parseInt(valArray[1])
@@ -386,11 +399,12 @@ function loadFromURL () {
          values.offsetY.from = parseInt(valArray[5])
          values.stretchX.from = parseInt(valArray[6])
          values.stretchY.from = parseInt(valArray[7])
-         values.spreadY.from = parseInt(valArray[8])
-         values.weight.from = parseInt(valArray[9])
-         values.ascenders.from = parseInt(valArray[10])
+         values.spreadX.from = parseInt(valArray[8])
+         values.spreadY.from = parseInt(valArray[9])
+         values.weight.from = parseInt(valArray[10])
+         values.ascenders.from = parseInt(valArray[11])
       } else {
-         print("Has to be 11 negative or positive numbers with _ in between")
+         print("Has to be 12 negative or positive numbers with _ in between")
       }
    }
 }
@@ -422,6 +436,7 @@ function writeToURL (noReload) {
       valueArr.push(""+getValue("offsetY"))
       valueArr.push(""+getValue("stretchX"))
       valueArr.push(""+getValue("stretchY"))
+      valueArr.push(""+getValue("spreadX"))
       valueArr.push(""+getValue("spreadY"))
       valueArr.push(""+getValue("weight"))
       valueArr.push(""+getValue("ascenders"))
@@ -504,6 +519,9 @@ function writeToURL (noReload) {
    if (!mode.drawFills) {
       newParams.append("fills",false)
    }
+   if (!mode.spreadFills) {
+      newParams.append("spreadfill",false)
+   }
 
    if (URLSearchParams.toString(newParams).length > 0) {
       URL += "?" + newParams
@@ -579,6 +597,7 @@ function defaultStyle () {
    values.spacing.to = 0
    values.stretchX.to = 0
    values.stretchY.to = 0
+   values.spreadX.to = 0
    values.spreadY.to = 0
 }
 
@@ -710,6 +729,7 @@ function draw () {
    animOffsetY = lerpValues(values.offsetY)
    animStretchX = lerpValues(values.stretchX)
    animStretchY = lerpValues(values.stretchY)
+   animSpreadX = lerpValues(values.spreadX)
    animSpreadY = lerpValues(values.spreadY)
    animWeight = lerpValues(values.weight)
    animAscenders = lerpValues(values.ascenders)
@@ -1139,8 +1159,8 @@ function drawText (lineNum) {
       const descenders = animAscenders
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
       map(letterOuter, 3, 4, 0, 1, true)
-      const wideOffset = 0.5*letterOuter + 0.5*letterInner
-      const extendOffset = waveValue(letterOuter, 0, 0.5) + (animStretchX-animStretchX%2)*0.5
+      const wideOffset = 0.5*letterOuter + 0.5*letterInner -animSpreadX*0.5
+      const extendOffset = waveValue(letterOuter, 0, 0.5) + ((animStretchX+animSpreadX)-(animStretchX+animSpreadX)%2)*0.5
 
       let calcPosFromTop = lineNum*totalHeight[lineNum]
       if (animOffsetY<0) calcPosFromTop -= animOffsetY
@@ -1164,7 +1184,7 @@ function drawText (lineNum) {
          offsetY: (effect==="staircase")? animOffsetX : animOffsetY,
          stretchX: animStretchX,
          stretchY: animStretchY,
-         spreadX: 0,
+         spreadX: animSpreadX,
          spreadY: animSpreadY,
          letter: letter,
          nextLetter: nextLetter,
@@ -1347,18 +1367,18 @@ function drawText (lineNum) {
                      drawModule(style, "square", 2, 2, 0, 0, {})
                      // SECOND LAYER
                      style.flipped = true
-                     drawModule(style, "square", 2, 1, wideOffset + animStretchX*2, 0, {})
+                     drawModule(style, "square", 2, 1, wideOffset + animStretchX*2 + animSpreadX*2, 0, {})
                      drawModule(style, "square", 1, 2, wideOffset, 0, {type: "branch", at:"start"})
                   } else {
                      drawModule(style, "diagonal", 1, 1, 0, 0, {})
                      drawModule(style, "diagonal", 2, 2, 0, 0, {})
                      // SECOND LAYER
                      style.flipped = true
-                     drawModule(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
+                     drawModule(style, "diagonal", 2, 1, wideOffset + animStretchX*2 + animSpreadX*2, 0, {})
                      drawModule(style, "diagonal", 1, 2, wideOffset, 0, {})
                   }
                   drawModule(style, "vert", 4, 3, wideOffset, 0, {})
-                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2 + animSpreadX*2, 0, {})
                   break;
                case "s":
                   if (!mode.altS) {
@@ -1374,14 +1394,14 @@ function drawText (lineNum) {
                      let xOffset = 0
                      //start further left if not connecting left
                      if (charInSet(prevLetter,["gap", "dr"])) {
-                        xOffset = -letterOuter*0.5 + extendOffset -animStretchX
+                        xOffset = -letterOuter*0.5 + extendOffset -animStretchX -animSpreadX
                         drawModule(style, "round", 3, 3, xOffset, 0, {type: "extend", at:"end"})
                      } else {
                         drawModule(style, "round", 3, 3, xOffset, 0, {})
                      }
                      if (!charInSet(nextLetter,["gap", "ul"]) && !"zxj".includes(nextLetter) || nextLetter === "s") {
                         drawModule(style, "round", 1, 2, wideOffset + xOffset, 0, {})
-                        drawModule(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset, 0, {type: "roundcut", at:"end"})
+                        drawModule(style, "round", 2, 1, wideOffset + animStretchX*2 + xOffset + animSpreadX*2, 0, {type: "roundcut", at:"end"})
                      } else {
                         drawModule(style, "round", 1, 2, wideOffset + xOffset, 0, {type: "extend", at:"end"})
                      }
@@ -1478,10 +1498,10 @@ function drawText (lineNum) {
                   drawModule(style, "diagonal", 4, 4, 0, 0, {})
 
                   style.flipped = true
-                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2 +animSpreadX*2, 0, {})
                   drawModule(style, "vert", 1, 2, wideOffset, 0, {})
                   drawModule(style, "diagonal", 4, 3, wideOffset, 0, {})
-                  drawModule(style, "diagonal", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "diagonal", 3, 4, wideOffset + animStretchX*2 +animSpreadX*2, 0, {})
                   break;
                case "r":
                   drawModule(style, "round", 1, 1, 0, 0, {})
@@ -1544,16 +1564,16 @@ function drawText (lineNum) {
                case "k":
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
-                  drawModule(style, "diagonal", 1, 1, style.weight, 0, {})
-                  drawModule(style, "diagonal", 4, 4, style.weight, 0, {})
+                  drawModule(style, "diagonal", 1, 1, style.weight+style.spreadX/2, 0, {})
+                  drawModule(style, "diagonal", 4, 4, style.weight+style.spreadX/2, 0, {})
                   if (!"zx".includes(nextLetter)) {
-                     drawModule(style, "hori", 2, 2, style.weight, 0, {extend: -oneoffset-style.weight})
+                     drawModule(style, "hori", 2, 2, style.weight+style.spreadX/2, 0, {extend: -oneoffset-style.weight})
                   }
                   if (!"sxz".includes(nextLetter)) {
                      if (!(charInSet(nextLetter,["dl", "gap"]))) {
-                        drawModule(style, "round", 3, 3, style.weight, 0, {type: "roundcut", at:"start"})
+                        drawModule(style, "round", 3, 3, style.weight+style.spreadX/2, 0, {type: "roundcut", at:"start"})
                      } else {
-                        drawModule(style, "hori", 3, 3, style.weight, 0, {extend: -oneoffset-style.weight})
+                        drawModule(style, "hori", 3, 3, style.weight+style.spreadX/2, 0, {extend: -oneoffset-style.weight})
                      }
                   }
                   break;
@@ -2246,7 +2266,7 @@ function lineWidthUntil (lineText, charIndex) {
       let letterOuter = animSize //+ [2,4,3,-2,0,2,4,5][i % 8]
       //letterInner = waveInner(c, letterInner, letterOuter)
 
-      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + (animStretchX-(animStretchX%2))*0.5
+      const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + ((animStretchX+animSpreadX)-((animStretchX+animSpreadX)%2))*0.5
       const isLastLetter = (c === charIndex)
       total += letterKerning(isLastLetter, prevchar, char, nextchar, animSpacing, letterInner, letterOuter, extendOffset)
    }
@@ -2258,7 +2278,7 @@ function lineWidthUntil (lineText, charIndex) {
 
 
 function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
-   const weight = (outer-inner)*0.5
+   const weight = (outer-inner)*0.5 + animSpreadX*0.5
 
    // negative spacing can't go past width of lines
    spacing = max(spacing, -weight)
@@ -2705,12 +2725,12 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
                if (charInSet(prevchar,["gap", "dr"])) {
                   stretchWidth = extendOffset
                } else {
-                  stretchWidth = animStretchX
+                  stretchWidth = (animStretchX+animSpreadX)
                }
                if (charInSet(nextchar,["gap", "ul"])) {
                   stretchWidth += extendOffset
                } else {
-                  stretchWidth += animStretchX
+                  stretchWidth += (animStretchX+animSpreadX)
                }
             }
             break;
@@ -2718,7 +2738,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          case "w":
          case "x":
          case "z":
-            stretchWidth = animStretchX * 2
+            stretchWidth = (animStretchX) * 2
             break;
          case "i":
          case ".":
@@ -2729,14 +2749,14 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             stretchWidth = 0
             break;
          default:
-            stretchWidth = animStretchX
+            stretchWidth = (animStretchX+animSpreadX)
       }
    } else if (font === "fontb") {
       switch (char) {
          case "m":
          case "w":
          case "t":
-            stretchWidth = animStretchX * 2
+            stretchWidth = (animStretchX+animSpreadX) * 2
             break;
          case "i":
          case ".":
@@ -2747,7 +2767,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             stretchWidth = 0
             break;
          default:
-            stretchWidth = animStretchX
+            stretchWidth = (animStretchX+animSpreadX)
       }
    }
 
@@ -3091,6 +3111,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    // useful numbers
    const INNERSIZE = style.sizes[style.sizes.length-1]
    const OUTERSIZE = style.sizes[0]
+   const spreadXScale = (style.spreadX/2) / ((style.weight))/2
    const spreadYScale = (style.spreadY/2) / ((style.weight))/2
 
    const SPREADX = style.spreadX
@@ -3129,8 +3150,17 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       // old corner fill requirements:
       // ! ((smallest <= 2 || letterOuter+2 <= 2) && noSmol)
 
+      let palettePickBg = palette.bg
+      if (mode.xray) {
+         if (shape === "vert" || shape === "hori") {
+            palettePickBg = palette.xrayBg
+         } else {
+            palettePickBg = palette.xrayBgCorner
+         }
+      }
+
       // fill style
-      stroke((mode.xray)? palette.xrayBgCorner : palette.bg)
+      stroke(palettePickBg)
       strokeWeight(style.weight*strokeScaleFactor)
       strokeCap(SQUARE)
       strokeJoin(MITER)
@@ -3144,7 +3174,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       if (shapeParams.noStretch) return
 
       if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
-   
          let outerSpreadY = -(OUTERSIZE-INNERSIZE)*spreadYScale
          for (let betweenStep = 0; betweenStep > outerSpreadY; betweenStep-=style.weight) {
             drawSinglePathOfModule(INNERSIZE+style.weight, "bg", 0, betweenStep)
@@ -3153,8 +3182,15 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       }
    })()
 
-   // colors
-   const INNERCOLOR = (mode.xray) ? palette.xrayFgCorner : lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   // foreground colors
+   let INNERCOLOR = lerpColor(palette.fg,palette.bg,(effect==="gradient") ? 0.5 : 0)
+   if (mode.xray) {
+      if (shape === "hori" || shape === "vert") {
+         INNERCOLOR = palette.xrayFg
+      } else {
+         INNERCOLOR = palette.xrayFgCorner
+      }
+   }
    const OUTERCOLOR = palette.fg
 
    ;(function drawModuleFG() {
@@ -3170,8 +3206,10 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
             if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
                outerSpreadY = -(OUTERSIZE-size)*spreadYScale
-               //if (font === "fontb") outerSpreadY *= 2
             }
+         }
+         if (SPREADX > 0 && style.weight > 0 && shapeParams.noStretchX === undefined && shapeParams.noStretch === undefined) {
+            outerSpreadX = -(OUTERSIZE-size)*spreadXScale
          }
          drawSinglePathOfModule(size, "fg", outerSpreadX, outerSpreadY)
       })
@@ -3217,7 +3255,31 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             y2: basePos.y
          }
 
-         if (shape === "vert") {
+         pickLineModule(linePos)
+
+         // vertical offset effect
+         if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
+            const steps = 4
+            for (let i = 1; i <= steps; i++) {
+               let fillStep = (i/steps) * 2
+               let movedPosX = basePos.x + ((SPREADX > 0 && shape === "vert") ? spreadXScale*fillStep*sideX : 0)
+               let movedPosY = basePos.y + ((SPREADY > 0 && shape === "hori") ? spreadYScale*fillStep*sideY : 0)
+               pickLineModule({x1: movedPosX, x2: movedPosX, y1: movedPosY, y2: movedPosY})
+            }
+         }
+
+         function pickLineModule(linePos) {
+            switch (shape) {
+               case "hori":
+                  drawHorizontalModule(linePos)
+                  break;
+               case "vert":
+                  drawVerticalModule(linePos)
+                  break;
+            }
+         }
+
+         function drawVerticalModule(linePos) {
             linePos.x1 += sideX * (size * 0.5 + outerSpreadX)
             linePos.x2 += sideX * (size * 0.5 + outerSpreadX)
             linePos.y1 += sideY * (lineStart + outerSpreadY)
@@ -3228,12 +3290,13 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                lineType(linePos.x1, linePos.y1 , linePos.x2 , linePos.y2)
             }
 
-            if (PLUSY > 0 && LINE_FROM === 0 && shapeParams.noStretch === undefined) {
+            if (PLUSY > 0 && LINE_FROM === 0) {
                if (STRETCHY > 0) drawStretchLines("stretch", sideX, sideY, "vert")
                if (SPREADY > 0) drawStretchLines("spread", sideX, sideY, "vert")
             }
+         }
 
-         } else if (shape === "hori") {
+         function drawHorizontalModule(linePos) {
             linePos.y1 += sideY * (size * 0.5 + outerSpreadY)
             linePos.y2 += sideY * (size * 0.5 + outerSpreadY)
             linePos.x1 += sideX * (lineStart + outerSpreadX)
@@ -3244,7 +3307,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2)
             }
 
-            if (PLUSX > 0 && LINE_FROM === 0 && shapeParams.noStretch === undefined) {
+            if (PLUSX > 0 && LINE_FROM === 0) {
                if (STRETCHX > 0) drawStretchLines("stretch", sideX, sideY, "hori")
                if (SPREADX > 0) drawStretchLines("spread", sideX, sideY, "hori")
             }
@@ -3255,27 +3318,39 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          let xpos = basePos.x
          let ypos = basePos.y
 
-         // move corner inwards if it's cut and facing to middle in Font a
-         const isCutVertical = (shapeParams.at === "end" && (arcQ%2===1) || shapeParams.at === "start" && arcQ%2===0)
-         if (shapeParams.type === "linecut" && isCutVertical && font === "fonta" && SPREADY > 0) {
-            outerSpreadY = 0
-            ypos -= sideY*SPREADY/2
+         const isCutVertical = (shapeParams.at === "end" && arcQ%2===1 || shapeParams.at === "start" && arcQ%2===0)
+         const isCutHorizontal = (shapeParams.at === "end" && arcQ%2===0 || shapeParams.at === "start" && arcQ%2===1)
+
+         if (shapeParams.type === "linecut" && font === "fonta") {
+            // move corner inwards vertically if it's cut and facing to middle
+            if (isCutVertical && SPREADY > 0) {
+               outerSpreadY = 0
+               ypos -= sideY*SPREADY/2
+            }
+            // move corner inwards horizontally if it's cut and facing to middle in font a
+            if (isCutHorizontal && SPREADX > 0) {
+               outerSpreadX = 0
+               xpos -= sideX*SPREADX/2
+            }
          }
 
-         pickCornerModule(xpos, ypos)
+         pickCornerModule(xpos, ypos, 0)
 
          // offset effect
-         //if (size !== OUTERSIZE && outerSpreadY !== 0 && style.weight >= 1) {
-         //   let fillOffset = spreadYScale*2
-         //   pickCornerModule(xpos, ypos + fillOffset * sideY)
-         //   fillOffset = spreadYScale*1
-         //   pickCornerModule(xpos, ypos + fillOffset * sideY)
-         //}
+         if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
+            const steps = 4
+            for (let i = 1; i <= steps; i++) {
+               let fillStep = (i/steps) * 2
+               let fillOffsetX = (SPREADX > 0) ? spreadXScale*fillStep*sideX : 0
+               let fillOffsetY = (SPREADY > 0) ? spreadYScale*fillStep*sideY : 0
+               pickCornerModule(xpos + fillOffsetX, ypos + fillOffsetY, fillOffsetY)
+            }
+         }
 
-         function pickCornerModule(xpos, ypos) {
+         function pickCornerModule(xpos, ypos, spreadFillStepY) {
             switch (shape) {
                case "round":
-                  drawRoundModule(xpos, ypos)
+                  drawRoundModule(xpos, ypos, spreadFillStepY)
                   break;
                case "diagonal":
                   drawDiagonalModule(xpos, ypos)
@@ -3287,11 +3362,11 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   print(shape + " is not a valid shape!")
                   break;
             }
+            drawCornerStretch(xpos, ypos) // UHHH DOESN"T ACTUALLY MAKE COPIES
          }
-         drawCornerStretch(xpos, ypos)
 
 
-         function drawRoundModule(xpos, ypos) {
+         function drawRoundModule(xpos, ypos, spreadFillStepY) {
 
             // angles
             let startAngle = PI + (arcQ-1)*HALF_PI
@@ -3357,8 +3432,11 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg") {
                      let overlapWeight = INNERSIZE
-                     //wip inside e
+                     // wip - inside e
                      if (outerSpreadY !== 0 && isCutVertical) overlapWeight = INNERSIZE + outerSpreadY + style.stretchY/2
+                     // wip - inside a
+                     if (outerSpreadX !== 0 && isCutHorizontal) overlapWeight = INNERSIZE + outerSpreadX + style.stretchX/2
+
                      cutDifference = HALF_PI-arcUntilLineAt(overlapWeight-2).angle
                   }
 
@@ -3369,14 +3447,15 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg" && INNERSIZE > 2) {
 
-                     let heightDistance = Math.abs(outerSpreadY)
+                     let heightDistance = Math.abs(outerSpreadY)-spreadFillStepY*sideY
 
                      if (heightDistance > arcUntilLineAt(INNERSIZE-2).position) {
                         // use if far enough inside letter
                         cutDifference = HALF_PI-arcUntilLineAt(INNERSIZE-2).angle
                      } else {
                         // use round cut
-                        let circleDistance = INNERSIZE+style.weight
+                        let circleDistance = INNERSIZE+style.weight - (SPREADX/2-Math.abs(outerSpreadX))
+
                         // adjust angle to account for this diagonal because of spread...
                         // if the circles are vertically offset, get the proper distance of the diagonal
                         let rotationAngle = atan(heightDistance / circleDistance)
@@ -3403,7 +3482,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
 
                   // basic curve for lines, shortened if needed
-                  arcType(xpos, ypos + outerSpreadY*sideY,size,size,startAngle,endAngle)
+                  arcType(xpos + outerSpreadX*sideX, ypos + outerSpreadY*sideY,size,size,startAngle,endAngle)
 
                } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
 
@@ -3417,7 +3496,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      if (mode.xray) layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010")
                      layerGroup[size].scale(animZoom)
                      layerGroup[size].noFill()
-                     layerGroup[size].stroke((mode.xray)?palette.xrayBgCorner : palette.bg)
+                     layerGroup[size].stroke((mode.xray) ? palette.xrayBgCorner : palette.bg)
                      layerGroup[size].strokeCap(SQUARE)
                      layerGroup[size].strokeWeight(style.weight*strokeScaleFactor)
                      arcType(size,size,size,size,HALF_PI*2,HALF_PI*3, layerGroup[size])
@@ -3460,7 +3539,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   branchLength = revSize
                }
               
-               let baseX = xpos+sideX*size/2
+               let baseX = xpos+sideX*(size/2+outerSpreadX)
                let baseY = ypos+sideY*(size/2+outerSpreadY)
                lineType(xpos, baseY, xpos+sideX*branchLength/2, baseY)
 
@@ -3495,9 +3574,9 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                // regular square corner
                beginShape()
-               vertex(xpos+sideX*size/2, ypos+outerSpreadY*sideY)
-               vertex(xpos+sideX*size/2, ypos+sideY*size/2+outerSpreadY*sideY)
-               vertex(xpos, ypos+sideY*size/2+outerSpreadY*sideY)
+               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+outerSpreadY*sideY)
+               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
+               vertex(xpos+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
                endShape()
             }
          }
@@ -3520,26 +3599,26 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (changeAxis === "x") {
                      xPoint.x = xpos+sideX*(OUTERSIZE/2 -style.weight -1)
                      xPoint.y = yPoint.y - (OUTERSIZE/2 - style.weight -1) + sideY*stepslope
-                     lineType(xpos, yPoint.y+outerSpreadY*sideY, yPoint.x, yPoint.y+outerSpreadY*sideY)
+                     lineType(xpos+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY, yPoint.x+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY)
                   } else if (changeAxis === "y") {
                      yPoint.y = ypos+sideY*(OUTERSIZE/2 -style.weight -1)
                      yPoint.x = xPoint.x - (OUTERSIZE/2 - style.weight -1) + sideX*stepslope
-                     lineType(xPoint.x, ypos+outerSpreadY*sideY, xPoint.x, xPoint.y+outerSpreadY*sideY)
+                     lineType(xPoint.x+outerSpreadX*sideX, ypos+outerSpreadY*sideY, xPoint.x+outerSpreadX*sideX, xPoint.y+outerSpreadY*sideY)
                   }
-                  lineType(xPoint.x, xPoint.y+outerSpreadY*sideY, yPoint.x, yPoint.y+outerSpreadY*sideY)
+                  lineType(xPoint.x+outerSpreadX*sideX, xPoint.y+outerSpreadY*sideY, yPoint.x+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY)
                } else {
-                  lineType(xPoint.x, xPoint.y+outerSpreadY*sideY, yPoint.x, yPoint.y+outerSpreadY*sideY)
+                  lineType(xPoint.x+outerSpreadX*sideX, xPoint.y+outerSpreadY*sideY, yPoint.x+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY)
                   if (step > 0) {
-                     lineType(xPoint.x, ypos+outerSpreadY*sideY, xPoint.x, xPoint.y+outerSpreadY*sideY)
-                     lineType(xpos, yPoint.y+outerSpreadY*sideY, yPoint.x, yPoint.y+outerSpreadY*sideY)
+                     lineType(xPoint.x+outerSpreadX*sideX, ypos+outerSpreadY*sideY, xPoint.x+outerSpreadX*sideX, xPoint.y+outerSpreadY*sideY)
+                     lineType(xpos+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY, yPoint.x+outerSpreadX*sideX, yPoint.y+outerSpreadY*sideY)
                   }
                }
             } else {
                beginShape()
-               vertex(xpos+sideX*size/2, ypos+outerSpreadY*sideY)
-               vertex(xpos+sideX*size/2, ypos+sideY*stepslope+outerSpreadY*sideY)
-               vertex(xpos+sideX*stepslope, ypos+sideY*size/2+outerSpreadY*sideY)
-               vertex(xpos, ypos+sideY*size/2+outerSpreadY*sideY)
+               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+outerSpreadY*sideY)
+               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+sideY*stepslope+outerSpreadY*sideY)
+               vertex(xpos+sideX*stepslope+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
+               vertex(xpos+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
                endShape()
             }
          }
@@ -3555,32 +3634,16 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                //if (type === "extend") return false
 
                const cutX = (arcQ % 2 === 0) === (shapeParams.at === "start")
-               if (dir === "x") return cutX
-               return !cutX
+               return ((dir === "x") === cutX)
             }
 
-            if (style.stretchX > 0 && shapeParams.noStretchX === undefined && !isCutInDir(shapeParams.type, "x")) {
+            if (shapeParams.noStretchX === undefined && !isCutInDir(shapeParams.type, "x") && (layer === "fg" || outerSpreadX===0)) {
 
-               if (SPREADX > 0) drawStretchLines("spread", sideX, sideY, "hori")
+               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "fontb") {
+                  if (SPREADX > 0) drawStretchLines("spread", sideX, sideY, "hori")
+               }
                if (STRETCHX > 0) drawStretchLines("stretch", sideX, sideY, "hori")
-               // if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-               // const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1
-               // let stretchXPos = xpos
-               // let stretchYPos = ypos + ((outerSpreadY===0)? size*0.5 : size*0.5+outerSpreadY) *toSideX
-               // const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1
 
-               // // the offset can be in between the regular lines vertically if it would staircase nicely
-               // let offsetShift = 0
-               // let stairDir = (style.vOffset+(offQ === 2 || offQ === 3) ? 1:0) % 2===0 ? -1 : 1
-               // if (Math.abs(style.offsetY) >2 && Math.abs(style.offsetY) <4) {
-               //    offsetShift = (style.offsetY/3)*stairDir
-               // } else if (Math.abs(style.offsetY) >1 && Math.abs(style.offsetY)<3) {
-               //    offsetShift = (style.offsetY/2)*stairDir
-               // }
-
-               // const lineX = stretchXPos
-               // const lineY = stretchYPos+offsetShift
-               // lineType(lineX, lineY, lineX + dirX*0.5*style.stretchX, lineY)
             }
 
             if (shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || outerSpreadY===0)) {
@@ -3591,57 +3654,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
                if (STRETCHY > 0) drawStretchLines("stretch",sideX, sideY, "vert")
 
-               // vertical stretch between shapes 
-               // and remaining stretch to connect corners moved by outer spread effect
-
-               // if (layer === "bg") stroke((mode.xray)? palette.xrayStretchCorner : palette.bg)
-               // const toSideY = (arcQ === 1 || arcQ === 4) ? -1 : 1
-               // let stretchXPos = xpos + size*toSideY*0.5
-               // let stretchYPos = ypos
-               // const dirY = (arcQ === 1 || arcQ === 2) ? 1 : -1
-
-               // // the offset can be in between the regular lines horizontally if it would staircase nicely
-               // let offsetShift = 0
-               // if (!style.spreadY>0) {
-               //    if (Math.abs(style.offsetX) >2 && Math.abs(style.offsetX) <4) {
-               //       offsetShift = style.offsetX/3*dirY
-               //    } else if (Math.abs(style.offsetX) >1 && Math.abs(style.offsetX)<3) {
-               //       offsetShift = style.offsetX/2*dirY
-               //    }
-               // }
-
-               // //base position
-               // const lineX = stretchXPos+offsetShift
-               // const lineY = stretchYPos
-
-               // if (!midlineEffects.includes(effect)) {
-
-               //    let stretchLength = 0.5*style.stretchY
-               //    if (font === "fontb") {
-               //       if (style.spreadY>0) {
-               //          if (style.stack > 0 && dirY === -1) outerSpreadY = outerSpreadY-style.stretchY
-               //          if ((style.stack === 1 && dirY === 1) || (style.stack === 0 && dirY === -1)) {
-               //             lineType(lineX, lineY -outerSpreadY*dirY, lineX, lineY + dirY*stretchLength*2)
-               //          }
-               //       } else {
-               //          lineType(lineX, lineY, lineX, lineY + dirY*stretchLength)
-               //       }
-               //    } else if (font === "fonta") {
-               //       if (!(shapeParams.type === "linecut" && isCutVertical && style.spreadY>0)) {
-               //          lineType(lineX, lineY - dirY*outerSpreadY, lineX, lineY + dirY*stretchLength)
-               //       }
-               //    }
-               // }
-
-               // // if vertical line goes down, set those connection spots in the array
-               // if (dirY === 1 && midlineEffects.includes(effect) && layer === "fg") {
-               //    if (style.letter === "‸") {
-               //       //caret counts separately
-               //       style.caretSpots[0] = stretchXPos
-               //    } else {
-               //       sortIntoArray(style.midlineSpots[style.stack], stretchXPos)
-               //    }
-               // }
             }
 
             const extendamount = ((OUTERSIZE % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
@@ -3657,10 +3669,19 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // other corner shapes...
       }
 
-      function drawStretchLines (mode, sideX, sideY, axis) {
+      function drawStretchLines (stretchMode, sideX, sideY, axis) {
 
          if (font === "fontb" && axis === "vert") {
             if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) return
+         }
+
+         // separate xray color
+         if (stretchMode === "stretch" && mode.xray && layer=== "bg") {
+            if (shape === "vert" || shape === "hori") {
+               stroke(palette.xrayStretch)
+            } else {
+               stroke(palette.xrayStretchCorner)
+            }
          }
 
          const sPos = {
@@ -3671,7 +3692,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          if (axis === "hori") {
             sPos.y += sideY * (size * 0.5 + outerSpreadY + SPREADY/2)
 
-            if (mode === "stretch") {
+            if (stretchMode === "stretch") {
                sPos.x -= sideX * SPREADX/2
                sPos.y -= sideY * SPREADY/2
                const stretchDifference = -sideX * style.stretchX * 0.5
@@ -3686,17 +3707,24 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
 
                // draw
-               if (layer === "bg") stroke((mode.xray)? palette.xrayStretch : palette.bg)
                lineType(sPos.x+stretchDifference, sPos.y+offsetShift, sPos.x, sPos.y+offsetShift)
 
-            } else if (mode === "spread") {
+            } else if (stretchMode === "spread") {
+               const spreadLengthX = outerSpreadX * -1
+               const maxSpreadLengthX = SPREADX / 2
 
+               if (layer === "fg" && spreadLengthX !== maxSpreadLengthX || layer === "bg" && spreadLengthX===0) {
+                  sPos.x += sideX * outerSpreadX
+                  sPos.y -= sideY * SPREADY/2
+                  const spreadDifferenceX = -sideX * (maxSpreadLengthX - spreadLengthX)
+                  lineType(sPos.x, sPos.y, sPos.x + spreadDifferenceX, sPos.y)
+               }
             }
 
          } else if (axis === "vert") {
             sPos.x += sideX * (size * 0.5 + outerSpreadX + SPREADX/2)
 
-            if (mode === "stretch") {
+            if (stretchMode === "stretch") {
                sPos.x -= sideX * SPREADX/2
                sPos.y -= sideY * SPREADY/2
                const stretchDifference = -sideY * STRETCHY * 0.5
@@ -3712,7 +3740,6 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   if (!midlineEffects.includes(effect)) {
-                     if (layer === "bg") stroke((mode.xray)? palette.xrayStretch : palette.bg)
                      if (SPREADY > 0 && font === "fontb") {
                         if ((style.stack === 1 && sideY === -1) || (style.stack === 0 && sideY === 1)) {
                            lineType(sPos.x-offsetShift, sPos.y+stretchDifference, sPos.x-offsetShift, sPos.y)
@@ -3732,14 +3759,15 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                   }
                }
-            } else if (mode === "spread") {
+            } else if (stretchMode === "spread") {
                const spreadLength = outerSpreadY * -1
                const maxSpreadLength = SPREADY / 2
 
                if (layer === "fg" && spreadLength !== maxSpreadLength || layer === "bg" && spreadLength===0) {
+                  sPos.x -= sideX * SPREADX/2
                   sPos.y += sideY * outerSpreadY
-                  const spreadDifference = -sideY * (maxSpreadLength - spreadLength)
-                  lineType(sPos.x, sPos.y, sPos.x, sPos.y+ spreadDifference)
+                  const spreadDifferenceY = -sideY * (maxSpreadLength - spreadLength)
+                  lineType(sPos.x, sPos.y, sPos.x, sPos.y+ spreadDifferenceY)
                }
             }
          }

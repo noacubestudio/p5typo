@@ -22,6 +22,7 @@
          <div class="sidebar-container">
             <div class="top-container">
                <h1>Multiline Maker</h1>
+               <h3>(Work in progress - @noa.cubestudio)</h3>
                <div>
                   <!-- <label class="dropdown-label">effects</label> -->
                   <div class="custom-select" style="width:100%;">
@@ -43,7 +44,7 @@
                </div>
             </div>
             <div class="effect-container">
-               <h2>effect</h2>
+               <h2>STYLE SETTINGS</h2>
                <div>
                   <!-- <label class="dropdown-label">effects</label> -->
                   <div class="custom-select" style="width:100%;">
@@ -67,7 +68,6 @@
                </div>
             </div>
             <div class="properties-container">
-               <h2>properties</h2>
                <div class="numbers-grid-container">
                   <div class="numbers-container">
                      <input id="number-size" type="number" value="9" min="1">
@@ -78,25 +78,33 @@
 
                      <input id="number-asc" type="number" value="2" min="1">
                      <label class="number-label">height</label>
-
+                  </div>
+                  <div class="numbers-container">
                      <input id="number-weight" type="number" value="7" min="1" max="9">
                      <label class="number-label">weight</label>
 
                      <input id="number-scale" type="number" value="10">
                      <label class="number-label">zoom</label>
-                  </div>
-                  <div class="numbers-container">
+
                      <input id="number-spacing" type="number" value="0" min="-2" max="2">
                      <label class="number-label">spacing</label>
-
-                     <input id="number-offset" type="number" value="0" min="-10" max="10">
-                     <label id="label-offset" class="number-label">offset</label>
-
-                     <input id="number-stretchY" type="number" value="0" min="0" max="50">
-                     <label class="number-label">stretch&nbsp;v</label>
-
+                  </div>
+               </div>
+            </div>
+            <div class="properties-container">
+               <div class="numbers-grid-container">
+                  <div class="numbers-container">
                      <input id="number-stretchX" type="number" value="0" min="0" max="50">
                      <label class="number-label">stretch&nbsp;h</label>
+                     <input id="number-spreadX" type="number" value="0" min="0" max="50">
+                     <label class="number-label">spread&nbsp;h</label>
+
+                     <input id="number-offset" type="number" value="0" min="-10" max="10">
+                     <label id="label-offset" class="number-label">offset&nbsp;h</label>
+                  </div>
+                  <div class="numbers-container">
+                     <input id="number-stretchY" type="number" value="0" min="0" max="50">
+                     <label class="number-label">stretch&nbsp;v</label>
 
                      <input id="number-spreadY" type="number" value="0" min="0" max="50">
                      <label class="number-label">spread&nbsp;v</label>
@@ -104,11 +112,14 @@
                </div>
             </div>
             <div class="other-container">
-               <h2>other</h2>
                <div class="checkbox-grid-container"
                   <div>
                      <label class="checkbox-container">show fills
                         <input type="checkbox" id="checkbox-fills" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">spread fills
+                        <input type="checkbox" id="checkbox-spreadfills" checked="checked">
                         <span class="checkmark"></span>
                      </label>
                      <label class="checkbox-container">alt. n/h
