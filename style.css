@@ -55,7 +55,7 @@ img {
   margin: 20px;
   display: flex;
   flex-direction: column;
-  gap: 1.5em;
+  gap: 1em;
 }
 .main-column {
   overflow: hidden;
@@ -90,6 +90,7 @@ h3 {
   font-weight: 400;
   font-size: 14px;
   margin-bottom: 1em;
+  color:rgba(var(--fg-color), 0.6)
 }
 p {
   font-size: 14pt;
@@ -132,11 +133,13 @@ kbd {
 }
 
 .checkbox-grid-container {
+  margin-left: 0.3em;
+  margin-top: 0.3em;
   display: grid;
   grid-template-columns: repeat(2,1fr);
   grid-template-rows: repeat(5, max-content);
-  /* grid-column-gap: 1em; */
-  grid-row-gap: 0.5em;
+  grid-column-gap: 1em;
+  grid-row-gap: 0.6em;
   grid-auto-flow: column;
   justify-content: space-between;
 }
@@ -180,12 +183,15 @@ textarea::-webkit-scrollbar {
 .checkbox-container {
   display: block;
   position: relative;
-  padding-left: 1.3em;
+  padding-left: 1.6em;
   cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+
+  color:rgba(var(--fg-color), 0.8);
+  font-size: 12pt;
 }
 
 .numbers-container {
@@ -239,7 +245,7 @@ textarea::-webkit-scrollbar {
 
 /* When the checkbox is checked, add a background */
 .checkbox-container input:checked ~ .checkmark {
-  background-color: rgb(var(--fg-color));
+  background-color: rgba(var(--fg-color), 1);
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
