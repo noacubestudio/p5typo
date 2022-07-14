@@ -1740,6 +1740,12 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   break;
+               case "#":
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at: "end"})
+                  drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at: "end"})
+                  drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at: "start"})
+                  drawModule(style, "square", 4, 4, 0, 0, {type: "branch", at: "start"})
+                  break;
                default:
                   style.sizes = [letterOuter]
                   style.opacity = 0.5
@@ -3234,7 +3240,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       style.sizes.forEach((size) => {
          let outerSpreadY = 0
-         let outerSpreadX = 0 //wip doesn't get updated and no fills
+         let outerSpreadX = 0
          if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
             if (font === "fonta" || ((bottomHalf===0 && style.stack === 1) || (bottomHalf===1 && style.stack===0))){
                outerSpreadY = -(OUTERSIZE-size)*spreadYScale
@@ -3591,6 +3597,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (shapeParams.type === "branch" && layer === "fg") {
                let branchLength = size
+               let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert"
 
                // for triangle of lines that branches off
                let revSize = OUTERSIZE+INNERSIZE-size
@@ -3598,38 +3605,53 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (size > (OUTERSIZE+INNERSIZE)/2) {
                   branchLength = revSize
                }
-              
-               let baseX = xpos+sideX*(size/2+outerSpreadX)
-               let baseY = ypos+sideY*(size/2+outerSpreadY)
-               lineType(xpos, baseY, xpos+sideX*branchLength/2, baseY)
 
-               if (size < (OUTERSIZE+INNERSIZE)/2) {
-
-                  //from outside
-                  if (SPREADY === 0) {
-                     lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2))
-                  }
-                  if (Math.abs(outerSpreadY) !== SPREADY/2) {
-                     
-                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadY, 0, -SPREADY/2, -SPREADY/2, 0)
-                     lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(branchLength))
-                  }
-
-                  // from inside
-                  branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadY
-                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(branchLength))
+               // side bit, not in branch direction
+               const baseX = xpos+sideX*(size/2+outerSpreadX)
+               const baseY = ypos+sideY*(size/2+outerSpreadY)
+               if (branchAxis === "vert") {
+                  lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*branchLength/2, baseY)
                } else {
-                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(OUTERSIZE/2))
+                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*branchLength/2)
+               }
+               
+               if (branchAxis === "vert") {
+                  if (size < (OUTERSIZE+INNERSIZE)/2) {
+                     //from outside
+                     if (SPREADY === 0) {
+                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2))
+                     }
+                     if (Math.abs(outerSpreadY) !== SPREADY/2) {
+                        branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadY, 0, -SPREADY/2, -SPREADY/2, 0)
+                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(branchLength))
+                     }
+                     // from inside
+                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadY
+                     lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(branchLength))
+
+                  } else {
+                     // outer rings
+                     lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(OUTERSIZE/2))
+                  }
+               } else if (branchAxis === "hori") {
+                  if (size < (OUTERSIZE+INNERSIZE)/2) {
+                     //from outside
+                     if (SPREADX === 0) {
+                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2), baseY)
+                     }
+                     if (Math.abs(outerSpreadX) !== SPREADX/2) {
+                        branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadX, 0, -SPREADX/2, -SPREADX/2, 0)
+                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(branchLength), baseY)
+                     }
+                     // from inside
+                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadX
+                     lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*(branchLength), baseY)
+                  } else {
+                     // outer rings
+                     lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*(OUTERSIZE/2), baseY)
+                  }
                }
 
-
-               //basic "triangle" of lines going into the branch directon (start or end)
-               if ((arcQ % 2 === 1) === (shapeParams.at === "start")) {
-                  //lineType(xpos +sideX*OUTERSIZE/2, baseY, xpos+sideX*revSize/2, baseY)
-               } else {
-                  if (SPREADY>0 && outerSpreadY!==0) revSize = map(revSize, INNERSIZE+1, OUTERSIZE+INNERSIZE, INNERSIZE+1-style.stretchY, OUTERSIZE+INNERSIZE+style.stretchY)
-                  //lineType(baseX, ypos +sideY*(OUTERSIZE/2), baseX, ypos +sideY*revSize/2)
-               }
             } else {
 
                // regular square corner
@@ -3770,14 +3792,16 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                lineType(sPos.x+stretchDifference, sPos.y+offsetShift, sPos.x, sPos.y+offsetShift)
 
             } else if (stretchMode === "spread") {
-               const spreadLengthX = outerSpreadX * -1
-               const maxSpreadLengthX = SPREADX / 2
+               const spreadLengthX = outerSpreadX * -1 
+               const maxSpreadLengthX = SPREADX / 2 
 
-               if (layer === "fg" && spreadLengthX !== maxSpreadLengthX || layer === "bg" && spreadLengthX===0) {
+               // WIP also account for fill length 
+               if (layer === "fg" && (spreadLengthX !== maxSpreadLengthX || mode.spreadFills) || layer === "bg" && spreadLengthX===0) {
                   sPos.x += sideX * outerSpreadX
                   sPos.y -= sideY * SPREADY/2
                   const spreadDifferenceX = -sideX * (maxSpreadLengthX - spreadLengthX)
-                  lineType(sPos.x, sPos.y, sPos.x + spreadDifferenceX, sPos.y)
+                  const fillSpreadDifferenceX = spreadFillStepX
+                  lineType(sPos.x + fillSpreadDifferenceX, sPos.y, sPos.x + spreadDifferenceX, sPos.y)
                }
             }
 
@@ -3833,11 +3857,12 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                const spreadLength = outerSpreadY * -1
                const maxSpreadLength = SPREADY / 2
 
-               if (layer === "fg" && spreadLength !== maxSpreadLength || layer === "bg" && spreadLength===0) {
+               if (layer === "fg" && (spreadLength !== maxSpreadLength || mode.spreadFills) || layer === "bg" && spreadLength===0) {
                   sPos.x -= sideX * SPREADX/2
                   sPos.y += sideY * outerSpreadY
                   const spreadDifferenceY = -sideY * (maxSpreadLength - spreadLength)
-                  lineType(sPos.x, sPos.y, sPos.x, sPos.y+ spreadDifferenceY)
+                  const fillSpreadDifferenceY = spreadFillStepY
+                  lineType(sPos.x, sPos.y+fillSpreadDifferenceY, sPos.x, sPos.y+ spreadDifferenceY)
                }
             }
          }
