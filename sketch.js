@@ -35,7 +35,7 @@ const palette = {}
 let lerpLength = 6
 
 let effect = "none"
-let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth"]
+let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth", "turn"]
 let stripeEffects = ["vstripes", "hstripes"]
 let webglEffects = ["spheres"]
 
@@ -336,6 +336,10 @@ function loadFromURL () {
             effect = "compress"
             print("Loaded with URL Mode: Compress V Effect")
             break;
+         case "turn":
+            effect = "turn"
+            print("Loaded with URL Mode: Turn V Effect")
+            break;
          case "twist":
             effect = "twist"
             print("Loaded with URL Mode: Twist V Effect")
@@ -480,6 +484,9 @@ function writeToURL (noReload) {
          case "compress":
             value = "compress"
             break;
+         case "turn":
+            value = "turn"
+            break;
          case "spread":
             value = "spread"
             break;
@@ -568,7 +575,7 @@ function autoValues () {
 
    if ((frameCount/waitFrames) % versionsPerEffect === 0) {
       // do effect
-      const randomEffect = ["none","none","gradient", "weightgradient", "compress", "spread", "split", "sway", "twist", "teeth"]
+      const randomEffect = ["none","none","gradient", "weightgradient", "compress", "turn", "spread", "split", "sway", "twist", "teeth"]
       effect = random(randomEffect)
    } else if ((frameCount/waitFrames) % versionsPerEffect === versionsPerEffect-1) {
       // prepare effect
@@ -638,7 +645,7 @@ function randomStyle () {
    }
 
    if (midlineEffects.includes(effect)) {
-      if (effect === "compress") {
+      if (effect === "compress" || effect === "turn") {
          values.stretchY.to = floor(random(values.size.to, values.size.to*3))
       } else if (effect === "teeth") {
          values.stretchY.to = floor(random(2, values.size.to-(values.rings.to-1)*2))
@@ -2177,7 +2184,7 @@ function drawText (lineNum) {
       if (font === "fontb") {
          push()
          translate(0, -animSize+(animRings-1)- animStretchY)
-         drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+         //drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
          pop()
       }
       drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
@@ -2187,7 +2194,14 @@ function drawText (lineNum) {
       push()
 
       stroke(palette.fg)
-      translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*0.5 + lineNum * totalHeight[lineNum])
+      const stretchHeight = (font === "fontb") ? animStretchY*0.5 : animStretchY
+      if (font === "fontb") {
+         const layerDir = (layer > 0) ? 0.75 : 0.25
+         translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*layerDir)
+      } else {
+         translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*0.5)
+      }
+      translate(0, lineNum * totalHeight[lineNum])
 
       //style and caret
       stroke(lerpColor(palette.bg, palette.fg, 0.5))
@@ -2228,40 +2242,70 @@ function drawText (lineNum) {
             const leftPos = word[0]
             const rightPos = word[total]
             let counter = 0
+            let chainLength = 0
+            let chainCount = 0
             let lastPos = undefined
             word.forEach((pos) => {
+               if (lastPos !== undefined && lastPos >= pos-1) {
+                  chainLength++
+               } else {
+                  chainLength = 0
+                  chainCount++
+               }
+
                if (effect === "spread") {
                   const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], stretchHeight)
                } else if (effect === "compress") {
                   const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], animStretchY)
+                  rowLines("bezier", [pos, midX, pos+animOffsetX], stretchHeight)
+               } else if (effect === "turn") {
+                  //const midX = (counter < total/2) ? leftPos + counter: rightPos - (total-counter)
+                  //rowLines("sharpbezier", [pos, midX, pos+animOffsetX], stretchHeight)
+                  if (chainLength > 0) {
+                     // diagonal
+                     if (i %2 === 0) {
+                        rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
+                     } else {
+                        rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
+                     }
+                     
+                     //straight piece
+                     if (chainLength === 1) {
+                        rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
+                     }
+                  } else {
+                     rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
+                  }
+                  if (pos == rightPos) {
+                     rowLines("bezier", [pos, pos+animOffsetX], stretchHeight)
+                  }
                } else if (effect === "split") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
                   }
                } else if (effect === "twist") {
                   if (counter % 2 === 1) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
                   } else if (counter === total) {
-                     rowLines("bezier", [pos, pos+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, pos+animOffsetX], stretchHeight)
                   }
                } else if (effect === "sway") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], animStretchY)
+                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
                   }
                } else if (effect === "teeth") {
                   if (counter % 2 === 1) {
                      const x = lastPos + (pos-lastPos)*0.5
                      const w = pos-lastPos
-                     arc(x, -(animStretchY)*0.5,w,w, 0, PI)
+                     arc(x, -(stretchHeight)*0.5,w,w, 0, PI)
                   } else {
                      //bottom
                      const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
                      const w = pos-lastPos
-                     arc(x, (animStretchY)*0.5,w,w, PI, TWO_PI)
+                     arc(x, (stretchHeight)*0.5,w,w, PI, TWO_PI)
                   }
                }
                lastPos = pos
@@ -2269,6 +2313,7 @@ function drawText (lineNum) {
             })
          })
       }
+      pop()
    }
 
    pop()
@@ -2284,6 +2329,10 @@ function rowLines (type, xValues, height) {
          } else if (type === "bezier") {
             const h1pos = lastPos.y + (pos.y-lastPos.y)*0.5
             const h2pos = lastPos.y + (pos.y-lastPos.y)*0.5
+            bezier(lastPos.x, lastPos.y, lastPos.x, h1pos, pos.x, h2pos, pos.x, pos.y)
+         } else if (type === "sharpbezier") {
+            const h1pos = (c % 2 == 0) ? lastPos.y : lastPos.y + (pos.y-lastPos.y)*1
+            const h2pos = (c % 2 == 1) ? pos.y : lastPos.y + (pos.y-lastPos.y)*0
             bezier(lastPos.x, lastPos.y, lastPos.x, h1pos, pos.x, h2pos, pos.x, pos.y)
          }
       }
@@ -3061,6 +3110,10 @@ function dropdownTextToEffect (text) {
          effect = "compress"
          if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
          break;
+      case "stretch turn":
+         effect = "turn"
+         if (values.stretchY.from < 1) values.stretchY.to = Math.ceil(values.size.from/2)
+         break;
       case "stretch spread":
          effect = "spread"
          if (values.stretchY.from < 1) values.stretchY.to = values.size.from
@@ -3596,38 +3649,42 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          function drawSquareModule(xpos, ypos, spreadFillStepX, spreadFillStepY) {
 
             if (shapeParams.type === "branch" && layer === "fg") {
-               let branchLength = size
                let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert"
 
                // for triangle of lines that branches off
-               let revSize = OUTERSIZE+INNERSIZE-size
+               let branchLengthX = size + outerSpreadX*2
+               let revSizeX = OUTERSIZE+INNERSIZE-size
+               let branchLengthY = size + outerSpreadY*2
+               let revSizeY = OUTERSIZE+INNERSIZE-size
 
-               if (size > (OUTERSIZE+INNERSIZE)/2) {
-                  branchLength = revSize
+               if ((size) > (OUTERSIZE+INNERSIZE)/2) {
+                  branchLengthX = revSizeX
+                  branchLengthY = revSizeY
+                  // WIP, this is not affected by spread right now...
                }
 
                // side bit, not in branch direction
                const baseX = xpos+sideX*(size/2+outerSpreadX)
                const baseY = ypos+sideY*(size/2+outerSpreadY)
                if (branchAxis === "vert") {
-                  lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*branchLength/2, baseY)
+                  lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*branchLengthX/2, baseY)
                } else {
-                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*branchLength/2)
+                  lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*branchLengthY/2)
                }
                
                if (branchAxis === "vert") {
                   if (size < (OUTERSIZE+INNERSIZE)/2) {
                      //from outside
                      if (SPREADY === 0) {
-                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2))
+                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(OUTERSIZE/2 + (OUTERSIZE-revSizeY)/-2))
                      }
                      if (Math.abs(outerSpreadY) !== SPREADY/2) {
-                        branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadY, 0, -SPREADY/2, -SPREADY/2, 0)
-                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(branchLength))
+                        branchLengthY =  OUTERSIZE/2 + (OUTERSIZE-revSizeY)/-2 + map(outerSpreadY, 0, -SPREADY/2, -SPREADY/2, 0)
+                        lineType(baseX, ypos+OUTERSIZE/2*sideY, baseX, ypos+sideY*(branchLengthY))
                      }
                      // from inside
-                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadY
-                     lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(branchLength))
+                     branchLengthY =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadY
+                     lineType(baseX, ypos+outerSpreadY*sideY, baseX, ypos+sideY*(branchLengthY))
 
                   } else {
                      // outer rings
@@ -3637,15 +3694,15 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (size < (OUTERSIZE+INNERSIZE)/2) {
                      //from outside
                      if (SPREADX === 0) {
-                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(OUTERSIZE/2 + (OUTERSIZE-revSize)/-2), baseY)
+                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(OUTERSIZE/2 + (OUTERSIZE-revSizeX)/-2), baseY)
                      }
                      if (Math.abs(outerSpreadX) !== SPREADX/2) {
-                        branchLength =  OUTERSIZE/2 + (OUTERSIZE-revSize)/-2 + map(outerSpreadX, 0, -SPREADX/2, -SPREADX/2, 0)
-                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(branchLength), baseY)
+                        branchLengthX =  OUTERSIZE/2 + (OUTERSIZE-revSizeX)/-2 + map(outerSpreadX, 0, -SPREADX/2, -SPREADX/2, 0)
+                        lineType(xpos+OUTERSIZE/2*sideX, baseY, xpos+sideX*(branchLengthX), baseY)
                      }
                      // from inside
-                     branchLength =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadX
-                     lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*(branchLength), baseY)
+                     branchLengthX =  OUTERSIZE/2 + (OUTERSIZE-size)/-2 + outerSpreadX
+                     lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*(branchLengthX), baseY)
                   } else {
                      // outer rings
                      lineType(xpos+outerSpreadX*sideX, baseY, xpos+sideX*(OUTERSIZE/2), baseY)
