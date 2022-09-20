@@ -39,6 +39,8 @@ let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth", "
 let stripeEffects = ["vstripes", "hstripes"]
 let webglEffects = ["spheres"]
 
+let endCapStyle = "none"
+
 let initialDraw = true
 
 const mode = {
@@ -302,6 +304,10 @@ function loadFromURL () {
       mode.xray = true
       print("Loaded with URL Mode: XRAY")
    }
+   if (params.caps === "round") {
+      endCapStyle = "round"
+      print("Loaded with URL Mode: Round end caps")
+   }
    if (params.fills === "false" || params.fills === "0") {
       mode.drawFills = false
       print("Loaded with URL Mode: Transparent overlaps")
@@ -471,6 +477,15 @@ function writeToURL (noReload) {
    }
    if (mode.auto) {
       newParams.append("auto",true)
+   }
+   if (endCapStyle !== undefined) {
+      let value = "none"
+      if (endCapStyle === "round") {
+         value = "round"
+      }
+      if (value !== "none") {
+         newParams.append("caps", value)
+      }
    }
    if (effect !== undefined) {
       let value = "none"
@@ -1214,6 +1229,7 @@ function drawText (lineNum) {
          spreadX: animSpreadX,
          spreadY: animSpreadY,
          spreadFillSteps: SPREADFILLSTEPSX,
+         endCap: endCapStyle,
          letter: letter,
          nextLetter: nextLetter,
          prevLetter: prevLetter,
@@ -2270,14 +2286,16 @@ function drawText (lineNum) {
                         rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
                      }
                      
-                     //straight piece
+                     // first straight piece of group
                      if (chainLength === 1) {
                         rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
                      }
                   } else {
+                     // last straight piece of group
                      rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
                   }
                   if (pos == rightPos) {
+                     // last straight piece of word
                      rowLines("bezier", [pos, pos+animOffsetX], stretchHeight)
                   }
                } else if (effect === "split") {
@@ -2933,12 +2951,12 @@ function lineType (x1, y1, x2, y2) {
       return
    }
    // WIP
-   // for (let i = 0.1; i <= 1; i+=0.1) {
-   //    const partialX = x1+(x2-x1)*i
-   //    const partialY = y1+(y2-y1)*i
-   //    stroke("#FFFFFF30")
-   //    line(x1, y1, partialX, partialY)
-   // }
+   //for (let i = 0.1; i <= 1; i+=0.1) {
+   //   const partialX = x1+(x2-x1)*i
+   //   const partialY = y1+(y2-y1)*i
+   //   stroke("#FFFFFF30")
+   //   line(x1, y1, partialX, partialY)
+   //}
    line(x1, y1, x2, y2)
 }
 
@@ -3326,9 +3344,12 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       if (shape === "vert" || shape === "hori") {
 
+         // determine based on endcap how much shorter the line should be
+         const endcapLength = (style.endCap === "round" && style.sizes.length >= 3) ? 1 : 0
+
          // first determine without needing to know direction
          const LINE_FROM = shapeParams.from || 0
-         const LINE_EXTEND = shapeParams.extend || 0
+         const LINE_EXTEND = shapeParams.extend -endcapLength*0.99|| -endcapLength
          const LINE_ADJUST = (() => {
             if (layer === "fg") return 0
             // so it looks nicer on grid backgrounds, etc...
@@ -3336,8 +3357,8 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             return style.weight/10 *-0.5
          })()
 
-         const lineStart = LINE_FROM === 0 ? 0 : LINE_FROM - LINE_ADJUST
-         const lineEnd = OUTERSIZE*0.5 + LINE_EXTEND + LINE_ADJUST
+         const LINE_START = LINE_FROM === 0 ? 0 : LINE_FROM - LINE_ADJUST
+         const LINE_END = OUTERSIZE*0.5 + LINE_EXTEND + LINE_ADJUST
 
          const linePos = {
             x1: basePos.x,
@@ -3379,12 +3400,27 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          function drawVerticalModule(linePos, spreadFillStepX, spreadFillStepY, fillIndexX) {
             linePos.x1 += sideX * (size * 0.5 + outerSpreadX)
             linePos.x2 += sideX * (size * 0.5 + outerSpreadX)
-            linePos.y1 += sideY * (lineStart + outerSpreadY)
-            linePos.y2 += sideY * lineEnd
+            linePos.y1 += sideY * (LINE_START + outerSpreadY)
+            linePos.y2 += sideY * LINE_END
 
             //only draw the non-stretch part if it is long enough to be visible
             if (sideY*(linePos.y2-linePos.y1)>=0) {
                lineType(linePos.x1, linePos.y1 , linePos.x2 , linePos.y2)
+            }
+
+            // draw the end cap
+            if (layer === "fg" && style.endCap === "round" && style.sizes.length >= 3) {
+               if (size === OUTERSIZE) {
+                  bezier(linePos.x1, linePos.y2 , linePos.x1, linePos.y2 + sideY*0.5,
+                      linePos.x2-0.5*sideX , linePos.y2 + sideY*1, linePos.x2-1*sideX , linePos.y2 + sideY*1)
+               } else if (size === INNERSIZE) {
+                  bezier(linePos.x1, linePos.y2 , linePos.x1, linePos.y2 + sideY*0.5,
+                     linePos.x2+0.5*sideX , linePos.y2 + sideY*1, linePos.x2+1*sideX , linePos.y2 + sideY*1)
+                  if (style.sizes.length >= 3) {
+                     lineType(linePos.x2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadX)*sideX-spreadFillStepX, linePos.y2+1*sideY, 
+                        linePos.x2+1*sideX, linePos.y2+1*sideY)
+                  }
+               }
             }
 
             if (PLUSY > 0 && LINE_FROM === 0) {
@@ -3396,12 +3432,29 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          function drawHorizontalModule(linePos, spreadFillStepX, spreadFillStepY, fillIndexX) {
             linePos.y1 += sideY * (size * 0.5 + outerSpreadY)
             linePos.y2 += sideY * (size * 0.5 + outerSpreadY)
-            linePos.x1 += sideX * (lineStart + outerSpreadX)
-            linePos.x2 += sideX * lineEnd
+            linePos.x1 += sideX * (LINE_START + outerSpreadX)
+            linePos.x2 += sideX * LINE_END
 
             //only draw the non-stretch part if it is long enough to be visible
             if (sideX*(linePos.x2-linePos.x1)>=0) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2)
+            }
+
+            // draw the end cap
+            if (layer === "fg" && style.endCap === "round" && style.sizes.length >= 3) {
+               if (size === OUTERSIZE) {
+                  //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
+                  bezier(linePos.x2, linePos.y1 , linePos.x2 + sideX*0.5, linePos.y1,
+                     linePos.x2 + sideX*1, linePos.y2-0.5*sideY, linePos.x2 + sideX*1, linePos.y2-1*sideY)
+               } else if (size === INNERSIZE) {
+                  bezier(linePos.x2, linePos.y2 , linePos.x2 + sideX*0.5, linePos.y2,
+                     linePos.x2 + sideX*1 , linePos.y2+0.5*sideY, linePos.x2 + sideX*1, linePos.y2+1*sideY)
+                  if (style.sizes.length >= 3) {
+                     lineType(linePos.x2+1*sideX, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadY)*sideY-spreadFillStepY, 
+                        linePos.x2+1*sideX , linePos.y2+1*sideY)
+                     //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
+                  }
+               }
             }
 
             if (PLUSX > 0 && LINE_FROM === 0) {
@@ -3411,6 +3464,9 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
          }
 
       } else { // CORNER
+
+         // determine based on endcap how much rounded the line should be
+         const cornerRoundLength = (style.endCap === "round" && style.sizes.length >= 3) ? 1 : 0
 
          let xpos = basePos.x
          let ypos = basePos.y
@@ -3713,8 +3769,22 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                // regular square corner
                beginShape()
-               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+outerSpreadY*sideY)
-               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
+               vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+outerSpreadY*sideY) // start
+               if (cornerRoundLength === 1 && size === OUTERSIZE) {
+                  //rounded corner on outer size
+                  const xBez1 = xpos+sideX*size/2+outerSpreadX*sideX
+                  const yBez1 = ypos+sideY*size/2+outerSpreadY*sideY - 1*sideY
+                  const xBez2 = xpos+sideX*size/2+outerSpreadX*sideX - 1*sideX
+                  const yBez2 = ypos+sideY*size/2+outerSpreadY*sideY
+                  vertex(xBez1, yBez1)
+                  endShape()
+                  bezier(xBez1, yBez1, xBez1, yBez1 + 0.5*sideY, 
+                     xBez2 + 0.5*sideX, yBez2, xBez2, yBez2)
+                  beginShape()
+                  vertex(xBez2, yBez2)
+               } else {
+                  vertex(xpos+sideX*size/2+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY) // middle
+               }
                vertex(xpos+outerSpreadX*sideX, ypos+sideY*size/2+outerSpreadY*sideY)
                endShape()
             }
