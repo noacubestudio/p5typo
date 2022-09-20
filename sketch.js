@@ -389,6 +389,10 @@ function loadFromURL () {
             font = "fontb"
             print("Loaded font: B")
             break;
+         case "c":
+            font = "fontc"
+            print("Loaded font: C")
+            break;
       }
    }
    if (params.lines !== null && params.lines.length > 0) {
@@ -535,6 +539,9 @@ function writeToURL (noReload) {
       switch (font) {
          case "fontb":
             newParams.append("font", "b")
+            break;
+         case "fontc":
+            newParams.append("font", "c")
             break;
       }
    }
@@ -1088,7 +1095,7 @@ function drawText (lineNum) {
    // total height
    let fontSize = animSize
    let stretchSize = animStretchY + animSpreadY
-   if (font === "fontb") {
+   if (font === "fontb" || font === "fontc") {
       fontSize = animSize*2 - min(animRings, animSize/2)
       //stretchSize *= 2
    }
@@ -1101,16 +1108,17 @@ function drawText (lineNum) {
    push()
    if (animOffsetX < 0 && effect!=="staircase") {
       translate(-animOffsetX,0)
-   } else if (animOffsetX > 0 && effect !== "staircase" && font === "fontb") {
+   } else if (animOffsetX > 0 && effect !== "staircase" && (font === "fontb" || font === "fontc")) {
       translate(animOffsetX,0)
    }
 
    //translate to (lower) midline
    translate(0,fontSize-0.5*animSize)
-   if (font === "fontb") translate(0, 1 + (animStretchY + animSpreadY)*0.5)
+   if (font === "fontb" || font === "fontc") translate(0, 1 + (animStretchY + animSpreadY)*0.5)
 
    let connectingUnderPrev = "sjzx"
    if (font === "fontb") connectingUnderPrev = "jt"
+   else if (font === "fontc") connectingUnderPrev = ""
 
    // go through all the letters, but this time to actually draw them
    // go in a weird order so that lower letters go first
@@ -1161,7 +1169,7 @@ function drawText (lineNum) {
       caretSpots: [],
       spaceSpots: [],
    }
-   if (font === "fontb") lineStyle.midlineSpots = [
+   if (font === "fontb" || font === "fontc") lineStyle.midlineSpots = [
       [...Array(SPREADFILLSTEPSX+1)].map(x => []), 
       [...Array(SPREADFILLSTEPSX+1)].map(x => [])
    ]
@@ -2185,6 +2193,132 @@ function drawText (lineNum) {
                   drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
             }
+         } else if (font === "fontc") {
+            switch (letter) {
+               case "a":
+               case "ä":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
+               case "b":
+               case "d":
+               case "o":
+               case "p":
+               case "q":
+                  style.stack = 1
+                  if (letter !== "b") drawModule(style, "round", 1, 1, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  }
+                  if (letter !== "d") drawModule(style, "round", 2, 2, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+                  }
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  if (letter !== "q") drawModule(style, "round", 3, 3, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+                  }
+                  if (letter !== "p") drawModule(style, "round", 4, 4, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+                  }
+                  break;
+               case "c":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
+               case "e":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
+               case "k":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  break;
+               case "n":
+               case "h":
+                  style.stack = 1
+                  if (letter !== "h") drawModule(style, "round", 1, 1, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  }
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  break;
+               case "s":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
+               case "u":
+               case "y":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  if (letter !== "y") drawModule(style, "round", 3, 3, 0, 0, {})
+                  else {
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+                  }
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
+               default:
+                  break;
+            }
          }
       })()
    }
@@ -2197,7 +2331,7 @@ function drawText (lineNum) {
          strokeWeight(0.2*strokeScaleFactor)
       }
       // run for each stage
-      if (font === "fontb") {
+      if (font === "fontb" || font === "fontc") {
          push()
          translate(0, -animSize+(animRings-1)- animStretchY)
          //drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
@@ -2210,8 +2344,8 @@ function drawText (lineNum) {
       push()
 
       stroke(palette.fg)
-      const stretchHeight = (font === "fontb") ? animStretchY*0.5 : animStretchY
-      if (font === "fontb") {
+      const stretchHeight = (font === "fontb" || font === "fontc") ? animStretchY*0.5 : animStretchY
+      if (font === "fontb" || font === "fontc") {
          const layerDir = (layer > 0) ? 0.75 : 0.25
          translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*layerDir)
       } else {
@@ -2413,6 +2547,11 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             spacing = max(spacing, 1)
          }
       }
+   } else if (font === "fontc") {
+      if (animRings <= 1) {
+         // WIP, maybe some can still be together with just one ring
+         spacing = max(spacing, 1)
+      }
    }
 
    if ("|".includes(char)) spacing = max(spacing, 1)
@@ -2536,6 +2675,13 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             break;
          case "|":
             charWidth = 0
+            break;
+      }
+   } else if (font === "fontc") {
+      switch(char) {
+         case "m":
+         case "w":
+            charWidth = weight*3 + inner*2
             break;
       }
    }
@@ -2874,6 +3020,15 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          default:
             stretchWidth = (animStretchX+animSpreadX)
       }
+   } else if (font === "fontc") {
+      switch (char) {
+         case "m":
+         case "w":
+            stretchWidth = (animStretchX+animSpreadX) * 2
+            break;
+         default:
+            stretchWidth = (animStretchX+animSpreadX)
+      }
    }
 
    return spacingResult + stretchWidth
@@ -3103,13 +3258,17 @@ function dropdownTextToEffect (text) {
    if (effect === "staircase") values.offsetX.from = 0
 
    switch (text) {
-      case "Font A (2x2)":
+      case "Lowercase 2x2":
          font = "fonta"
          print("Switched to Font A")
          break;
-      case "Font B (3x2)":
+      case "Uppercase 3x2":
          font = "fontb"
          print("Switched to Font B")
+         break;
+      case "Lowercase 3x2":
+         font = "fontc"
+         print("Switched to Font C")
          break;
       case "weight gradient":
          effect = "weightgradient"
@@ -3243,7 +3402,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    basePos.y += (style.vOffset+rightHalf) *style.offsetY //% 2==0 ? style.offsetY : 0
    // offset based on quarter and stretch
    basePos.x += rightHalf * PLUSX
-   basePos.y += bottomHalf * PLUSY * ((font === "fontb") ? 0.5 : 1)
+   basePos.y += bottomHalf * PLUSY * ((font === "fontb" || font === "fontc") ? 0.5 : 1)
    // modify based on stack (top half)
    basePos.y -= style.stack * (OUTERSIZE - style.weight + PLUSY * 0.5)
    // modify based on offset
@@ -3848,7 +4007,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (shapeParams.noStretchX === undefined && !isCutInDir(shapeParams.type, "x") && (layer === "fg" || outerSpreadX===0)) {
 
-               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "fontb") {
+               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "fontb" || font === "fontc") {
                   if (SPREADX > 0) drawStretchLines("spread", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0)
                }
                if (STRETCHX > 0) drawStretchLines("stretch", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0)
@@ -3858,7 +4017,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || outerSpreadY===0)) {
 
                // round shapes should get vertical spread effect, unless...
-               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutVertical) || font === "fontb") {
+               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutVertical) || font === "fontb" || font === "fontc") {
                   if (SPREADY > 0) drawStretchLines("spread",sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
                }
                if (STRETCHY > 0) drawStretchLines("stretch",sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
@@ -3880,7 +4039,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       function drawStretchLines (stretchMode, sideX, sideY, axis, spreadFillStepX, spreadFillStepY, fillIndexX) {
 
-         if (font === "fontb" && axis === "vert") {
+         if ((font === "fontb" || font === "fontc") && axis === "vert") {
             if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) return
          }
 
@@ -3952,7 +4111,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   if (!midlineEffects.includes(effect)) {
-                     if (SPREADY > 0 && font === "fontb") {
+                     if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
                         if ((style.stack === 1 && sideY === -1) || (style.stack === 0 && sideY === 1)) {
                            lineType(sPos.x-offsetShift, sPos.y+stretchDifference, sPos.x-offsetShift, sPos.y)
                         }
