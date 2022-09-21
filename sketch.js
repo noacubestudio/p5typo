@@ -1953,18 +1953,18 @@ function drawText (lineNum) {
                   style.flipped = true
                   drawModule(style, "diagonal", 1, 2, wideOffset, 0, {})
                   drawModule(style, "diagonal", 2, 1, wideOffset + animStretchX*2, 0, {})
-                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawModule(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
                   style.stack = 0
                   style.flipped = false
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   // right side
                   style.flipped = true
-                  drawModule(style, "vert", 1, 2, wideOffset, 0, 0, undefined)
-                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, 0, undefined)
-                  drawModule(style, "vert", 4, 3, wideOffset, 0, 0, undefined)
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
                   break;
                case "n":
                   style.stack = 1
@@ -2260,6 +2260,42 @@ function drawText (lineNum) {
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
+               case "g":
+                  if (descenders >= 1) {
+                     style.stack = 1
+                     drawModule(style, "round", 1, 1, 0, 0, {})
+                     drawModule(style, "round", 2, 2, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     drawModule(style, "vert", 4, 4, 0, 0, {})
+                     style.stack = 0
+                     drawModule(style, "vert", 1, 1, 0, 0, {})
+                     drawModule(style, "vert", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                     if (descenders <= style.weight) {
+                        // if only one ring, move line down so there is a gap
+                        const extragap = (letterOuter > letterInner) ? 0:1
+                        const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
+      
+                        drawModule(style, "hori", 2, 3, 0, letterOuter + lineOffset, {noStretchY: true})
+                        drawModule(style, "hori", 1, 4, 0, letterOuter + lineOffset, {noStretchY: true})
+                     }
+                  } else {
+                     // compact mode
+                     // WIP
+                  }
+                  break;
+               case "i":
+               case "l":
+                  style.stack = 1
+                  if (letter === "i") drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                  else drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  break;
                case "k":
                   style.stack = 1
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
@@ -2289,6 +2325,29 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   break;
+               case "m":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  // right side
+                  style.flipped = true
+                  drawModule(style, "round", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "round", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
+                  style.flipped = false
+
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  // right side
+                  style.flipped = true
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
+                  break;
                case "s":
                   style.stack = 1
                   drawModule(style, "round", 1, 1, 0, 0, {})
@@ -2301,6 +2360,7 @@ function drawText (lineNum) {
                   break;
                case "u":
                case "y":
+               case "v":
                   style.stack = 1
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 2, 2, 0, 0, {})
@@ -2309,14 +2369,69 @@ function drawText (lineNum) {
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 2, 2, 0, 0, {})
-                  if (letter !== "y") drawModule(style, "round", 3, 3, 0, 0, {})
-                  else {
+                  if (letter === "u") {
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                  } else if (letter === "y") {
                      drawModule(style, "vert", 3, 3, 0, 0, {extend: ascenders})
                      drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                  } else if (letter === "v") {
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "square", 4, 4, 0, 0, {})
                   }
+                  break;
+               case "w":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  // right side
+                  style.flipped = true
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
+
+                  style.flipped = false
+
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
+                  // right side
+                  style.flipped = true
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "round", 3, 4, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "round", 4, 3, wideOffset, 0, {})
+                  break;
+               case " ":
+                  sortIntoArray(style.spaceSpots, style.posFromLeft)
+                  break;
+               case "‸":
+                  //caret symbol
+                  style.opacity = 0.5
+                  style.sizes = [letterOuter]
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: animAscenders})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: animAscenders})
                   break;
                default:
+                  style.opacity = 0.5
+                  style.sizes = [letterOuter]
+                  style.stack = 1
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
             }
          }
@@ -2525,6 +2640,10 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
 
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
+
+   // WIP: currently depends of number of rings - if there's only one, more space
+   // However, animRings isn't accurate to real number, also depends on size
+
    if (font === "fonta") {
       if (animRings > 1) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
@@ -2682,6 +2801,22 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          case "m":
          case "w":
             charWidth = weight*3 + inner*2
+            break;
+         case "i":
+         case "l":
+         case ".":
+         case ",":
+         case "!":
+            charWidth = weight
+            break;
+         case "‸":
+            charWidth = 1
+            if (charInSet(nextchar,["gap"])) {
+               charWidth = 0
+            }
+            break;
+         case "|":
+            charWidth = 0
             break;
       }
    }
@@ -3026,6 +3161,15 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          case "w":
             stretchWidth = (animStretchX+animSpreadX) * 2
             break;
+         case "i":
+         case "l":
+         case ".":
+         case ",":
+         case "!":
+         case " ":
+         case "‸": //caret
+            stretchWidth = 0
+            break;
          default:
             stretchWidth = (animStretchX+animSpreadX)
       }
@@ -3041,11 +3185,14 @@ function letterYOffsetCount (prevchar, char, nextchar) {
    switch (char) {
       case "m":
       case "w":
-      case "x":
          offsetSegments = 2
          break;
+      case "x":
+         if (font === "fonta") offsetSegments = 2
+         else offsetSegments = 1
+         break;
       case "s":
-         if (char === "s") {
+         if (font === "fonta") {
             if (!mode.altS) {
                // stretch spacing depends on if it connects
                if (charInSet(prevchar,["gap", "dr"])) {
@@ -3055,6 +3202,8 @@ function letterYOffsetCount (prevchar, char, nextchar) {
                   offsetSegments +=1
                }
             }
+         } else {
+            offsetSegments = 1
          }
          break;
       case "i":
@@ -3065,7 +3214,8 @@ function letterYOffsetCount (prevchar, char, nextchar) {
          offsetSegments = 0
          break;
       case "z":
-         offsetSegments = 2
+         if (font === "fonta") offsetSegments = 2
+         else offsetSegments = 1
          break;
       default:
          offsetSegments = 1
