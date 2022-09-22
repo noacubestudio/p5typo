@@ -156,7 +156,7 @@ kbd {
 textarea, input {
   background-color: rgb(var(--bg-color));
   color: rgba(var(--fg-color), 0.8);
-  padding: 0.5em 0.8em;
+  padding: 0.5em 1.0em;
   outline: none; /* remove default highlighting */
 
   border: none;

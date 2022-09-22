@@ -18,7 +18,7 @@ const numberInputsObj = {
    spacing: {element: document.getElementById('number-spacing'), min: -2, max:2},
    size: {element: document.getElementById('number-size'), min: 1, max:50},
    rings: {element: document.getElementById('number-rings'), min: 1, max:30},
-   ascenders: {element: document.getElementById('number-asc'), min: 1, max:30},
+   ascenders: {element: document.getElementById('number-asc'), min: 0, max:30},
    stretchX: {element: document.getElementById('number-stretchX'), min:0, max:50},
    stretchY: {element: document.getElementById('number-stretchY'), min:0, max:50},
    offsetX: {element: document.getElementById('number-offset'), min:-10, max:10},
@@ -871,7 +871,7 @@ function drawElements() {
          push()
          if (webglEffects.includes(effect)) translate(0,0,-1)
          let fontSize = animSize
-         if (font === "fontb") fontSize = animSize*2 - min(animRings, animSize/2) + 1
+         if (font === "fontb" || font === "fontc") fontSize = animSize*2 - min(animRings, animSize/2) + 1
          const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY + animSpreadY
          const gridWidth = (width-60)/animZoom
          const asc = (font === "fontb") ? 0 : animAscenders
@@ -1118,7 +1118,8 @@ function drawText (lineNum) {
    //WIP should this be used instead of y?
 
    totalHeight[lineNum] = fontSize + Math.abs(animOffsetY) + stretchSize + animAscenders + max(1,animSpacing)
-
+   // add a space so that 0 space means they have a single gap
+   if (font === "fontb" || font === "fontc") totalHeight[lineNum]++;
 
    // wip test: always fit on screen?
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
@@ -2415,7 +2416,6 @@ function drawText (lineNum) {
                   break;
                case "u":
                case "ü":
-               case "y":
                case "v":
                   style.stack = 1
                   drawModule(style, "vert", 1, 1, 0, 0, {})
@@ -2432,10 +2432,6 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 2, 2, 0, 0, {})
                   if (letter === "u" || letter === "ü") {
                      drawModule(style, "round", 3, 3, 0, 0, {})
-                     drawModule(style, "round", 4, 4, 0, 0, {})
-                  } else if (letter === "y") {
-                     drawModule(style, "vert", 3, 3, 0, 0, {extend: ascenders})
-                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
                      drawModule(style, "round", 4, 4, 0, 0, {})
                   } else if (letter === "v") {
                      drawModule(style, "round", 3, 3, 0, 0, {})
@@ -2479,6 +2475,30 @@ function drawText (lineNum) {
                   style.flipped = true
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 2, 2, 0, 0, {})
+                  break;
+               case "y":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+
+                  if (animAscenders >= 1) {
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     drawModule(style, "vert", 4, 4, 0, 0, {})
+                     style.stack = 0
+                     drawModule(style, "vert", 1, 1, 0, 0, {})
+                     drawModule(style, "vert", 2, 2, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: ascenders})
+                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                  } else {
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     style.stack = 0
+                     drawModule(style, "vert", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                  }
                   break;
                case "z":
                   style.stack = 1
