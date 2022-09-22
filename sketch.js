@@ -378,6 +378,10 @@ function loadFromURL () {
             effect = "hstripes"
             print("Loaded with URL Mode: Stripes H Effect")
             break;
+         case "staircase":
+            effect = "staircase"
+            print("Loaded with URL Mode: Staircase Effect")
+            break;
          default:
             print("Could not load effect")
             break;
@@ -526,6 +530,9 @@ function writeToURL (noReload) {
             break;
          case "hstripes":
             value = "hstripes"
+            break;
+         case "staircase":
+            value = "staircase"
             break;
          case "spheres":
             value = "spheres"
@@ -716,8 +723,9 @@ function draw () {
       }
    });
 
-   // calculate in between values for everything
+   // calculate the in-between values for everything
    function lerpValues (slider, col) {
+      // if it's a color
       if (col !== undefined) {
          let saturation; let lightness;
          if (col === "dark") {
@@ -758,8 +766,8 @@ function draw () {
    animOffsetY = lerpValues(values.offsetY)
    animStretchX = lerpValues(values.stretchX)
    animStretchY = lerpValues(values.stretchY)
-   animSpreadX = lerpValues(values.spreadX) * (animRings-1) *2 //WIP, means it always aligns with grid though
-   animSpreadY = lerpValues(values.spreadY) * (animRings-1) *2
+   animSpreadX = lerpValues(values.spreadX) * (animRings-1) * 2 //WIP, means it always aligns with grid though
+   animSpreadY = lerpValues(values.spreadY) * (animRings-1) * 2
    animWeight = lerpValues(values.weight)
    animAscenders = lerpValues(values.ascenders)
    animColorDark = lerpValues(values.hueDark, "dark")
@@ -833,7 +841,10 @@ function drawElements() {
    translate(40, 40)
    scale(animZoom)
 
-   if (font === "fonta") translate(0, animAscenders)
+   // font styles with ascenders and descenders start lower so they stay on screen
+   if (font === "fonta" || font === "fontc") {
+      translate(0, animAscenders)
+   }
 
    strokeWeight((animWeight/10)*strokeScaleFactor)
    palette.fg.setAlpha(255)
@@ -1047,10 +1058,12 @@ function charInSet (char, sets) {
 
 function drawText (lineNum) {
 
-   // current line text
+   // draw a single line of input text
+
+   // get the text in all lowercase first
    let lineText = linesArray[lineNum].toLowerCase()
 
-   // include caret into line so that it can be rendered
+   // insert the caret into line so that it can be rendered
    if (writingFocused && !mode.xray && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
       let totalChars = 0
       for (let l = 0; l < linesArray.length; l++) {
@@ -1092,6 +1105,7 @@ function drawText (lineNum) {
 
    // go through the letters once to get total spacing
    totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
+
    // total height
    let fontSize = animSize
    let stretchSize = animStretchY + animSpreadY
@@ -1099,16 +1113,23 @@ function drawText (lineNum) {
       fontSize = animSize*2 - min(animRings, animSize/2)
       //stretchSize *= 2
    }
+   //staircase height
+   //let staircaseHeight = (effect === "staircase") ? Math.abs(animOffsetX) : 0
+   //WIP should this be used instead of y?
+
    totalHeight[lineNum] = fontSize + Math.abs(animOffsetY) + stretchSize + animAscenders + max(1,animSpacing)
+
 
    // wip test: always fit on screen?
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
 
+
    //translate to account for x offset
    push()
-   if (animOffsetX < 0 && effect!=="staircase") {
+   if (animOffsetX < 0 && effect !== "staircase") {
       translate(-animOffsetX,0)
    } else if (animOffsetX > 0 && effect !== "staircase" && (font === "fontb" || font === "fontc")) {
+      //go the other way for 3-tiered text
       translate(animOffsetX,0)
    }
 
@@ -1116,12 +1137,13 @@ function drawText (lineNum) {
    translate(0,fontSize-0.5*animSize)
    if (font === "fontb" || font === "fontc") translate(0, 1 + (animStretchY + animSpreadY)*0.5)
 
+
+   // go through all the letters, but this time to actually draw them
+   // go in a weird order so that lower letters go first
    let connectingUnderPrev = "sjzx"
    if (font === "fontb") connectingUnderPrev = "jt"
    else if (font === "fontc") connectingUnderPrev = ""
 
-   // go through all the letters, but this time to actually draw them
-   // go in a weird order so that lower letters go first
    let prevOverlapCharCount = 0
    for (let c = 0; c < lineText.length; c++) {
       const char = lineText[c]
@@ -1180,12 +1202,13 @@ function drawText (lineNum) {
    }
 
 
+   // now go through each letter of the line, in above determined layer order
    for (let layerPos = 0; layerPos < lineText.length; layerPos++) {
 
       // VALUES -----------------------------------------------------------------------------
 
       // get characters
-      //(WIP)
+      // pretend there is a space before the first and after the last character
       const letter = lineText[layerArray.indexOf(layerPos)]
       const nextLetter = (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " "
       const prevLetter = (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " "
@@ -1197,7 +1220,7 @@ function drawText (lineNum) {
       // change depending on the character index (i) if wave mode is on
       letterInner = waveInner(layerArray.indexOf(layerPos), letterInner, letterOuter)
 
-      // array with all ring sizes for that letter
+      // make and fill array with all ring sizes for this letter
       let ringSizes = []
       for (let b = letterOuter; b >= letterInner-1; b-=2) {
          // smallest ring is animated
@@ -1207,14 +1230,21 @@ function drawText (lineNum) {
 
       const ascenders = animAscenders
       const descenders = animAscenders
+
+      // WIP - explain what these are and see if more things need to be described like this
       const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
       map(letterOuter, 3, 4, 0, 1, true)
       const wideOffset = 0.5*letterOuter + 0.5*letterInner -animSpreadX*0.5
       const extendOffset = waveValue(letterOuter, 0, 0.5) + ((animStretchX+animSpreadX)-(animStretchX+animSpreadX)%2)*0.5
 
+
       let calcPosFromTop = lineNum*totalHeight[lineNum]
+      //place lower because of negative offset
       if (animOffsetY<0) calcPosFromTop -= animOffsetY
-      if (animOffsetX<0 && effect === "staircase") calcPosFromTop -= animOffsetX
+      if (animOffsetX<0 && effect === "staircase") {
+         //first line matters for staircase
+         calcPosFromTop -= animOffsetX * offsetUntil(linesArray[0], linesArray[0].length)
+      }
 
       // style per letter, modify during drawing when needed
       const style = {
@@ -2378,6 +2408,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   style.stack = 0
+                  style.flipped = true
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
@@ -2434,6 +2465,31 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
                   drawModule(style, "round", 3, 4, wideOffset + animStretchX*2, 0, {})
                   drawModule(style, "round", 4, 3, wideOffset, 0, {})
+                  break;
+               case "x":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 1
+                  style.flipped = true
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  break;
+               case "z":
+                  style.stack = 1
+                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  style.stack = 0
+                  style.flipped = true
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "square", 3, 3, 0, 0, {})
+                  drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -2675,31 +2731,31 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
    // However, animRings isn't accurate to real number, also depends on size
 
    if (font === "fonta") {
-      if (animRings > 1) {
+      if (animRings >= 2) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
             ("dgi".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1)
          }
       } else {
          if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
-            ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
-            ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
-            ("nm".includes(char) && "nm".includes(nextchar))) {
-            spacing = max(spacing, 1)
+               ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
+               ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
+               ("nm".includes(char) && "nm".includes(nextchar))) {
+               spacing = max(spacing, 2 - animRings) // if there's less than two rings, introduce forced gap
          }
       }
    } else if (font === "fontb") {
-      if (animRings <= 1) {
+      if (animRings < 2) {
          if (("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar))
-            || ("i".includes(char) && "abcdefhiklnpruvwxz".includes(nextchar))
-            || ("aghijkmnouvwxyz".includes(char) && "i".includes(nextchar))) {
-            spacing = max(spacing, 1)
+               || ("i".includes(char) && "abcdefhiklnpruvwxz".includes(nextchar))
+               || ("aghijkmnouvwxyz".includes(char) && "i".includes(nextchar))) {
+            spacing = max(spacing, 2 - animRings) // if there's less than two rings, introduce forced gap
          }
       }
    } else if (font === "fontc") {
-      if (animRings <= 1) {
+      if (animRings < 2) {
          // WIP, maybe some can still be together with just one ring
-         spacing = max(spacing, 1)
+         spacing = max(spacing, 2 - animRings) // if there's less than two rings, introduce forced gap
       }
    }
 
