@@ -2240,6 +2240,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight -0.5})
 
                   if (letter === "ä") {
                      drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
@@ -2312,6 +2313,7 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: -style.weight -0.5})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
@@ -2458,9 +2460,11 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {extend: -style.weight -0.5})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   style.stack = 0
                   style.flipped = true
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: -style.weight -0.5})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
@@ -2569,9 +2573,11 @@ function drawText (lineNum) {
                   drawModule(style, "square", 1, 1, 0, 0, {})
                   drawModule(style, "square", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight -0.5})
                   style.stack = 0
                   style.flipped = true
                   drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: -style.weight -0.5})
                   drawModule(style, "square", 3, 3, 0, 0, {})
                   drawModule(style, "square", 4, 4, 0, 0, {})
                   break;
@@ -3756,6 +3762,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const EXTRAY = style.extraY
    const PLUSX = STRETCHX + SPREADX
    const PLUSY = STRETCHY + SPREADY + EXTRAY
+
    const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (style.sizes.length >= 2)
    const DRAWREVCAP = (shapeParams.from !== undefined) && (style.sizes.length >= 2)
 
@@ -3949,26 +3956,25 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             //only draw the non-stretch part if it is long enough to be visible
             if (sideY*(linePos.y2-linePos.y1)>=0) {
                lineType(linePos.x1, linePos.y1 , linePos.x2 , linePos.y2)
-            }
 
-            // draw the end cap
-            if (layer === "fg" && style.endCap !== "none" && (DRAWCAP || DRAWREVCAP)) {
-               if (DRAWCAP) drawVerticalCaps(style.endCap, linePos.y2, sideY)
-               if (DRAWREVCAP) drawVerticalCaps(style.endCap, linePos.y1, -sideY)
-               
-               function drawVerticalCaps (capStyle, endPoint, endDir) {
-                  if (capStyle === "round") {
-                     const capScale = (style.sizes.length === 2) ? 0.5 : 1
-                     if (size === OUTERSIZE) {
-                        bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
-                            linePos.x2-0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2-1*capScale*sideX , endPoint + endDir*1*capScale)
-                     } else if (size === INNERSIZE) {
-                        bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
-                           linePos.x2+0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2+1*capScale*sideX , endPoint + endDir*1*capScale)
-                        if (style.sizes.length >= 3) {
-                           lineType(linePos.x2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadX)*sideX-spreadFillStepX, endPoint+1*endDir, 
-                              linePos.x2+1*sideX, endPoint+1*endDir)
-                        }
+               // draw the end cap
+               if (layer === "fg" && style.endCap !== "none" && (DRAWCAP || DRAWREVCAP)) {
+                  if (DRAWCAP) drawVerticalCaps(style.endCap, linePos.y2, sideY)
+                  if (DRAWREVCAP) drawVerticalCaps(style.endCap, linePos.y1, -sideY)
+               }
+            }
+            function drawVerticalCaps (capStyle, endPoint, endDir) {
+               if (capStyle === "round") {
+                  const capScale = (style.sizes.length === 2) ? 0.5 : 1
+                  if (size === OUTERSIZE) {
+                     bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
+                         linePos.x2-0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2-1*capScale*sideX , endPoint + endDir*1*capScale)
+                  } else if (size === INNERSIZE) {
+                     bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
+                        linePos.x2+0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2+1*capScale*sideX , endPoint + endDir*1*capScale)
+                     if (style.sizes.length >= 3) {
+                        lineType(linePos.x2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadX)*sideX-spreadFillStepX, endPoint+1*endDir, 
+                           linePos.x2+1*sideX, endPoint+1*endDir)
                      }
                   }
                }
