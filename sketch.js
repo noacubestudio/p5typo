@@ -84,6 +84,8 @@ let values = {
 let animSize, animRings, animSpacing, animWeight, animAscenders, animZoom
 let animOffsetX, animOffsetY, animStretchX, animStretchY, animSpreadY, animSpreadX
 let animColorDark, animColorLight
+// calculated from above but also used everywhere
+let animExtraY
 
 //drawfillcorner graphic layers
 let fillCornerLayers = {}
@@ -761,6 +763,9 @@ function draw () {
 
    animSize = lerpValues(values.size)
    animRings = lerpValues(values.rings)
+   // if inner size is below 2, add 1 grid size of vertical stretch
+   animExtraY = map(getInnerSize(animSize, animRings), 1,2, 1,0, true)
+
    animSpacing = lerpValues(values.spacing)
    animOffsetX = lerpValues(values.offsetX)
    animOffsetY = lerpValues(values.offsetY)
@@ -769,7 +774,7 @@ function draw () {
    animSpreadX = lerpValues(values.spreadX) * (animRings-1) * 2 //WIP, means it always aligns with grid though
    animSpreadY = lerpValues(values.spreadY) * (animRings-1) * 2
    animWeight = lerpValues(values.weight)
-   animAscenders = lerpValues(values.ascenders)
+   animAscenders = lerpValues(values.ascenders) * 0.5
    animColorDark = lerpValues(values.hueDark, "dark")
    animColorLight = lerpValues(values.hueLight, "light")
    animZoom = lerpValues(values.zoom)
@@ -872,7 +877,7 @@ function drawElements() {
          if (webglEffects.includes(effect)) translate(0,0,-1)
          let fontSize = animSize
          if (font === "fontb" || font === "fontc") fontSize = animSize*2 - min(animRings, animSize/2) + 1
-         const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY + animSpreadY
+         const gridHeight = fontSize + Math.abs(animOffsetY) + animStretchY + animSpreadY + animExtraY
          const gridWidth = (width-60)/animZoom
          const asc = (font === "fontb") ? 0 : animAscenders
    
@@ -1108,9 +1113,11 @@ function drawText (lineNum) {
 
    // total height
    let fontSize = animSize
-   let stretchSize = animStretchY + animSpreadY
+   let stretchSize = animStretchY + animSpreadY + animExtraY*0.5
    if (font === "fontb" || font === "fontc") {
       fontSize = animSize*2 - min(animRings, animSize/2)
+
+      //WIP: this would make each stretch side be an integer...
       //stretchSize *= 2
    }
    //staircase height
@@ -1265,6 +1272,7 @@ function drawText (lineNum) {
          offsetY: (effect==="staircase")? animOffsetX : animOffsetY,
          stretchX: animStretchX,
          stretchY: animStretchY,
+         extraY: animExtraY,
          spreadX: animSpreadX,
          spreadY: animSpreadY,
          spreadFillSteps: SPREADFILLSTEPSX,
@@ -2283,12 +2291,16 @@ function drawText (lineNum) {
                   }
                   break;
                case "c":
+                  // (- 0.5*letterOuter + 0.5*letterInner - 1) * 0.5
+                  const centersDistance = style.weight + letterInner
                   style.stack = 1
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {extend: -letterOuter*0.5+(centersDistance-1)*0.5})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: -letterOuter*0.5+(centersDistance-1)*0.5})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
@@ -2303,6 +2315,19 @@ function drawText (lineNum) {
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
+               case "f":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  drawModule(style, "hori", 3, 3, 0, 0, {cap: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders})
+                  drawModule(style, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+                  break;
                case "g":
                   if (descenders >= 1) {
                      style.stack = 1
@@ -2313,43 +2338,69 @@ function drawText (lineNum) {
                      style.stack = 0
                      drawModule(style, "vert", 1, 1, 0, 0, {})
                      drawModule(style, "vert", 2, 2, 0, 0, {})
-                     drawModule(style, "round", 3, 3, 0, 0, {})
                      drawModule(style, "round", 4, 4, 0, 0, {})
-                     if (descenders <= style.weight) {
-                        // if only one ring, move line down so there is a gap
-                        const extragap = (letterOuter > letterInner) ? 0:1
-                        const lineOffset = (extragap+style.weight > descenders) ? -(style.weight-descenders) : extragap
-      
-                        drawModule(style, "hori", 2, 3, 0, letterOuter + lineOffset, {noStretchY: true})
-                        drawModule(style, "hori", 1, 4, 0, letterOuter + lineOffset, {noStretchY: true})
+
+                     drawModule(style, "vert", 3, 3, 0, 0, {extend: (descenders >= 2) ? letterOuter*0.5 : 1})
+                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+
+                     if (descenders < letterOuter || ascenders < 2) {
+                        drawModule(style, "square", 3, 3, 0, descenders, {noStretchY: true})
+                        drawModule(style, "hori", 4, 4, 0, descenders, {cap: true, noStretchY: true})
+                     } else {
+                        drawModule(style, "round", 3, 3, 0, descenders, {noStretchY: true})
+                        drawModule(style, "round", 4, 4, 0, descenders, {noStretchY: true})
                      }
                   } else {
-                     // compact mode
-                     // WIP
+                     style.stack = 1
+                     drawModule(style, "round", 1, 1, 0, 0, {})
+                     drawModule(style, "round", 2, 2, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
+                     drawModule(style, "vert", 3, 3, 0, 0, {})
+                     style.stack = 0
+                     drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+                     drawModule(style, "round", 3, 3, 0, 0, {})
+                     drawModule(style, "round", 4, 4, 0, 0, {})
                   }
                   break;
                case "i":
                case "l":
                   style.stack = 1
-                  if (letter === "i") drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
-                  else drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
-                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  if (letter === "i") {
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                     drawModule(style, "vert", 1, 1, 0, 0, {cap: true})
+                  }
+                  else {
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  }
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
+                  break;
+               case "j":
+                  style.stack = 1
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + 1, noStretch: true})
+                  drawModule(style, "hori", 1, 1, 0, 0, {cap: true})
+                  drawModule(style, "square", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
                case "k":
                   style.stack = 1
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
-                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {cap: true})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "round", 2, 2, 0, 0, {})
-                  drawModule(style, "vert", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {cap: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
                   break;
                case "n":
                case "h":
@@ -2365,8 +2416,8 @@ function drawText (lineNum) {
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 2, 2, 0, 0, {})
-                  drawModule(style, "vert", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {cap: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
                   break;
                case "m":
                   style.stack = 1
@@ -2383,25 +2434,25 @@ function drawText (lineNum) {
 
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
                   // right side
                   style.flipped = true
                   drawModule(style, "vert", 1, 2, wideOffset, 0, {})
                   drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
-                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
-                  drawModule(style, "vert", 4, 3, wideOffset, 0, {})
+                  drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {cap: true})
+                  drawModule(style, "vert", 4, 3, wideOffset, 0, {cap: true})
                   break;
                case "r":
                   style.stack = 1
-                  drawModule(style, "square", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "round", 2, 2, 0, 0, {})
-                  drawModule(style, "vert", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {cap: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
                   break;
                case "s":
                   style.stack = 1
@@ -2414,12 +2465,25 @@ function drawText (lineNum) {
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   break;
+               case "t":
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+                  drawModule(style, "hori", 2, 2, 0, 0, {cap: true})
+                  drawModule(style, "vert", 3, 3, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "round", 4, 4, 0, 0, {})
+                  break;
                case "u":
                case "ü":
                case "v":
                   style.stack = 1
-                  drawModule(style, "vert", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {cap: true})
+                  drawModule(style, "vert", 2, 2, 0, 0, {cap: true})
                   drawModule(style, "vert", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   if (letter === "ü") {
@@ -2440,12 +2504,12 @@ function drawText (lineNum) {
                   break;
                case "w":
                   style.stack = 1
-                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {cap: true})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   // right side
                   style.flipped = true
-                  drawModule(style, "vert", 1, 2, wideOffset, 0, {})
-                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {})
+                  drawModule(style, "vert", 1, 2, wideOffset, 0, {cap: true})
+                  drawModule(style, "vert", 2, 1, wideOffset + animStretchX*2, 0, {cap: true})
                   drawModule(style, "vert", 3, 4, wideOffset + animStretchX*2, 0, {})
                   drawModule(style, "vert", 4, 3, wideOffset, 0, {})
 
@@ -2464,22 +2528,22 @@ function drawText (lineNum) {
                   break;
                case "x":
                   style.stack = 1
-                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {cap: true})
                   drawModule(style, "round", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
-                  drawModule(style, "vert", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {cap: true})
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
                   style.stack = 1
                   style.flipped = true
+                  drawModule(style, "vert", 2, 2, 0, 0, {cap: true})
                   drawModule(style, "round", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 2, 2, 0, 0, {})
                   break;
                case "y":
                   style.stack = 1
-                  drawModule(style, "vert", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 1, 1, 0, 0, {cap: true})
+                  drawModule(style, "vert", 2, 2, 0, 0, {cap: true})
 
                   if (animAscenders >= 1) {
                      drawModule(style, "vert", 3, 3, 0, 0, {})
@@ -2510,6 +2574,45 @@ function drawText (lineNum) {
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "square", 3, 3, 0, 0, {})
                   drawModule(style, "square", 4, 4, 0, 0, {})
+                  break;
+               case "ß":
+                  style.stack = 1
+                  drawModule(style, "round", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "round", 2, 2, 0, 0, {})
+                  drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders})
+                  break;
+               case "-":
+                  style.sizes = [letterOuter]
+                  drawModule(style, "hori", 1, 1, 0, +letterOuter*0.5, {extend: -1})
+                  drawModule(style, "hori", 2, 2, 0, +letterOuter*0.5, {extend: -1})
+                  sortIntoArray(style.spaceSpots, style.posFromLeft)
+                  break;
+               case "_":
+                  style.sizes = [letterOuter]
+                  drawModule(style, "hori", 3, 3, 0, 0, {extend: -1})
+                  drawModule(style, "hori", 4, 4, 0, 0, {extend: -1})
+                  sortIntoArray(style.spaceSpots, style.posFromLeft)
+                  break;
+               case "|":
+                  style.sizes = [letterOuter]
+                  style.stack = 1
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  style.stack = 0
+                  drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  break;
+               case ".":
+                  drawModule(style, "vert", 4, 4, 0, 0, {cap: true, from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
+                  break;
+               case ",":
+                  drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders, from: letterOuter*0.5 - (style.weight+0.5), noStretch: true})
                   break;
                case " ":
                   sortIntoArray(style.spaceSpots, style.posFromLeft)
@@ -2756,7 +2859,7 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             ("dgi".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1)
          }
-      } else {
+      } else if (animRings < 2) {
          if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
                ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
                ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
@@ -2773,7 +2876,12 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
          }
       }
    } else if (font === "fontc") {
-      if (animRings < 2) {
+      if (animRings >= 2) {
+         if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
+            ("di".includes(char) && "i".includes(nextchar))) {
+            spacing = max(spacing, 1)
+         }
+      } else if (animRings < 2) {
          // WIP, maybe some can still be together with just one ring
          spacing = max(spacing, 2 - animRings) // if there's less than two rings, introduce forced gap
       }
@@ -2920,6 +3028,9 @@ function letterKerning (isLastLetter, prevchar, char, nextchar, spacing, inner, 
             if (charInSet(nextchar,["gap"])) {
                charWidth = 0
             }
+            break;
+         case " ":
+            charWidth = max([2, spacing*2, ceil(inner*0.5)])
             break;
          case "|":
             charWidth = 0
@@ -3642,8 +3753,11 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const SPREADY = style.spreadY
    const STRETCHX = style.stretchX
    const STRETCHY = style.stretchY
+   const EXTRAY = style.extraY
    const PLUSX = STRETCHX + SPREADX
-   const PLUSY = STRETCHY + SPREADY
+   const PLUSY = STRETCHY + SPREADY + EXTRAY
+   const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (style.sizes.length >= 2)
+   const DRAWREVCAP = (shapeParams.from !== undefined) && (style.sizes.length >= 2)
 
    // position
    const basePos = {
@@ -3760,10 +3874,24 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       if (shape === "vert" || shape === "hori") {
 
          // determine based on endcap how much shorter the line should be
-         const endcapLength = (style.endCap === "round" && style.sizes.length >= 3) ? 1 : 0
+         let endcapLength = 0; let startcapLength = 0;
+         if (style.endCap === "round" && DRAWCAP) {
+            if (style.sizes.length === 2) {
+               endcapLength = 0.5;
+            } else {
+               endcapLength = 1;
+            }
+         }
+         if (style.endCap === "round" && DRAWREVCAP) {
+            if (style.sizes.length === 2) {
+               startcapLength = 0.5;
+            } else {
+               startcapLength = 1;
+            }
+         }
 
          // first determine without needing to know direction
-         const LINE_FROM = shapeParams.from || 0
+         const LINE_FROM = shapeParams.from +startcapLength || 0
          const LINE_EXTEND = shapeParams.extend -endcapLength*0.99|| -endcapLength
          const LINE_ADJUST = (() => {
             if (layer === "fg") return 0
@@ -3824,22 +3952,31 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
 
             // draw the end cap
-            if (layer === "fg" && style.endCap === "round" && style.sizes.length >= 3) {
-               if (size === OUTERSIZE) {
-                  bezier(linePos.x1, linePos.y2 , linePos.x1, linePos.y2 + sideY*0.5,
-                      linePos.x2-0.5*sideX , linePos.y2 + sideY*1, linePos.x2-1*sideX , linePos.y2 + sideY*1)
-               } else if (size === INNERSIZE) {
-                  bezier(linePos.x1, linePos.y2 , linePos.x1, linePos.y2 + sideY*0.5,
-                     linePos.x2+0.5*sideX , linePos.y2 + sideY*1, linePos.x2+1*sideX , linePos.y2 + sideY*1)
-                  if (style.sizes.length >= 3) {
-                     lineType(linePos.x2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadX)*sideX-spreadFillStepX, linePos.y2+1*sideY, 
-                        linePos.x2+1*sideX, linePos.y2+1*sideY)
+            if (layer === "fg" && style.endCap !== "none" && (DRAWCAP || DRAWREVCAP)) {
+               if (DRAWCAP) drawVerticalCaps(style.endCap, linePos.y2, sideY)
+               if (DRAWREVCAP) drawVerticalCaps(style.endCap, linePos.y1, -sideY)
+               
+               function drawVerticalCaps (capStyle, endPoint, endDir) {
+                  if (capStyle === "round") {
+                     const capScale = (style.sizes.length === 2) ? 0.5 : 1
+                     if (size === OUTERSIZE) {
+                        bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
+                            linePos.x2-0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2-1*capScale*sideX , endPoint + endDir*1*capScale)
+                     } else if (size === INNERSIZE) {
+                        bezier(linePos.x1, endPoint , linePos.x1, endPoint + endDir*0.5*capScale,
+                           linePos.x2+0.5*capScale*sideX , endPoint + endDir*1*capScale, linePos.x2+1*capScale*sideX , endPoint + endDir*1*capScale)
+                        if (style.sizes.length >= 3) {
+                           lineType(linePos.x2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadX)*sideX-spreadFillStepX, endPoint+1*endDir, 
+                              linePos.x2+1*sideX, endPoint+1*endDir)
+                        }
+                     }
                   }
                }
             }
 
             if (PLUSY > 0 && LINE_FROM === 0) {
                if (STRETCHY > 0) drawStretchLines("stretch", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
+               if (EXTRAY > 0) drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
                if (SPREADY > 0) drawStretchLines("spread", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
             }
          }
@@ -3856,14 +3993,15 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
 
             // draw the end cap
-            if (layer === "fg" && style.endCap === "round" && style.sizes.length >= 3) {
+            if (layer === "fg" && style.endCap === "round" && DRAWCAP) {
+               const capScale = (style.sizes.length === 2) ? 0.5 : 1
                if (size === OUTERSIZE) {
                   //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
-                  bezier(linePos.x2, linePos.y1 , linePos.x2 + sideX*0.5, linePos.y1,
-                     linePos.x2 + sideX*1, linePos.y2-0.5*sideY, linePos.x2 + sideX*1, linePos.y2-1*sideY)
+                  bezier(linePos.x2, linePos.y1 , linePos.x2 + sideX*0.5*capScale, linePos.y1,
+                     linePos.x2 + sideX*1*capScale, linePos.y2-0.5*capScale*sideY, linePos.x2 + sideX*1*capScale, linePos.y2-1*capScale*sideY)
                } else if (size === INNERSIZE) {
-                  bezier(linePos.x2, linePos.y2 , linePos.x2 + sideX*0.5, linePos.y2,
-                     linePos.x2 + sideX*1 , linePos.y2+0.5*sideY, linePos.x2 + sideX*1, linePos.y2+1*sideY)
+                  bezier(linePos.x2, linePos.y2 , linePos.x2 + sideX*0.5*capScale, linePos.y2,
+                     linePos.x2 + sideX*1*capScale , linePos.y2+0.5*capScale*sideY, linePos.x2 + sideX*1*capScale, linePos.y2+1*capScale*sideY)
                   if (style.sizes.length >= 3) {
                      lineType(linePos.x2+1*sideX, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1-outerSpreadY)*sideY-spreadFillStepY, 
                         linePos.x2+1*sideX , linePos.y2+1*sideY)
@@ -3881,7 +4019,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
       } else { // CORNER
 
          // determine based on endcap how much rounded the line should be
-         const cornerRoundLength = (style.endCap === "round" && style.sizes.length >= 3) ? 1 : 0
+         const cornerRoundLength = (style.endCap === "round" && style.sizes.length > 1) ? map(style.weight, 0, 1, 0, 1, true) : 0
 
          let xpos = basePos.x
          let ypos = basePos.y
@@ -4277,7 +4415,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (SPREADY > 0) drawStretchLines("spread",sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
                }
                if (STRETCHY > 0) drawStretchLines("stretch",sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
-
+               if (EXTRAY > 0) drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
             }
 
             const extendamount = ((OUTERSIZE % 2 == 0) ? 0 : 0.5) + (style.stretchX-(style.stretchX%2))*0.5
@@ -4295,9 +4433,22 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       function drawStretchLines (stretchMode, sideX, sideY, axis, spreadFillStepX, spreadFillStepY, fillIndexX) {
 
-         if ((font === "fontb" || font === "fontc") && axis === "vert") {
-            if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) return
+         if (stretchMode === "extra") {
+            if (font === "fontb" || font === "fontc") {
+               if (style.stack === 1 && sideY === -1 || style.stack === 0 && sideY === 1) {
+                  return
+               }
+            } else {
+               //if ((arcQ === 1 || arcQ === 2) && sideY === 1) return
+            }
+         } else {
+            if ((font === "fontb" || font === "fontc") && axis === "vert") {
+               if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) {
+                  return
+               }
+            }
          }
+
 
          // separate xray color
          if (stretchMode === "stretch" && mode.xray && layer=== "bg") {
@@ -4351,10 +4502,14 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
             const outerSPosX = sPos.x + sideX * (OUTERSIZE * 0.5) 
             sPos.x += sideX * (size * 0.5 + outerSpreadX + SPREADX/2) + spreadFillStepX
 
-            if (stretchMode === "stretch") {
+            if (stretchMode === "stretch" || stretchMode === "extra") {
                sPos.x -= sideX * SPREADX/2
                sPos.y -= sideY * SPREADY/2
-               const stretchDifference = -sideY * STRETCHY * 0.5
+
+               let stretchDifference = -sideY * STRETCHY * 0.5
+               if (stretchMode === "extra") {
+                  stretchDifference = -sideY * EXTRAY * 0.5
+               }
 
                if (layer === "fg" || outerSpreadY===0) { //only draw once
 
