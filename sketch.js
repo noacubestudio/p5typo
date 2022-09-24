@@ -2342,16 +2342,25 @@ function drawText (lineNum) {
                      drawModule(style, "vert", 2, 2, 0, 0, {})
                      drawModule(style, "round", 4, 4, 0, 0, {})
 
-                     drawModule(style, "vert", 3, 3, 0, 0, {extend: (descenders >= 2) ? letterOuter*0.5 : 1})
-                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+                     //drawModule(style, "vert", 3, 3, 1, 0, {extend: (descenders >= 2) ? descenders - letterOuter*0.5 : 1})
 
-                     if (descenders < letterOuter || ascenders < 2) {
-                        drawModule(style, "square", 3, 3, 0, descenders, {noStretchY: true})
+                     if (descenders < letterOuter*0.5+1 || ascenders < 2) {
+                        if (descenders > letterOuter*0.5) {
+                           drawModule(style, "vert", 2, 2, 0, descenders, {extend: -letterOuter*0.5+1})
+                           drawModule(style, "round", 3, 3, 0, descenders, {noStretchY: true})
+                        } else {
+                           drawModule(style, "square", 3, 3, 0, descenders, {noStretchY: true})
+                        }
                         drawModule(style, "hori", 4, 4, 0, descenders, {cap: true, noStretchY: true})
                      } else {
+                        drawModule(style, "vert", 1, 1, 0, descenders, {extend: -style.weight -0.5})
+                        drawModule(style, "vert", 2, 2, 0, descenders, {extend: -(letterOuter-descenders-0.5)})
                         drawModule(style, "round", 3, 3, 0, descenders, {noStretchY: true})
                         drawModule(style, "round", 4, 4, 0, descenders, {noStretchY: true})
                      }
+                     // branch over
+                     drawModule(style, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+
                   } else {
                      style.stack = 1
                      drawModule(style, "round", 1, 1, 0, 0, {})
@@ -2359,6 +2368,7 @@ function drawText (lineNum) {
                      drawModule(style, "round", 4, 4, 0, 0, {})
                      drawModule(style, "vert", 3, 3, 0, 0, {})
                      style.stack = 0
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: -style.weight -0.5})
                      drawModule(style, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
                      drawModule(style, "round", 3, 3, 0, 0, {})
                      drawModule(style, "round", 4, 4, 0, 0, {})
@@ -2563,6 +2573,7 @@ function drawText (lineNum) {
                      drawModule(style, "round", 4, 4, 0, 0, {})
                      drawModule(style, "vert", 3, 3, 0, 0, {})
                      style.stack = 0
+                     drawModule(style, "vert", 1, 1, 0, 0, {extend: -style.weight -0.5})
                      drawModule(style, "vert", 2, 2, 0, 0, {})
                      drawModule(style, "round", 3, 3, 0, 0, {})
                      drawModule(style, "round", 4, 4, 0, 0, {})
@@ -3434,6 +3445,7 @@ function letterYOffsetCount (prevchar, char, nextchar) {
       case ",":
       case "!":
       case " ":
+      case "‸":
          offsetSegments = 0
          break;
       case "z":
@@ -3982,7 +3994,7 @@ function drawModule (style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (PLUSY > 0 && LINE_FROM === 0) {
                if (STRETCHY > 0) drawStretchLines("stretch", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
-               if (EXTRAY > 0) drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
+               if (EXTRAY > 0 && sideY*(linePos.y2-linePos.y1)>=0) drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
                if (SPREADY > 0) drawStretchLines("spread", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX)
             }
          }
