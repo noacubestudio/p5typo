@@ -1,6 +1,6 @@
 'use strict';
 
-import { animSpreadX, animStretchX, font, animRings, charInSet } from '../sketch.mjs';
+import { animSpreadX, animStretchX, font, animRings, charInSet, endCapStyle, waveValue, mode } from '../sketch.mjs';
 
 
 export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
@@ -37,7 +37,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
          }
       }
    } else if (font === "fontc") {
-      if (animRings >= 2) {
+      if (animRings >= 2 && endCapStyle === "rounded") {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
             ("di".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1);
