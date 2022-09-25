@@ -121,6 +121,7 @@ window.setup = function () {
 function createGUI () {
 
    createDropDown()
+   document.getElementById("defaultOpen").click();
 
    // create textarea for line input
    writeEl = document.getElementById('textarea-lines')
