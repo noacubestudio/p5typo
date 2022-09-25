@@ -1,7 +1,7 @@
 'use strict';
 import { font, effect, webglEffects, mode, palette, strokeScaleFactor, 
    ringStyle, lineType, animSpacing, charInSet, arcType, stripeEffects, 
-   fillCornerLayers, animZoom, midlineEffects, sortIntoArray } from "../sketch.mjs";
+   fillCornerLayers, animZoom, midlineEffects, sortIntoArray, animSpreadY, animSpreadX } from "../sketch.mjs";
 
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
@@ -545,7 +545,6 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if ((size) > (OUTERSIZE + INNERSIZE) / 2) {
                   branchLengthX = revSizeX;
                   branchLengthY = revSizeY;
-                  // WIP, this is not affected by spread right now...
                }
 
                // side bit, not in branch direction
@@ -564,7 +563,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (OUTERSIZE / 2 + (OUTERSIZE - revSizeY) / -2));
                      }
                      if (Math.abs(outerSpreadY) !== SPREADY / 2) {
-                        branchLengthY = OUTERSIZE / 2 + (OUTERSIZE - revSizeY) / -2 + map(outerSpreadY, 0, -SPREADY / 2, -SPREADY / 2, 0);
+                        // change branch length of the ones getting shorter again because of spread
+                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + animSpreadY*0.5;
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (branchLengthY));
                      }
                      // from inside
@@ -582,7 +582,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (OUTERSIZE / 2 + (OUTERSIZE - revSizeX) / -2), baseY);
                      }
                      if (Math.abs(outerSpreadX) !== SPREADX / 2) {
-                        branchLengthX = OUTERSIZE / 2 + (OUTERSIZE - revSizeX) / -2 + map(outerSpreadX, 0, -SPREADX / 2, -SPREADX / 2, 0);
+                        // change branch length of the ones getting shorter again because of spread
+                        branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + animSpreadX*0.5;
                         lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (branchLengthX), baseY);
                      }
                      // from inside

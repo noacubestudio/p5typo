@@ -2463,7 +2463,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
-                  drawModule(style, "square", 1, 1, -5, 0, {type: "branch", at:"end"})
+                  drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "vert", 3, 3, 0, 0, {cap: true})
                   drawModule(style, "vert", 4, 4, 0, 0, {cap: true})
