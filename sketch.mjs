@@ -2342,7 +2342,8 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
-                  drawModule(style, "vert", 2, 2, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  drawModule(style, "vert", 2, 2, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {extend: -style.weight -1})
                   drawModule(style, "hori", 3, 3, 0, 0, {cap: true})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: ascenders})
                   drawModule(style, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
@@ -2501,7 +2502,8 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "hori", 2, 2, 0, 0, {cap: true})
-                  drawModule(style, "vert", 3, 3, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: -style.weight -1})
+                  drawModule(style, "vert", 3, 3, 0, 0, {})
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
