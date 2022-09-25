@@ -262,22 +262,28 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             //only draw the non-stretch part if it is long enough to be visible
             if (sideX * (linePos.x2 - linePos.x1) >= 0) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2);
+
+               // draw the end cap
+               if (layer === "fg" && style.endCap !== "none" && DRAWCAP) {
+                  drawHorizontalCaps(style.endCap)
+               }
             }
 
-            // draw the end cap
-            if (layer === "fg" && style.endCap === "round" && DRAWCAP) {
-               const capScale = (style.sizes.length === 2) ? 0.5 : 1;
-               if (size === OUTERSIZE) {
-                  //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
-                  bezier(linePos.x2, linePos.y1, linePos.x2 + sideX * 0.5 * capScale, linePos.y1,
-                     linePos.x2 + sideX * 1 * capScale, linePos.y2 - 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 - 1 * capScale * sideY);
-               } else if (size === INNERSIZE) {
-                  bezier(linePos.x2, linePos.y2, linePos.x2 + sideX * 0.5 * capScale, linePos.y2,
-                     linePos.x2 + sideX * 1 * capScale, linePos.y2 + 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 + 1 * capScale * sideY);
-                  if (style.sizes.length >= 3) {
-                     lineType(linePos.x2 + 1 * sideX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * sideY - spreadFillStepY,
-                        linePos.x2 + 1 * sideX, linePos.y2 + 1 * sideY);
-                     //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
+            function drawHorizontalCaps (capStyle) {
+               if (capStyle === "round") {
+                  const capScale = (style.sizes.length === 2) ? 0.5 : 1;
+                  if (size === OUTERSIZE) {
+                     //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
+                     bezier(linePos.x2, linePos.y1, linePos.x2 + sideX * 0.5 * capScale, linePos.y1,
+                        linePos.x2 + sideX * 1 * capScale, linePos.y2 - 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 - 1 * capScale * sideY);
+                  } else if (size === INNERSIZE) {
+                     bezier(linePos.x2, linePos.y2, linePos.x2 + sideX * 0.5 * capScale, linePos.y2,
+                        linePos.x2 + sideX * 1 * capScale, linePos.y2 + 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 + 1 * capScale * sideY);
+                     if (style.sizes.length >= 3) {
+                        lineType(linePos.x2 + 1 * sideX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * sideY - spreadFillStepY,
+                           linePos.x2 + 1 * sideX, linePos.y2 + 1 * sideY);
+                        //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
+                     }
                   }
                }
             }
@@ -714,16 +720,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // other corner shapes...
       }
 
-      function drawStretchLines(stretchMode, sideX, sideY, axis, spreadFillStepX, spreadFillStepY, fillIndexX) {
+      function drawStretchLines (stretchMode, sideX, sideY, axis, spreadFillStepX, spreadFillStepY, fillIndexX) {
 
          if (stretchMode === "extra") {
             if (font === "fontb" || font === "fontc") {
                if (style.stack === 1 && sideY === -1 || style.stack === 0 && sideY === 1) {
                   return;
                }
-            } else {
-               //if ((arcQ === 1 || arcQ === 2) && sideY === 1) return
-            }
+            } 
          } else {
             if ((font === "fontb" || font === "fontc") && axis === "vert") {
                if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) {
@@ -814,7 +818,9 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   // if vertical line goes down, set those connection spots in the array
-                  if (layer === "fg" && sideY === -1 && midlineEffects.includes(effect)) {
+                  if (layer === "fg" && midlineEffects.includes(effect)) {
+                     // (sideY===-1&&style.stack===1||sideY===1&&style.stack===0)
+                     // ^ does nothing....already the correct ones
                      if (style.letter === "‸") {
                         //caret counts separately
                         style.caretSpots[0] = sPos.x;

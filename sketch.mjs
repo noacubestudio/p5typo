@@ -246,6 +246,12 @@ function createGUI () {
       mode.altS = altSToggle.checked
       writeToURL()
    })
+   const roundcapsToggle = document.getElementById('checkbox-roundcaps')
+   roundcapsToggle.checked = (endCapStyle === "round")
+   roundcapsToggle.addEventListener('click', () => {
+      endCapStyle = (roundcapsToggle.checked) ? "round" : "none"
+      writeToURL()
+   })
    const fillsToggle = document.getElementById('checkbox-fills')
    fillsToggle.checked = mode.drawFills
    fillsToggle.addEventListener('click', () => {
@@ -904,11 +910,20 @@ function drawElements() {
                   lineType(0, i+gridHeight/2-animOffsetY*0.5, gridWidth, i+gridHeight/2-animOffsetY*0.5)
                   lineType(0, i+gridHeight/2+animOffsetY*0.5, gridWidth, i+gridHeight/2+animOffsetY*0.5)   
                } else if (font === "fontb")  {
-                  lineType(0, i + animSize +animStretchY, gridWidth, i + animSize+animStretchY)
-                  lineType(0, i+gridHeight -animSize -animStretchY, gridWidth, i+gridHeight -animSize -animStretchY)
+                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
+                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
                   //twice
-                  lineType(0, i + animSize +animStretchY, gridWidth, i + animSize+animStretchY)
-                  lineType(0, i+gridHeight -animSize -animStretchY, gridWidth, i+gridHeight -animSize -animStretchY)
+                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
+                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
+                  //halfway
+                  lineType(0, i + animSize*0.5, gridWidth, i + animSize*0.5)
+                  lineType(0, i+gridHeight -animSize*0.5, gridWidth, i+gridHeight -animSize*0.5)
+               } else if (font === "fontc") {
+                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
+                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
+                  //twice
+                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
+                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
                   //halfway
                   lineType(0, i + animSize*0.5, gridWidth, i + animSize*0.5)
                   lineType(0, i+gridHeight -animSize*0.5, gridWidth, i+gridHeight -animSize*0.5)
@@ -2602,8 +2617,10 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 4, 4, 0, 0, {})
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
+                  drawModule(style, "hori", 1, 1, 0, 0, {extend: -style.weight -1})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
+                  drawModule(style, "hori", 4, 4, 0, 0, {extend: -style.weight -1})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: descenders})
                   break;
                case "-":
@@ -2676,11 +2693,20 @@ function drawText (lineNum) {
       // run for each stage
       if (font === "fontb" || font === "fontc") {
          push()
-         translate(0, -animSize+(animRings-1)- animStretchY)
-         //drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+         translate(0, -animSize+(animRings-1)- animStretchY - animSpreadY)
+         drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
          pop()
+
+         push()
+         translate(-animOffsetX,0)
+         drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+         pop()
+
+         //if (frameCount === 1) print("Midlines:", lineStyle.midlineSpots)
+      } else {
+         drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
       }
-      drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+      
    }
 
    function drawMidlineEffects (layer, midlineSpots, caretSpots, spaceSpots) {
@@ -2724,7 +2750,7 @@ function drawText (lineNum) {
             })
          
          
-         if (frameCount === 1) print("Line:", lineText, "Mid Connection Spots:", wordSpots)
+         if (frameCount === 1) print("Line:", lineText, ", Layer:", layer, ", Mid Connection Spots:", wordSpots)
          // show spaces
          //lineStyle.spaceSpots.forEach((pos) => {
          //   lineType(pos,5, pos, 7)

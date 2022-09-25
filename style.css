@@ -140,7 +140,7 @@ kbd {
   margin-top: 0.3em;
   display: grid;
   grid-template-columns: repeat(2,1fr);
-  grid-template-rows: repeat(5, max-content);
+  grid-template-rows: repeat(6, max-content);
   grid-column-gap: 1em;
   grid-row-gap: 0.6em;
   grid-auto-flow: column;
