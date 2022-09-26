@@ -921,13 +921,12 @@ function drawElements() {
          if (type === "xray") {
             translate(0,0.5*animSize)
             for (let lineNum = 0; lineNum < linesArray.length; lineNum++) {
-               palette.fg.setAlpha(50)
-               stroke(palette.fg)
-               strokeWeight(0.1*strokeScaleFactor)
+               stroke("#00FFFF50")
+               strokeWeight(0.2*strokeScaleFactor)
          
                const i = lineNum * totalHeight[lineNum] - animSize/2
       
-               //horizontal gridlines
+               // special horizontal gridlines
                lineType(0, i, gridWidth, i)
                lineType(0, i+gridHeight, gridWidth, i+gridHeight)
                if (font === "fonta") {
@@ -942,28 +941,33 @@ function drawElements() {
                } else if (font === "fontb")  {
                   lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
                   lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
-                  //twice
-                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
-                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
                   //halfway
                   lineType(0, i + animSize*0.5, gridWidth, i + animSize*0.5)
                   lineType(0, i+gridHeight -animSize*0.5, gridWidth, i+gridHeight -animSize*0.5)
                } else if (font === "fontc") {
                   lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
                   lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
-                  //twice
-                  lineType(0, i + animSize +animStretchY*0.5, gridWidth, i + animSize+animStretchY*0.5)
-                  lineType(0, i+gridHeight -animSize -animStretchY*0.5, gridWidth, i+gridHeight -animSize -animStretchY*0.5)
                   //halfway
                   lineType(0, i + animSize*0.5, gridWidth, i + animSize*0.5)
                   lineType(0, i+gridHeight -animSize*0.5, gridWidth, i+gridHeight -animSize*0.5)
                }
+               palette.fg.setAlpha(50)
+               strokeWeight(0.1*strokeScaleFactor)
+               stroke(palette.fg)
+
+               //horizontal gridlines
+               push()
+               translate(0,i)
+               for (let y = 0; y <= gridHeight; y++) {
+                  lineType(0, y, gridWidth, y)
+               }
+               pop()
 
                //vertical gridlines
                push()
                translate(0,i+gridHeight*0.5)
-               for (let j = 0; j <= gridWidth; j++) {
-                  lineType(j, -gridHeight/2-asc, j, gridHeight/2+asc)
+               for (let x = 0; x <= gridWidth; x++) {
+                  lineType(x, -gridHeight/2-asc, x, gridHeight/2+asc)
                }
                pop()
       
@@ -3279,7 +3283,7 @@ export function waveValue(input, low, high) {
    return (-0.5*Math.cos(input*PI)+0.5)*(high-low)+low
 }
 
-
+ 
 
 export function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
    //strokeweight
