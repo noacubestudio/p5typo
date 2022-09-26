@@ -10,8 +10,9 @@ let writeEl
 let numberOffsetEl
 let playToggleEl
 
-let writingFocused = false
+let focusedEl = "none"
 let caretTimer = 0
+let wiggleMode = false
 const newLineChar = String.fromCharCode(13, 10)
 
 const numberInputsObj = {
@@ -135,10 +136,10 @@ function createGUI () {
       writeToURL()
    }, false)
    writeEl.addEventListener('focusin', () => {
-      writingFocused = true
+      focusedEl = "text"
    })
    writeEl.addEventListener('focusout', () => {
-      writingFocused = false
+      focusedEl = "none"
 
       // remove spaces and newlines at the end from field and actual array
       for (let l = 0; l < linesArray.length; l++) {
@@ -280,10 +281,18 @@ function createGUI () {
       numberInput.element.addEventListener('input', () => {
          if (numberInput.element.value !== "") {
             values[property].to = clamp(numberInput.element.value, numberInput.min, numberInput.max)
+            wiggleMode = false
             writeToURL()
          }
       })
+      numberInput.element.addEventListener("focusin", () => {
+         focusedEl = property
+         wiggleMode = true
+         print(focusedEl)
+      })
       numberInput.element.addEventListener("focusout", () => {
+         focusedEl = "none"
+         wiggleMode = false
          if (numberInput.element.value === "") {
             numberInput.element.value = values[property].from
          }
@@ -602,11 +611,11 @@ function updateInGUI () {
    // wip...
 }
 
-function keyTyped() {
+window.keyTyped = function () {
    // wip
 }
 
-function keyPressed() {
+window.keyPressed = function () {
    if (keyCode === LEFT_ARROW) {
       caretTimer = 0
    } else if (keyCode === RIGHT_ARROW) {
@@ -652,6 +661,12 @@ function defaultStyle () {
    values.stretchY.to = 0
    values.spreadX.to = 0
    values.spreadY.to = 0
+}
+
+function activeWiggle () {
+   if (focusedEl !== "none" && focusedEl !== "text") {
+      values[focusedEl].to
+   }
 }
 
 function randomStyle () {
@@ -741,7 +756,9 @@ window.draw = function () {
    });
 
    // calculate the in-between values for everything
-   function lerpValues (slider, col) {
+   function lerpValues (key, col) {
+      const slider = values[key]
+
       // if it's a color
       if (col !== undefined) {
          let saturation; let lightness;
@@ -770,29 +787,34 @@ window.draw = function () {
 
       // not a color
       if (slider.to === undefined) {
-         return slider.from
+         // just return the base value, but add wiggle if active
+         let wiggle = 0
+         if (focusedEl === key && wiggleMode) {
+            wiggle += (sin(((frameCount % 60) / 60) * PI * 2)+1) * 0.2
+         }
+         return slider.from + wiggle
       } else {
          return map(slider.lerp,0,lerpLength,slider.from, slider.to)
       }
    }
 
-   animSize = lerpValues(values.size)
-   animRings = lerpValues(values.rings)
+   animSize = lerpValues("size")
+   animRings = lerpValues("rings")
    // if inner size is below 2, add 1 grid size of vertical stretch
    animExtraY = map(getInnerSize(animSize, animRings), 1,2, 1,0, true)
 
-   animSpacing = lerpValues(values.spacing)
-   animOffsetX = lerpValues(values.offsetX)
-   animOffsetY = lerpValues(values.offsetY)
-   animStretchX = lerpValues(values.stretchX)
-   animStretchY = lerpValues(values.stretchY)
-   animSpreadX = lerpValues(values.spreadX) * (animRings-1) * 2 //WIP, means it always aligns with grid though
-   animSpreadY = lerpValues(values.spreadY) * (animRings-1) * 2
-   animWeight = lerpValues(values.weight)
-   animAscenders = lerpValues(values.ascenders) * 0.5
-   animColorDark = lerpValues(values.hueDark, "dark")
-   animColorLight = lerpValues(values.hueLight, "light")
-   animZoom = lerpValues(values.zoom)
+   animSpacing = lerpValues("spacing")
+   animOffsetX = lerpValues("offsetX")
+   animOffsetY = lerpValues("offsetY")
+   animStretchX = lerpValues("stretchX")
+   animStretchY = lerpValues("stretchY")
+   animSpreadX = lerpValues("spreadX") * (animRings-1) * 2 //WIP, means it always aligns with grid though
+   animSpreadY = lerpValues("spreadY") * (animRings-1) * 2
+   animWeight = lerpValues("weight")
+   animAscenders = lerpValues("ascenders") * 0.5
+   animColorDark = lerpValues("hueDark", "dark")
+   animColorLight = lerpValues("hueLight", "light")
+   animZoom = lerpValues("zoom")
 
    const lightColor = (mode.mono || mode.xray) ? color("white") : animColorLight
    const darkColor = (mode.mono || mode.xray) ? color("black") : animColorDark
@@ -1093,7 +1115,7 @@ function drawText (lineNum) {
    let lineText = linesArray[lineNum].toLowerCase()
 
    // insert the caret into line so that it can be rendered
-   if (writingFocused && !mode.xray && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
+   if (focusedEl === "text" && !mode.xray && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
       let totalChars = 0
       for (let l = 0; l < linesArray.length; l++) {
          //found current line
