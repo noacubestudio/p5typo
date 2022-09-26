@@ -27,7 +27,7 @@
                   <!-- <label class="dropdown-label">effects</label> -->
                   <div class="custom-select" style="width:100%;">
                      <select>
-                     <option value="0">Lowercase 2x2:</option>
+                     <option value="0">Lowercase 3x2:</option>
                      <option value="1">Lowercase 2x2</option>
                      <option value="2">Uppercase 3x2</option>
                      <option value="3">Lowercase 3x2</option>
@@ -102,17 +102,17 @@
                <div class="properties-container">
                   <div class="numbers-grid-container">
                      <div class="numbers-container">
-                        <input id="number-size" type="number" value="9" min="1">
+                        <input id="number-size" type="number" value="6" min="1">
                         <label class="number-label">size</label>
    
-                        <input id="number-rings" type="number" value="3" min="1">
+                        <input id="number-rings" type="number" value="2" min="1">
                         <label class="number-label">rings</label>
    
-                        <input id="number-asc" type="number" value="2" min="0">
+                        <input id="number-asc" type="number" value="4" min="0">
                         <label class="number-label">height</label>
                      </div>
                      <div class="numbers-container">
-                        <input id="number-weight" type="number" value="7" min="1" max="9">
+                        <input id="number-weight" type="number" value="6" min="1" max="9">
                         <label class="number-label">weight</label>
    
                         <input id="number-scale" type="number" value="10">
@@ -147,52 +147,58 @@
             
             <div id="settings-tab" class="tabcontent">
                <div class="other-container">
-                  <div class="checkbox-grid-container"
-                     <div>
-                        <label class="checkbox-container">round caps
-                           <input type="checkbox" id="checkbox-roundcaps" checked="checked">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">show fills
-                           <input type="checkbox" id="checkbox-fills" checked="checked">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">spread fills
-                           <input type="checkbox" id="checkbox-spreadfills" checked="checked">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">alt. n/h
-                           <input type="checkbox" id="checkbox-altNH">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">alt. m
-                           <input type="checkbox" id="checkbox-altM">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">alt. s
-                           <input type="checkbox" id="checkbox-altS">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">dark mode
-                           <input type="checkbox" id="checkbox-darkmode" checked="checked">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">monochrome
-                           <input type="checkbox" id="checkbox-monochrome">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">x-ray view
-                           <input type="checkbox" id="checkbox-xray">
-                           <span class="checkmark"></span>
-                        </label>
-                        <label class="checkbox-container">svg mode
-                           <input type="checkbox" id="checkbox-svg">
-                           <span class="checkmark"></span>
-                        </label>
-                     </div>
+                  <div class="checkbox-grid-container">
+                     <label class="checkbox-container">round caps
+                        <input type="checkbox" id="checkbox-roundcaps" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">show fills
+                        <input type="checkbox" id="checkbox-fills" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">spread fills
+                        <input type="checkbox" id="checkbox-spreadfills" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">center effects
+                        <input type="checkbox" id="checkbox-centereffects">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">dark mode
+                        <input type="checkbox" id="checkbox-darkmode" checked="checked">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">monochrome
+                        <input type="checkbox" id="checkbox-monochrome">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">x-ray view
+                        <input type="checkbox" id="checkbox-xray">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">svg mode
+                        <input type="checkbox" id="checkbox-svg">
+                        <span class="checkmark"></span>
+                     </label>
+                  </div>
+                  <div class="checkbox-grid-container">
+                     <label class="checkbox-container">alt. n/h
+                        <input type="checkbox" id="checkbox-altNH">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. m
+                        <input type="checkbox" id="checkbox-altM">
+                        <span class="checkmark"></span>
+                     </label>
+                     <label class="checkbox-container">alt. s
+                        <input type="checkbox" id="checkbox-altS">
+                        <span class="checkmark"></span>
+                     </label>
+                  </div>
                </div>
             </div>
-            </div>
+
+         </div>
 
          <div class="main-column">
             <div id="sketch-holder">

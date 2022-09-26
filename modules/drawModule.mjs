@@ -7,9 +7,25 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    noFill();
 
+   // size
+   const SIZES = [...style.sizes]
+
+   // testing new effect, WIP
+   // if (SIZES.length > 1) {
+   //    if (style.stack === 1 && offQ >= 3 || style.stack === 0 && offQ <= 2) {
+   //       SIZES.forEach((s, i, arr) => {
+   //          arr[i] = s -2
+   //       })
+   //    } else if (style.stack === 0 && offQ >=3) {
+   //       SIZES.forEach((s, i, arr) => {
+   //          arr[i] = s -4
+   //       })
+   //    }
+   // }
+
    // useful numbers
-   const INNERSIZE = style.sizes[style.sizes.length - 1];
-   const OUTERSIZE = style.sizes[0];
+   const INNERSIZE = SIZES[SIZES.length - 1];
+   const OUTERSIZE = SIZES[0];
    const spreadXScale = (style.spreadX / 2) / (style.weight) / 2;
    const spreadYScale = (style.spreadY / 2) / (style.weight) / 2;
 
@@ -21,8 +37,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const PLUSX = STRETCHX + SPREADX;
    const PLUSY = STRETCHY + SPREADY + EXTRAY;
 
-   const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (style.sizes.length >= 2);
-   const DRAWREVCAP = (shapeParams.from !== undefined) && (style.sizes.length >= 2);
+   const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (SIZES.length >= 2);
+   const DRAWREVCAP = (shapeParams.from !== undefined) && (SIZES.length >= 2);
 
    // position
    const basePos = {
@@ -46,7 +62,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       basePos.x -= style.stack * style.offsetX; (function drawModuleBG() {
          if (webglEffects.includes(effect))
             return;
-         if (style.sizes.length <= 1)
+         if (SIZES.length <= 1)
             return;
          if (style.weight <= 0)
             return;
@@ -99,14 +115,16 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          INNERCOLOR = palette.xrayFgCorner;
       }
    }
-   const OUTERCOLOR = palette.fg; (function drawModuleFG() {
+   const OUTERCOLOR = palette.fg; 
+   
+   (function drawModuleFG() {
       // draw the foreground
       strokeCap(ROUND);
       strokeJoin(ROUND);
       strokeWeight((style.stroke / 10) * strokeScaleFactor);
       if (mode.xray) { strokeWeight(0.2 * strokeScaleFactor); }
 
-      style.sizes.forEach((size) => {
+      SIZES.forEach((size) => {
          let outerSpreadY = 0;
          let outerSpreadX = 0;
          if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
@@ -142,14 +160,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // determine based on endcap how much shorter the line should be
          let endcapLength = 0; let startcapLength = 0;
          if (style.endCap === "round" && DRAWCAP) {
-            if (style.sizes.length === 2) {
+            if (SIZES.length === 2) {
                endcapLength = 0.5;
             } else {
                endcapLength = 1;
             }
          }
          if (style.endCap === "round" && DRAWREVCAP) {
-            if (style.sizes.length === 2) {
+            if (SIZES.length === 2) {
                startcapLength = 0.5;
             } else {
                startcapLength = 1;
@@ -214,6 +232,43 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             linePos.y1 += sideY * (LINE_START + outerSpreadY);
             linePos.y2 += sideY * LINE_END;
 
+            // if centered midlines are active, don't draw the vertical line, instead add to array
+            if (midlineEffects.includes(effect) && mode.centeredEffect && (font === "fontb" || font === "fontc")) {
+
+               // relevant possible spots
+               if ((style.stack === 1 && sideY === 1) || (style.stack === 0 && sideY === -1)) {
+                  if (!shapeParams.broken && shapeParams.extend === undefined && shapeParams.from === undefined) {
+                     if (style.stack === 1 && sideY === 1) {
+                        if (layer === "fg") includeInCenteredEffect()
+                        return
+                     } else if (style.stack === 0 && sideY === -1) {
+                        return
+                     }
+                  } else if (layer === "fg") {
+                     sortIntoArray(style.stopSpots, linePos.x1)
+                  }
+               }
+            }
+
+            function includeInCenteredEffect () {
+               if (style.letter === "‸") {
+                  //caret counts separately
+                  style.caretSpots[0] = linePos.x1;
+               } else {
+                  const midlineSpotX = linePos.x1;
+                  sortIntoArray(style.midlineSpots[0][fillIndexX], midlineSpotX);
+
+                  //add the remaining stretch spot on the end while fillIndex is on
+                  // for some reason size is never OUTERSIZE then, so this is needed for now
+                  //should only add this once, like only if size is smallest
+                  if (size === INNERSIZE && fillIndexX !== 0) {
+                     sortIntoArray(style.midlineSpots[0][fillIndexX], linePos.x1+sideX*(OUTERSIZE*0.5));
+                  }
+               }
+            }
+
+
+
             //only draw the non-stretch part if it is long enough to be visible
             if (sideY * (linePos.y2 - linePos.y1) >= 0) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2);
@@ -228,14 +283,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
             function drawVerticalCaps(capStyle, endPoint, endDir) {
                if (capStyle === "round") {
-                  const capScale = (style.sizes.length === 2) ? 0.5 : 1;
+                  const capScale = (SIZES.length === 2) ? 0.5 : 1;
                   if (size === OUTERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
                         linePos.x2 - 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 - 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
                   } else if (size === INNERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
                         linePos.x2 + 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 + 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
-                     if (style.sizes.length >= 3) {
+                     if (SIZES.length >= 3) {
                         lineType(linePos.x2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadX) * sideX - spreadFillStepX, endPoint + 1 * endDir,
                            linePos.x2 + 1 * sideX, endPoint + 1 * endDir);
                      }
@@ -271,7 +326,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             function drawHorizontalCaps (capStyle) {
                if (capStyle === "round") {
-                  const capScale = (style.sizes.length === 2) ? 0.5 : 1;
+                  const capScale = (SIZES.length === 2) ? 0.5 : 1;
                   if (size === OUTERSIZE) {
                      //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
                      bezier(linePos.x2, linePos.y1, linePos.x2 + sideX * 0.5 * capScale, linePos.y1,
@@ -279,7 +334,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   } else if (size === INNERSIZE) {
                      bezier(linePos.x2, linePos.y2, linePos.x2 + sideX * 0.5 * capScale, linePos.y2,
                         linePos.x2 + sideX * 1 * capScale, linePos.y2 + 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 + 1 * capScale * sideY);
-                     if (style.sizes.length >= 3) {
+                     if (SIZES.length >= 3) {
                         lineType(linePos.x2 + 1 * sideX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * sideY - spreadFillStepY,
                            linePos.x2 + 1 * sideX, linePos.y2 + 1 * sideY);
                         //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
@@ -298,7 +353,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
       } else { // CORNER
          // determine based on endcap how much rounded the line should be
-         const cornerRoundLength = (style.endCap === "round" && style.sizes.length > 1) ? map(style.weight, 0, 1, 0, 1, true) : 0;
+         const cornerRoundLength = (style.endCap === "round" && SIZES.length > 1) ? map(style.weight, 0, 1, 0, 1, true) : 0;
 
          let xpos = basePos.x;
          let ypos = basePos.y;
@@ -807,7 +862,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      offsetShift = style.offsetX / 2 * sideY;
                   }
 
-                  if (!midlineEffects.includes(effect)) {
+                  if (!midlineEffects.includes(effect) || mode.centeredEffect) {
                      if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
                         if ((style.stack === 1 && sideY === -1) || (style.stack === 0 && sideY === 1)) {
                            lineType(sPos.x - offsetShift, sPos.y + stretchDifference, sPos.x - offsetShift, sPos.y);
@@ -818,7 +873,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   // if vertical line goes down, set those connection spots in the array
-                  if (layer === "fg" && midlineEffects.includes(effect)) {
+                  if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect) {
                      // (sideY===-1&&style.stack===1||sideY===1&&style.stack===0)
                      // ^ does nothing....already the correct ones
                      if (style.letter === "‸") {

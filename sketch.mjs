@@ -2,7 +2,7 @@
 import { drawModule } from "./modules/drawModule.mjs"
 import { letterKerning } from "./modules/letterKerning.mjs"
 
-export let font = "fonta"
+export let font = "fontc"
 
 // gui
 let canvasEl
@@ -40,7 +40,7 @@ export let effect = "none"
 export let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth", "turn"]
 export let stripeEffects = ["vstripes", "hstripes"]
 export let webglEffects = ["spheres"]
-export let endCapStyle = "none"
+export let endCapStyle = "round"
 
 let initialDraw = true
 
@@ -53,6 +53,7 @@ export const mode = {
    drawFills: true,
    spreadFills: true,
    wave: false,
+   centeredEffect: false,
    // use alt letters?
    altS: false,
    altM: false,
@@ -68,8 +69,8 @@ const totalHeight = [0, 0, 0, 0]
 let values = {
    hueDark: {from: 210, to: undefined, lerp: 0},
    hueLight: {from: 130, to: undefined, lerp: 0},
-   rings: {from: 3, to: undefined, lerp: 0},
-   size: {from: 9, to: undefined, lerp: 0},
+   rings: {from: 2, to: undefined, lerp: 0},
+   size: {from: 6, to: undefined, lerp: 0},
    spacing: {from: 0, to: undefined, lerp: 0},
    offsetX: {from: 0, to: undefined, lerp: 0},
    stretchX: {from: 0, to: undefined, lerp: 0},
@@ -77,8 +78,8 @@ let values = {
    stretchY: {from: 0, to: undefined, lerp: 0},
    spreadX: {from: 0, to: undefined, lerp: 0},
    spreadY: {from: 0, to: undefined, lerp: 0},
-   weight: {from: 7, to: undefined, lerp: 0},
-   ascenders: {from: 2, to: undefined, lerp: 0},
+   weight: {from: 6, to: undefined, lerp: 0},
+   ascenders: {from: 4, to: undefined, lerp: 0},
    zoom: {from: 10, to: undefined, lerp: 0},
 }
 // calculated every frame based on current lerps
@@ -228,6 +229,12 @@ function createGUI () {
       if (!svgToggle.checked) {
          location.reload()
       }
+   })
+   const centerEffectsToggle = document.getElementById('checkbox-centereffects')
+   centerEffectsToggle.checked = mode.centeredEffect
+   centerEffectsToggle.addEventListener('click', () => {
+      mode.centeredEffect = centerEffectsToggle.checked
+      writeToURL()
    })
    const altMToggle = document.getElementById('checkbox-altM')
    altMToggle.checked = mode.altM
@@ -630,10 +637,10 @@ function autoValues () {
 
 function defaultStyle () {
    if (!mode.auto) {
-      values.size.to = 9
-      values.rings.to = 3
-      values.weight.to = 7
-      values.ascenders.to = 2
+      values.size.to = 6
+      values.rings.to = 2
+      values.weight.to = 6
+      values.ascenders.to = 4
       values.offsetX.to = 0
    } else {
       if (values.offsetX.to > 0) values.offsetX.to = 1
@@ -666,7 +673,7 @@ function randomStyle () {
       values.rings.to = floor(random(1, values.size.to/2 + 1))
    }
    values.spacing.to = floor(random(max(-values.rings.to, -2), 2))
-   values.ascenders.to = floor(random(1, values.size.to*0.6))
+   values.ascenders.to = floor(random(1, values.size.to*1.0))
 
    values.offsetX.to = 0
    values.offsetY.to = 0
@@ -1213,6 +1220,7 @@ function drawText (lineNum) {
       // array has 1 or 2 arrays inside based on module height of font
       // these in turn contoin an array for every fill step
       midlineSpots: [[...Array(SPREADFILLSTEPSX+1)].map(x => [])],
+      stopSpots: [],
       caretSpots: [],
       spaceSpots: [],
    }
@@ -1270,6 +1278,7 @@ function drawText (lineNum) {
          midlineSpots: lineStyle.midlineSpots,
          caretSpots: lineStyle.caretSpots,
          spaceSpots: lineStyle.spaceSpots,
+         stopSpots: lineStyle.stopSpots,
          // position and offset after going through all letters in the line until this point
          posFromLeft: lineWidthUntil(lineText, layerArray.indexOf(layerPos)),
          posFromTop: calcPosFromTop,
@@ -2257,7 +2266,7 @@ function drawText (lineNum) {
                   style.stack = 1
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
-                  drawModule(style, "vert", 3, 3, 0, 0, {})
+                  drawModule(style, "vert", 3, 3, 0, 0, {broken: true})
                   drawModule(style, "vert", 4, 4, 0, 0, {extend: -style.weight -0.5})
 
                   if (letter === "ä") {
@@ -2328,7 +2337,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {broken: true})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "vert", 2, 2, 0, 0, {extend: -style.weight -0.5})
@@ -2410,11 +2419,14 @@ function drawText (lineNum) {
                   break;
                case "j":
                   style.stack = 1
-                  drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + dotgap, noStretch: true})
                   drawModule(style, "hori", 1, 1, 0, 0, {cap: true})
+                  drawModule(style, "vert", 1, 1, 0, 0, {extend: -style.weight -1})
+
+                  drawModule(style, "vert", 2, 2, 0, 0, {extend: ascenders, from: letterOuter*0.5 + dotgap, noStretch: true})
                   drawModule(style, "square", 2, 2, 0, 0, {})
                   drawModule(style, "vert", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {from: -letterOuter*0.5 + style.weight + 1})
+                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  
                   style.stack = 0
                   drawModule(style, "vert", 1, 1, 0, 0, {})
                   drawModule(style, "vert", 2, 2, 0, 0, {})
@@ -2426,7 +2438,7 @@ function drawText (lineNum) {
                   drawModule(style, "vert", 1, 1, 0, 0, {extend: ascenders})
                   drawModule(style, "vert", 2, 2, 0, 0, {cap: true})
                   drawModule(style, "round", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {broken: true})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "round", 2, 2, 0, 0, {})
@@ -2478,7 +2490,7 @@ function drawText (lineNum) {
                   drawModule(style, "round", 1, 1, 0, 0, {})
                   drawModule(style, "round", 2, 2, 0, 0, {})
                   drawModule(style, "round", 3, 3, 0, 0, {})
-                  drawModule(style, "vert", 4, 4, 0, 0, {})
+                  drawModule(style, "vert", 4, 4, 0, 0, {broken: true})
                   style.stack = 0
                   drawModule(style, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                   drawModule(style, "round", 2, 2, 0, 0, {})
@@ -2695,16 +2707,21 @@ function drawText (lineNum) {
       }
       // run for each stage
       if (font === "fontb" || font === "fontc") {
-         push()
-         translate(0, -animSize+(animRings-1)- animStretchY - animSpreadY)
-         drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
-         pop()
+         if (mode.centeredEffect) {
+            drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots, lineStyle.stopSpots)
+         } else {
+            push()
+            translate(0, -animSize+(animRings-1)- animStretchY - animSpreadY)
+            drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+            pop()
 
-         push()
-         translate(-animOffsetX,0)
-         drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
-         pop()
+            push()
+            translate(-animOffsetX,0)
+            drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+            pop()
 
+         }
+         
          //if (frameCount === 1) print("Midlines:", lineStyle.midlineSpots)
       } else {
          drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
@@ -2712,17 +2729,31 @@ function drawText (lineNum) {
       
    }
 
-   function drawMidlineEffects (layer, midlineSpots, caretSpots, spaceSpots) {
+   function drawMidlineEffects (layer, midlineSpots, caretSpots, spaceSpots, stopSpots) {
       push()
 
       stroke(palette.fg)
-      const stretchHeight = (font === "fontb" || font === "fontc") ? animStretchY*0.5 : animStretchY
+
+      let stretchHeight = animStretchY
       if (font === "fontb" || font === "fontc") {
-         const layerDir = (layer > 0) ? 0.75 : 0.25
-         translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*layerDir)
+         if (mode.centeredEffect) {
+            stretchHeight = (animSize - animRings) + 1
+         } else {
+            stretchHeight = animStretchY*0.5
+         }
+      }
+
+      if ((font === "fontb" || font === "fontc")) {
+         if (mode.centeredEffect) {
+            translate(0, -stretchHeight*0.5)
+         } else {
+            const layerDir = (layer > 0) ? 0.75 : 0.25
+            translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*layerDir)
+         }
       } else {
          translate(0, (Math.abs(animOffsetY) + animStretchY + animSpreadY)*0.5)
       }
+      
       translate(0, lineNum * totalHeight[lineNum])
 
       //style and caret
@@ -2754,19 +2785,23 @@ function drawText (lineNum) {
          
          
          if (frameCount === 1) print("Line:", lineText, ", Layer:", layer, ", Mid Connection Spots:", wordSpots)
+         if (frameCount === 1  && stopSpots !== undefined) print(stopSpots)
          // show spaces
          //lineStyle.spaceSpots.forEach((pos) => {
          //   lineType(pos,5, pos, 7)
          //})
 
          wordSpots.forEach((word) => {
-            let total = word.length-1
+            const total = word.length-1
             const leftPos = word[0]
             const rightPos = word[total]
             let counter = 0
             let chainLength = 0
             let chainCount = 0
             let lastPos = undefined
+
+            // WIP: use stoppos here to split centered midline font b/c effects
+
             word.forEach((pos) => {
                if (lastPos !== undefined && lastPos >= pos-1) {
                   chainLength++
@@ -2774,51 +2809,53 @@ function drawText (lineNum) {
                   chainLength = 0
                   chainCount++
                }
+               
+               const xBend = (mode.centeredEffect) ? 0 : animOffsetX
 
                if (effect === "spread") {
-                  const midX = map(counter, 0, total, leftPos, rightPos) + animOffsetX*0.5
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], stretchHeight)
+                  const midX = map(counter, 0, total, leftPos, rightPos) + xBend*0.5
+                  rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
                } else if (effect === "compress") {
-                  const midX = (rightPos - total + leftPos + animOffsetX)*0.5 + counter
-                  rowLines("bezier", [pos, midX, pos+animOffsetX], stretchHeight)
+                  const midX = (rightPos - total + leftPos + xBend)*0.5 + counter
+                  rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
                } else if (effect === "turn") {
                   //const midX = (counter < total/2) ? leftPos + counter: rightPos - (total-counter)
-                  //rowLines("sharpbezier", [pos, midX, pos+animOffsetX], stretchHeight)
+                  //rowLines("sharpbezier", [pos, midX, pos+xBend], stretchHeight)
                   if (chainLength > 0) {
                      // diagonal
                      if (i %2 === 0) {
-                        rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
+                        rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                      } else {
-                        rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
+                        rowLines("bezier", [lastPos, pos+xBend], stretchHeight)
                      }
                      
                      // first straight piece of group
                      if (chainLength === 1) {
-                        rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
+                        rowLines("bezier", [lastPos, lastPos+xBend], stretchHeight)
                      }
                   } else {
                      // last straight piece of group
-                     rowLines("bezier", [lastPos, lastPos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [lastPos, lastPos+xBend], stretchHeight)
                   }
                   if (pos == rightPos) {
                      // last straight piece of word
-                     rowLines("bezier", [pos, pos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [pos, pos+xBend], stretchHeight)
                   }
                } else if (effect === "split") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
+                     rowLines("bezier", [lastPos, pos+xBend], stretchHeight)
                   }
                } else if (effect === "twist") {
                   if (counter % 2 === 1) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
-                     rowLines("bezier", [lastPos, pos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
+                     rowLines("bezier", [lastPos, pos+xBend], stretchHeight)
                   } else if (counter === total) {
-                     rowLines("bezier", [pos, pos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [pos, pos+xBend], stretchHeight)
                   }
                } else if (effect === "sway") {
                   if (counter > 0) {
-                     rowLines("bezier", [pos, lastPos+animOffsetX], stretchHeight)
+                     rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                   }
                } else if (effect === "teeth") {
                   if (counter % 2 === 1) {
@@ -2827,7 +2864,7 @@ function drawText (lineNum) {
                      arc(x, -(stretchHeight)*0.5,w,w, 0, PI)
                   } else {
                      //bottom
-                     const x = lastPos + (pos-lastPos)*0.5 +animOffsetX
+                     const x = lastPos + (pos-lastPos)*0.5 +xBend
                      const w = pos-lastPos
                      arc(x, (stretchHeight)*0.5,w,w, PI, TWO_PI)
                   }
