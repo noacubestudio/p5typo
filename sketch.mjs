@@ -9,6 +9,7 @@ let canvasEl
 let writeEl
 let numberOffsetEl
 let playToggleEl
+const toggles = {}
 
 let focusedEl = "none"
 let caretTimer = 0
@@ -206,61 +207,61 @@ function createGUI () {
       updateInGUI()
    })
 
-   const darkmodeToggle = document.getElementById('checkbox-darkmode')
-   darkmodeToggle.checked = mode.dark
-   darkmodeToggle.addEventListener('click', () => {
-      mode.dark = darkmodeToggle.checked
+   toggles.darkmodeToggle = document.getElementById('checkbox-darkmode')
+   toggles.darkmodeToggle.checked = mode.dark
+   toggles.darkmodeToggle.addEventListener('click', () => {
+      mode.dark = toggles.darkmodeToggle.checked
       writeToURL()
    })
-   const svgToggle = document.getElementById('checkbox-svg')
-   svgToggle.checked = mode.svg
-   svgToggle.addEventListener('click', () => {
-      mode.svg = svgToggle.checked
+   toggles.svgToggle = document.getElementById('checkbox-svg')
+   toggles.svgToggle.checked = mode.svg
+   toggles.svgToggle.addEventListener('click', () => {
+      mode.svg = toggles.svgToggle.checked
       writeToURL()
-      if (!svgToggle.checked) {
+      if (!toggles.svgToggle.checked) {
          location.reload()
       }
    })
-   const centerEffectsToggle = document.getElementById('checkbox-centereffects')
-   centerEffectsToggle.checked = mode.centeredEffect
-   centerEffectsToggle.addEventListener('click', () => {
-      mode.centeredEffect = centerEffectsToggle.checked
+   toggles.centerEffectsToggle = document.getElementById('checkbox-centereffects')
+   toggles.centerEffectsToggle.checked = mode.centeredEffect
+   toggles.centerEffectsToggle.addEventListener('click', () => {
+      mode.centeredEffect = toggles.centerEffectsToggle.checked
       writeToURL()
    })
-   const altMToggle = document.getElementById('checkbox-altM')
-   altMToggle.checked = mode.altM
-   altMToggle.addEventListener('click', () => {
-      mode.altM = altMToggle.checked
+   toggles.altMToggle = document.getElementById('checkbox-altM')
+   toggles.altMToggle.checked = mode.altM
+   toggles.altMToggle.addEventListener('click', () => {
+      mode.altM = toggles.altMToggle.checked
       writeToURL()
    })
-   const altNHToggle = document.getElementById('checkbox-altNH')
-   altNHToggle.checked = mode.altNH
-   altNHToggle.addEventListener('click', () => {
-      mode.altNH = altNHToggle.checked
+   toggles.altNHToggle = document.getElementById('checkbox-altNH')
+   toggles.altNHToggle.checked = mode.altNH
+   toggles.altNHToggle.addEventListener('click', () => {
+      mode.altNH = toggles.altNHToggle.checked
       writeToURL()
    })
-   const altSToggle = document.getElementById('checkbox-altS')
-   altSToggle.checked = mode.altS
-   altSToggle.addEventListener('click', () => {
-      mode.altS = altSToggle.checked
+   toggles.altSToggle = document.getElementById('checkbox-altS')
+   toggles.altSToggle.checked = mode.altS
+   toggles.altSToggle.addEventListener('click', () => {
+      mode.altS = toggles.altSToggle.checked
       writeToURL()
    })
-   const roundcapsToggle = document.getElementById('checkbox-roundcaps')
-   roundcapsToggle.checked = (endCapStyle === "round")
-   roundcapsToggle.addEventListener('click', () => {
-      endCapStyle = (roundcapsToggle.checked) ? "round" : "none"
+   toggles.roundcapsToggle = document.getElementById('checkbox-roundcaps')
+   toggles.roundcapsToggle.checked = (endCapStyle === "round")
+   toggles.roundcapsToggle.addEventListener('click', () => {
+      endCapStyle = (toggles.roundcapsToggle.checked) ? "round" : "none"
       writeToURL()
    })
-   const fillsToggle = document.getElementById('checkbox-fills')
-   fillsToggle.checked = mode.drawFills
-   fillsToggle.addEventListener('click', () => {
-      mode.drawFills = fillsToggle.checked
+   toggles.fillsToggle = document.getElementById('checkbox-fills')
+   toggles.fillsToggle.checked = mode.drawFills
+   toggles.fillsToggle.addEventListener('click', () => {
+      mode.drawFills = toggles.fillsToggle.checked
       writeToURL()
    })
-   const spreadFillsToggle = document.getElementById('checkbox-spreadfills')
-   spreadFillsToggle.checked = mode.spreadFills
-   spreadFillsToggle.addEventListener('click', () => {
-      mode.spreadFills = spreadFillsToggle.checked
+   toggles.spreadFillsToggle = document.getElementById('checkbox-spreadfills')
+   toggles.spreadFillsToggle.checked = mode.spreadFills
+   toggles.spreadFillsToggle.addEventListener('click', () => {
+      mode.spreadFills = toggles.spreadFillsToggle.checked
       writeToURL()
    })
 
@@ -621,7 +622,17 @@ function updateInGUI () {
 }
 
 window.keyTyped = function () {
-   // wip
+   if (focusedEl !== "none") {
+      return
+   }
+   if (key === 'r') {
+      randomStyle()
+      writeToURL()
+      updateInGUI()
+   } else if (key === "c") {
+      toggles.roundcapsToggle.click()
+      toggles.roundcapsToggle.checked = (endCapStyle === "round")
+   }
 }
 
 window.keyPressed = function () {
