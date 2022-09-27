@@ -41,7 +41,9 @@ export let effect = "none"
 export let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth", "turn"]
 export let stripeEffects = ["vstripes", "hstripes"]
 export let webglEffects = ["spheres"]
+
 export let endCapStyle = "round"
+export let viewMode = "default"
 
 let initialDraw = true
 
@@ -210,18 +212,6 @@ function createGUI () {
       mode.dark = darkmodeToggle.checked
       writeToURL()
    })
-   const monochromeToggle = document.getElementById('checkbox-monochrome')
-   monochromeToggle.checked = mode.mono
-   monochromeToggle.addEventListener('click', () => {
-      mode.mono = monochromeToggle.checked
-      writeToURL()
-   })
-   const xrayToggle = document.getElementById('checkbox-xray')
-   xrayToggle.checked = mode.xray
-   xrayToggle.addEventListener('click', () => {
-      mode.xray = xrayToggle.checked
-      writeToURL()
-   })
    const svgToggle = document.getElementById('checkbox-svg')
    svgToggle.checked = mode.svg
    svgToggle.addEventListener('click', () => {
@@ -327,9 +317,24 @@ function loadFromURL () {
       mode.wave = true
       print("Loaded with URL Mode: Wave")
    }
-   if (params.xray === "true" || params.xray === "1") {
-      mode.xray = true
-      print("Loaded with URL Mode: XRAY")
+   if (params.view !== undefined) {
+      switch (params.view) {
+         case "xray":
+            viewMode = "xray"
+            print("Loaded with View Mode: X-Ray")
+            break;
+         case "colorful":
+            viewMode = "colorful"
+            print("Loaded with View Mode: More colorful")
+            break;
+         case "mono":
+            viewMode = "mono"
+            print("Loaded with View Mode: mono")
+            break;
+         default:
+            print("Could not load view mode")
+            break;
+      }
    }
    if (params.caps === "round") {
       endCapStyle = "round"
@@ -346,10 +351,6 @@ function loadFromURL () {
    if (params.invert === "true" || params.invert === "1") {
       mode.dark = false
       print("Loaded with URL Mode: Inverted")
-   }
-   if (params.mono === "true" || params.mono === "1") {
-      mode.mono = true
-      print("Loaded with URL Mode: Mono")
    }
    if (params.auto === "true" || params.auto === "1") {
       mode.auto = true
@@ -501,11 +502,18 @@ function writeToURL (noReload) {
    if (!mode.dark) {
       newParams.append("invert",true)
    }
-   if (mode.mono) {
-      newParams.append("mono",true)
-   }
-   if (mode.xray) {
-      newParams.append("xray",true)
+   if (viewMode !== undefined) {
+      let value = "default"
+      if (viewMode === "mono") {
+         value = "mono"
+      } else if (viewMode === "xray") {
+         value = "xray"
+      } else if (viewMode === "colorful") {
+         value = "colorful"
+      }
+      if (value !== "default") {
+         newParams.append("view", value)
+      }
    }
    if (mode.wave) {
       newParams.append("wave",true)
@@ -757,34 +765,53 @@ window.draw = function () {
    });
 
    // calculate the in-between values for everything
-   function lerpValues (key, col) {
-      const slider = values[key]
-
-      // if it's a color
-      if (col !== undefined) {
+   function switchColors (key, forMenu) {
+      function getColorSL () {
          let saturation; let lightness;
-         if (col === "dark") {
-            if (mode.dark) {
+         if (key === "hueDark") {
+            if (forMenu) {
                saturation = 100
-               lightness = 6
+               lightness = 5
+            } else if (mode.dark) {
+               saturation = 100
+               lightness = (viewMode === "colorful") ? 4 : 6
             } else {
                saturation = 100
-               lightness = 20
+               lightness = (viewMode === "colorful") ? 35 : 20
             }
-         } else if (col === "light") {
-            if (mode.dark) {
+         } else if (key === "hueLight") {
+            if (forMenu) {
                saturation = 100
                lightness = 90
+            } else if (mode.dark) {
+               saturation = 100
+               lightness = (viewMode === "colorful") ? 76 : 90
             } else {
                saturation = 100
-               lightness = 99
+               lightness = (viewMode === "colorful") ? 96 : 99
             }
          }
-         const colorFrom = color('hsl('+slider.from+', '+saturation+'%, '+lightness+'%)')
-         const colorTo = color('hsl('+slider.to+', '+saturation+'%, '+lightness+'%)')
-         if (slider.to === undefined) { return colorFrom }
-         return lerpColor(colorFrom, colorTo, slider.lerp/lerpLength)
+         return {s: saturation, l: lightness}
       }
+
+      function invertedKey (key) {
+         if (key === "hueDark") return "hueLight"
+         return "hueDark"
+      }
+
+      const components = getColorSL()
+      const slider = (mode.dark || forMenu) ? values[key] : values[invertedKey(key)]
+
+      const colorFrom = color('hsl('+slider.from+', '+components.s+'%, '+components.l+'%)')
+      const colorTo = color('hsl('+slider.to+', '+components.s+'%, '+components.l+'%)')
+      if (slider.to === undefined) { return colorFrom }
+      return lerpColor(colorFrom, colorTo, slider.lerp/lerpLength)
+
+
+   }
+
+   function lerpValues (key) {
+      const slider = values[key]
 
       // not a color
       if (slider.to === undefined) {
@@ -819,12 +846,15 @@ window.draw = function () {
    animSpreadY = lerpValues("spreadY") * (animRings-1) * 2
    animWeight = lerpValues("weight")
    animAscenders = lerpValues("ascenders") * 0.5
-   animColorDark = lerpValues("hueDark", "dark")
-   animColorLight = lerpValues("hueLight", "light")
+   animColorDark = switchColors("hueDark", false)
+   animColorLight = switchColors("hueLight", false)
    animZoom = lerpValues("zoom")
 
-   const lightColor = (mode.mono || mode.xray) ? color("white") : animColorLight
-   const darkColor = (mode.mono || mode.xray) ? color("black") : animColorDark
+   const lightColor = (viewMode === "mono" || viewMode === "xray") ? color("white") : animColorLight
+   const darkColor = (viewMode === "mono" || viewMode === "xray") ? color("black") : animColorDark
+
+   const lightMenuColor = (viewMode === "mono" || viewMode === "xray") ? color("white") : switchColors("hueLight", true)
+   const darkMenuColor = (viewMode === "mono" || viewMode === "xray") ? color("black") : switchColors("hueDark", true)
 
    if (!mode.dark) {
       // light mode
@@ -848,8 +878,8 @@ window.draw = function () {
       palette.xrayFgCorner = color("#98EE2B")
    }
 
-   document.documentElement.style.setProperty('--fg-color', rgbValues(palette.fg))
-   document.documentElement.style.setProperty('--bg-color', rgbValues(palette.bg))
+   document.documentElement.style.setProperty('--fg-color', rgbValues(lightMenuColor))
+   document.documentElement.style.setProperty('--bg-color', rgbValues(darkMenuColor))
 
    background(palette.bg)
    if (webglEffects.includes(effect)) {
@@ -912,7 +942,7 @@ function drawElements() {
       pop()
 
       // draw debug grid always on top
-      if (mode.xray) {
+      if (viewMode === "xray") {
          drawGrid("xray")
       }
    
@@ -1003,7 +1033,7 @@ function drawElements() {
             }
          } else {
             stroke(palette.fg)
-            if (mode.xray) {
+            if (viewMode === "xray") {
                strokeWeight(0.2*strokeScaleFactor)
             } else {
                strokeWeight((animWeight/10)*1*strokeScaleFactor)
@@ -1126,7 +1156,7 @@ function drawText (lineNum) {
    let lineText = linesArray[lineNum].toLowerCase()
 
    // insert the caret into line so that it can be rendered
-   if (focusedEl === "text" && !mode.xray && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
+   if (focusedEl === "text" && viewMode !== "xray" && !mode.svg && (writeEl.selectionStart === writeEl.selectionEnd)) {
       let totalChars = 0
       for (let l = 0; l < linesArray.length; l++) {
          //found current line
@@ -2735,7 +2765,7 @@ function drawText (lineNum) {
       // style - the actual stroke color is changed inside the function
       noFill()
       strokeWeight((animWeight/10)*strokeScaleFactor)
-      if (mode.xray) {
+      if (viewMode === "xray") {
          strokeWeight(0.2*strokeScaleFactor)
       }
       // run for each stage
@@ -3178,6 +3208,18 @@ function dropdownTextToEffect (text) {
    if (effect === "staircase") values.offsetX.from = 0
 
    switch (text) {
+      case "default look":
+         viewMode = "default"
+         break;
+      case "monochrome":
+         viewMode = "mono"
+         break;
+      case "more colorful":
+         viewMode = "colorful"
+         break;
+      case "x-ray":
+         viewMode = "xray"
+         break;
       case "Lowercase 2x2":
          font = "fonta"
          print("Switched to Font A")
@@ -3247,17 +3289,17 @@ function dropdownTextToEffect (text) {
    updateInGUI()
 
    //check current effect
-   const isWebgl = webglEffects.includes(effect)
-   if (wasWebgl && !isWebgl) {
-      canvasEl = undefined
-      noLoop()
-      location.reload()
-   }
-   if (!wasWebgl && isWebgl) {
-      canvasEl = undefined
-      noLoop()
-      location.reload()
-   }
+   // const isWebgl = webglEffects.includes(effect)
+   // if (wasWebgl && !isWebgl) {
+   //    canvasEl = undefined
+   //    noLoop()
+   //    location.reload()
+   // }
+   // if (!wasWebgl && isWebgl) {
+   //    canvasEl = undefined
+   //    noLoop()
+   //    location.reload()
+   // }
 }
 
 export function sortIntoArray(array, insertNumber) {

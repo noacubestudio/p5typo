@@ -1,10 +1,13 @@
 'use strict';
-import { font, effect, webglEffects, mode, palette, strokeScaleFactor, lineType, animSpacing, charInSet, arcType, stripeEffects, 
+import { font, effect, webglEffects, viewMode, mode, palette, strokeScaleFactor, lineType, animSpacing, charInSet, arcType, stripeEffects, 
    fillCornerLayers, animZoom, midlineEffects, sortIntoArray, animSpreadY, animSpreadX } from "../sketch.mjs";
 
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    noFill();
+
+   // fun experiment, could turn into toggle:
+   //if (shape === "round") shape = "square"
 
    // size
    const SIZES = [...style.sizes]
@@ -71,7 +74,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // old corner fill requirements:
          // ! ((smallest <= 2 || letterOuter+2 <= 2) && noSmol)
          let palettePickBg = palette.bg;
-         if (mode.xray) {
+         if (viewMode === "xray") {
             if (shape === "vert" || shape === "hori") {
                palettePickBg = palette.xrayBg;
             } else {
@@ -107,7 +110,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    // foreground colors
    let INNERCOLOR = lerpColor(palette.fg, palette.bg, (effect === "gradient") ? 0.5 : 0);
-   if (mode.xray) {
+   if (viewMode === "xray") {
       if (shape === "hori" || shape === "vert") {
          INNERCOLOR = palette.xrayFg;
       } else {
@@ -121,7 +124,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       strokeCap(ROUND);
       strokeJoin(ROUND);
       strokeWeight((style.stroke / 10) * strokeScaleFactor);
-      if (mode.xray) { strokeWeight(0.2 * strokeScaleFactor); }
+      if (viewMode === "xray") { strokeWeight(0.2 * strokeScaleFactor); }
 
       SIZES.forEach((size) => {
          let outerSpreadY = 0;
@@ -182,7 +185,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (layer === "fg")
                return 0;
             // so it looks nicer on grid backgrounds, etc...
-            if (mode.xray)
+            if (viewMode === "xray")
                return 0.2 * strokeScaleFactor * -0.5;
             return style.weight / 10 * -0.5;
          })();
@@ -550,7 +553,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   // basic curve for lines, shortened if needed
                   arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
 
-               } else if (layer === "bg" && (mode.svg || mode.xray || stripeEffects.includes(effect))) {
+               } else if (layer === "bg" && (mode.svg || viewMode === "xray" || stripeEffects.includes(effect))) {
 
                   // background segment with cutoff is displayed as an image instead
                   // this only happens in svg mode or while xray view is on
@@ -558,11 +561,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   const layerGroup = (shapeParams.type === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut;
                   if (layerGroup[size] === undefined) {
                      layerGroup[size] = createGraphics((size) * animZoom, (size) * animZoom);
-                     if (mode.xray)
+                     if (viewMode === "xray")
                         layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010");
                      layerGroup[size].scale(animZoom);
                      layerGroup[size].noFill();
-                     layerGroup[size].stroke((mode.xray) ? palette.xrayBgCorner : palette.bg);
+                     layerGroup[size].stroke((viewMode === "xray") ? palette.xrayBgCorner : palette.bg);
                      layerGroup[size].strokeCap(SQUARE);
                      layerGroup[size].strokeWeight(style.weight * strokeScaleFactor);
                      arcType(size, size, size, size, HALF_PI * 2, HALF_PI * 3, layerGroup[size]);
@@ -794,7 +797,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
 
          // separate xray color
-         if (stretchMode === "stretch" && mode.xray && layer === "bg") {
+         if (stretchMode === "stretch" && viewMode === "xray" && layer === "bg") {
             if (shape === "vert" || shape === "hori") {
                stroke(palette.xrayStretch);
             } else {
@@ -922,7 +925,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
 function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
    //strokeweight
-   if ((effect==="weightgradient") && !mode.xray) {
+   if ((effect==="weightgradient") && viewMode !== "xray") {
       strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
       if ((arcQ !== offQ) !== isFlipped) {
          strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
