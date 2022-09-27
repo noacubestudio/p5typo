@@ -94,7 +94,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             }
             break;
          case " ":
-            charWidth = max([2, spacing * 2, ceil(inner * 0.5)]);
+            charWidth = max([2, spacing * 2, inner-1]);
             break;
          case "i":
          case ".":
@@ -167,7 +167,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             charWidth = weight * 1 + inner - 1;
             break;
          case " ":
-            charWidth = max([2, spacing * 2, ceil(inner * 0.5)]);
+            charWidth = max([2, spacing * 2, inner-1]);
             break;
          case "|":
             charWidth = 0;
@@ -193,7 +193,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             }
             break;
          case " ":
-            charWidth = max([2, spacing * 2, ceil(inner * 0.5)]);
+            charWidth = max([2, spacing * 2, inner-1]);
             break;
          case "|":
             charWidth = 0;

@@ -288,6 +288,7 @@ function createGUI () {
       numberInput.element.addEventListener("focusin", () => {
          focusedEl = property
          wiggleMode = true
+         caretTimer = 0
          print(focusedEl)
       })
       numberInput.element.addEventListener("focusout", () => {
@@ -790,7 +791,13 @@ window.draw = function () {
          // just return the base value, but add wiggle if active
          let wiggle = 0
          if (focusedEl === key && wiggleMode) {
-            wiggle += (sin(((frameCount % 60) / 60) * PI * 2)+1) * 0.2
+            const animDuration = caretTimer / 20
+            if (animDuration <= 1) {
+               wiggle += (animDuration < 0.5) ? easeInOutCubic(animDuration*2) : easeInOutCubic((1-animDuration)*2)
+            }
+            
+            //wiggle += (sin(((caretTimer % 60) / 60) * PI * 2)+1) * 0.2
+            //wiggle += (sin(((frameCount % 200) / 200) * PI * 2)+1) * 0.5
          }
          return slider.from + wiggle
       } else {
@@ -1281,7 +1288,7 @@ function drawText (lineNum) {
 
       // make and fill array with all ring sizes for this letter
       let ringSizes = []
-      for (let b = letterOuter; b >= letterInner-1; b-=2) {
+      for (let b = letterOuter; b > letterInner-2; b-=2) {
          // smallest ring is animated
          let size = (b < letterInner) ? letterInner : b
          ringSizes.push(size)
@@ -3283,27 +3290,6 @@ export function waveValue(input, low, high) {
    return (-0.5*Math.cos(input*PI)+0.5)*(high-low)+low
 }
 
- 
-
-export function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
-   //strokeweight
-   if ((effect==="weightgradient") && !mode.xray) {
-      strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
-      if ((arcQ !== offQ) !== isFlipped) {
-         strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
-      }
-   }
-
-   //color
-   let innerEdgeReference = smallest
-   //1-2 rings
-   if ((biggest-smallest) <1) {
-      innerEdgeReference = biggest-2
-   }
-   let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
-   if ((arcQ !== offQ) !== isFlipped ) {
-      lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
-   }
-   lerpedColor = lerpColor(palette.bg, lerpedColor, opacity)
-   stroke(lerpedColor)
+function easeInOutCubic (x) {
+   return x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2;
 }

@@ -1,6 +1,5 @@
 'use strict';
-import { font, effect, webglEffects, mode, palette, strokeScaleFactor, 
-   ringStyle, lineType, animSpacing, charInSet, arcType, stripeEffects, 
+import { font, effect, webglEffects, mode, palette, strokeScaleFactor, lineType, animSpacing, charInSet, arcType, stripeEffects, 
    fillCornerLayers, animZoom, midlineEffects, sortIntoArray, animSpreadY, animSpreadX } from "../sketch.mjs";
 
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
@@ -160,18 +159,20 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // determine based on endcap how much shorter the line should be
          let endcapLength = 0; let startcapLength = 0;
          if (style.endCap === "round" && DRAWCAP) {
-            if (SIZES.length === 2) {
-               endcapLength = 0.5;
-            } else {
-               endcapLength = 1;
-            }
+            endcapLength = map(style.weight, 0, 2, 0, 1, true)
+            // if (SIZES.length === 2) {
+            //    endcapLength = 0.5;
+            // } else {
+            //    endcapLength = 1;
+            // }
          }
          if (style.endCap === "round" && DRAWREVCAP) {
-            if (SIZES.length === 2) {
-               startcapLength = 0.5;
-            } else {
-               startcapLength = 1;
-            }
+            startcapLength = map(style.weight, 0, 2, 0, 1, true)
+            // if (SIZES.length === 2) {
+            //    startcapLength = 0.5;
+            // } else {
+            //    startcapLength = 1;
+            // }
          }
 
          // first determine without needing to know direction
@@ -283,14 +284,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
             function drawVerticalCaps(capStyle, endPoint, endDir) {
                if (capStyle === "round") {
-                  const capScale = (SIZES.length === 2) ? 0.5 : 1;
+                  const capScale = map(style.weight, 0, 2, 0, 1, true)
                   if (size === OUTERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
                         linePos.x2 - 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 - 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
                   } else if (size === INNERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
                         linePos.x2 + 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 + 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
-                     if (SIZES.length >= 3) {
+                     if (style.weight >= 2) {
                         lineType(linePos.x2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadX) * sideX - spreadFillStepX, endPoint + 1 * endDir,
                            linePos.x2 + 1 * sideX, endPoint + 1 * endDir);
                      }
@@ -326,7 +327,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             function drawHorizontalCaps (capStyle) {
                if (capStyle === "round") {
-                  const capScale = (SIZES.length === 2) ? 0.5 : 1;
+                  const capScale = map(style.weight, 0, 2, 0, 1, true)
                   if (size === OUTERSIZE) {
                      //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
                      bezier(linePos.x2, linePos.y1, linePos.x2 + sideX * 0.5 * capScale, linePos.y1,
@@ -334,7 +335,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   } else if (size === INNERSIZE) {
                      bezier(linePos.x2, linePos.y2, linePos.x2 + sideX * 0.5 * capScale, linePos.y2,
                         linePos.x2 + sideX * 1 * capScale, linePos.y2 + 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 + 1 * capScale * sideY);
-                     if (SIZES.length >= 3) {
+                     if (style.weight >= 2) {
                         lineType(linePos.x2 + 1 * sideX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * sideY - spreadFillStepY,
                            linePos.x2 + 1 * sideX, linePos.y2 + 1 * sideY);
                         //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
@@ -917,4 +918,27 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       //   if (frameCount === 1) print(xpos, ypos, fWidth, fHeight)
       //}
    }
+}
+
+function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
+   //strokeweight
+   if ((effect==="weightgradient") && !mode.xray) {
+      strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
+      if ((arcQ !== offQ) !== isFlipped) {
+         strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
+      }
+   }
+
+   //color
+   let innerEdgeReference = smallest
+   //1-2 rings
+   if ((biggest-smallest) <1) {
+      innerEdgeReference = biggest-2
+   }
+   let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
+   if ((arcQ !== offQ) !== isFlipped ) {
+      lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
+   }
+   lerpedColor = lerpColor(palette.bg, lerpedColor, opacity)
+   stroke(lerpedColor)
 }
