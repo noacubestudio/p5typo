@@ -3,10 +3,14 @@ import { mode, charInSet, sortIntoArray, waveValue } from "../sketch.mjs";
 
 export function drawLetter (letter, font) {
 
-   const sizeOuter = letter.sizes[0]
-   const sizeInner = letter.sizes[letter.sizes.length - 1]
+   const char = letter.char
+   const nextchar = letter.nextchar
+   const prevchar = letter.prevchar
    const ascenders = letter.ascenders
    const descenders = letter.ascenders
+
+   const sizeOuter = letter.sizes[0]
+   const sizeInner = letter.sizes[letter.sizes.length - 1]
 
    // WIP - explain what these consts are and see if more things need to be described like this
    // maybe move into drawModule and use when necessary via letter object boolean properties
@@ -17,8 +21,6 @@ export function drawLetter (letter, font) {
    const extendOffset = waveValue(sizeOuter, 0, 0.5) + ((letter.stretchX+letter.spreadX)-(letter.stretchX+letter.spreadX)%2)*0.5
    const dotgap = (letter.endCap === "round") ? map(letter.weight, 0, 1, 1, 0, true) : 1
 
-
-   const char = letter.char
    if (font === "fonta") {
       const isFlipped = (!"cktfe".includes(char))
       // draw chars

@@ -435,9 +435,9 @@ function loadFromURL () {
             font = "fontb"
             print("Loaded font: B")
             break;
-         case "c":
-            font = "fontc"
-            print("Loaded font: C")
+         case "a":
+            font = "fonta"
+            print("Loaded font: A")
             break;
       }
    }
@@ -591,13 +591,13 @@ function writeToURL (noReload) {
          newParams.append("effect", value)
       }
    }
-   if (font !== "fonta") {
+   if (font !== "fontc") {
       switch (font) {
          case "fontb":
             newParams.append("font", "b")
             break;
-         case "fontc":
-            newParams.append("font", "c")
+         case "fonta":
+            newParams.append("font", "a")
             break;
       }
    }

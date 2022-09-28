@@ -255,7 +255,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             }
 
             function includeInCenteredEffect () {
-               if (style.letter === "‸") {
+               if (style.char === "‸") {
                   //caret counts separately
                   style.caretSpots[0] = linePos.x1;
                } else {
@@ -434,19 +434,19 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   const x = Math.sqrt(size ** 2 - y ** 2);
                   const dangerousOverlap = ((size - x) < 0.6);
-                  const inNextLetter = (size >= (OUTERSIZE + letter.spacing * 2));
+                  const inNextLetter = (size >= (OUTERSIZE + style.spacing * 2));
                   if (dangerousOverlap && isCutVertical && inNextLetter) {
                      // might have to be removed
                      //but depends on what letter is adjacent
                      if (font === "fonta") {
                         // only really matters for e
-                        if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1)
+                        if (charInSet(style.nextchar, ["ml"]) && rightHalf === 1)
                            return 0;
                      } else if (font === "fontb") {
                         // matters for s,z,y
-                        if (charInSet(style.nextLetter, ["ml"]) && rightHalf === 1)
+                        if (charInSet(style.nextchar, ["ml"]) && rightHalf === 1)
                            return 0;
-                        if (charInSet(style.prevLetter, ["mr"]) && rightHalf === 0)
+                        if (charInSet(style.prevchar, ["mr"]) && rightHalf === 0)
                            return 0;
                      }
                   }
@@ -880,7 +880,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect && stretchMode !== "extra") {
                      // (sideY===-1&&style.stack===1||sideY===1&&style.stack===0)
                      // ^ does nothing....already the correct ones
-                     if (style.letter === "‸") {
+                     if (style.char === "‸") {
                         //caret counts separately
                         style.caretSpots[0] = sPos.x;
                      } else {
