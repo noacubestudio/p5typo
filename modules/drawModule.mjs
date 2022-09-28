@@ -1,6 +1,6 @@
 'use strict';
-import { font, effect, webglEffects, viewMode, mode, palette, strokeScaleFactor, lineType, animSpacing, charInSet, arcType, stripeEffects, 
-   fillCornerLayers, animZoom, midlineEffects, sortIntoArray, animSpreadY, animSpreadX } from "../sketch.mjs";
+import { font, finalValues, effect, webglEffects, viewMode, mode, palette, strokeScaleFactor, lineType, charInSet, arcType, stripeEffects, 
+   fillCornerLayers, midlineEffects, sortIntoArray } from "../sketch.mjs";
 
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
@@ -434,7 +434,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   const x = Math.sqrt(size ** 2 - y ** 2);
                   const dangerousOverlap = ((size - x) < 0.6);
-                  const inNextLetter = (size >= (OUTERSIZE + animSpacing * 2));
+                  const inNextLetter = (size >= (OUTERSIZE + finalValues.spacing * 2));
                   if (dangerousOverlap && isCutVertical && inNextLetter) {
                      // might have to be removed
                      //but depends on what letter is adjacent
@@ -560,19 +560,19 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   // slow, try to optimize...
                   const layerGroup = (shapeParams.type === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut;
                   if (layerGroup[size] === undefined) {
-                     layerGroup[size] = createGraphics((size) * animZoom, (size) * animZoom);
+                     layerGroup[size] = createGraphics((size) * finalValues.Zoom, (size) * finalValues.Zoom);
                      if (viewMode === "xray")
                         layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010");
-                     layerGroup[size].scale(animZoom);
+                     layerGroup[size].scale(finalValues.Zoom);
                      layerGroup[size].noFill();
                      layerGroup[size].stroke((viewMode === "xray") ? palette.xrayBgCorner : palette.bg);
                      layerGroup[size].strokeCap(SQUARE);
                      layerGroup[size].strokeWeight(style.weight * strokeScaleFactor);
                      arcType(size, size, size, size, HALF_PI * 2, HALF_PI * 3, layerGroup[size]);
                      if (shapeParams.type === "linecut") {
-                        for (let x = 0; x < size * animZoom; x++) {
+                        for (let x = 0; x < size * finalValues.Zoom; x++) {
                            const lineUntil = (size + style.weight) * 0.5 + 1 + (style.stroke / 10) * 0.5;
-                           for (let y = 0; y < lineUntil * animZoom; y++) {
+                           for (let y = 0; y < lineUntil * finalValues.Zoom; y++) {
                               layerGroup[size].set(x, y, color("#00000000"));
                            }
                         }
@@ -629,7 +629,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                      if (Math.abs(outerSpreadY) !== SPREADY / 2) {
                         // change branch length of the ones getting shorter again because of spread
-                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + animSpreadY*0.5;
+                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + finalValues.spreadY*0.5;
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (branchLengthY));
                      }
                      // from inside
@@ -648,7 +648,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                      if (Math.abs(outerSpreadX) !== SPREADX / 2) {
                         // change branch length of the ones getting shorter again because of spread
-                        branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + animSpreadX*0.5;
+                        branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + finalValues.spreadX*0.5;
                         lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (branchLengthX), baseY);
                      }
                      // from inside
@@ -866,7 +866,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      offsetShift = style.offsetX / 2 * sideY;
                   }
 
-                  if (!midlineEffects.includes(effect) || mode.centeredEffect) {
+                  if (!midlineEffects.includes(effect) || mode.centeredEffect || stretchMode === "extra") {
                      if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
                         if ((style.stack === 1 && sideY === -1) || (style.stack === 0 && sideY === 1)) {
                            lineType(sPos.x - offsetShift, sPos.y + stretchDifference, sPos.x - offsetShift, sPos.y);
@@ -877,7 +877,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   // if vertical line goes down, set those connection spots in the array
-                  if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect) {
+                  if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect && stretchMode !== "extra") {
                      // (sideY===-1&&style.stack===1||sideY===1&&style.stack===0)
                      // ^ does nothing....already the correct ones
                      if (style.letter === "‸") {

@@ -1,10 +1,10 @@
 'use strict';
 
-import { animSpreadX, animStretchX, font, animRings, charInSet, endCapStyle, waveValue, mode } from '../sketch.mjs';
+import { finalValues, font, charInSet, endCapStyle, waveValue, mode } from '../sketch.mjs';
 
 
 export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
-   const weight = (outer - inner) * 0.5 + animSpreadX * 0.5;
+   const weight = (outer - inner) * 0.5 + finalValues.spreadX * 0.5;
 
    // negative spacing can't go past width of lines
    spacing = max(spacing, -weight);
@@ -13,38 +13,38 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
    // WIP: currently depends of number of rings - if there's only one, more space
-   // However, animRings isn't accurate to real number, also depends on size
+   // However, finalValues.rings isn't accurate to real number, also depends on size
    if (font === "fonta") {
-      if (animRings >= 2) {
+      if (finalValues.rings >= 2) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
             ("dgi".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1);
          }
-      } else if (animRings < 2) {
+      } else if (finalValues.rings < 2) {
          if (("i".includes(char) && "bhkltfivnmrp".includes(nextchar)) ||
             ("dgihnmaqvy".includes(char) && "i".includes(nextchar)) ||
             ("dqay".includes(char) && "bhptf".includes(nextchar)) ||
             ("nm".includes(char) && "nm".includes(nextchar))) {
-            spacing = max(spacing, 2 - animRings); // if there's less than two rings, introduce forced gap
+            spacing = max(spacing, 2 - finalValues.rings); // if there's less than two rings, introduce forced gap
          }
       }
    } else if (font === "fontb") {
-      if (animRings < 2) {
+      if (finalValues.rings < 2) {
          if (("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar))
             || ("i".includes(char) && "abcdefhiklnpruvwxz".includes(nextchar))
             || ("aghijkmnouvwxyz".includes(char) && "i".includes(nextchar))) {
-            spacing = max(spacing, 2 - animRings); // if there's less than two rings, introduce forced gap
+            spacing = max(spacing, 2 - finalValues.rings); // if there's less than two rings, introduce forced gap
          }
       }
    } else if (font === "fontc") {
-      if (animRings >= 2 && endCapStyle === "rounded") {
+      if (finalValues.rings >= 2 && endCapStyle === "rounded") {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
             ("di".includes(char) && "i".includes(nextchar))) {
             spacing = max(spacing, 1);
          }
-      } else if (animRings < 2) {
+      } else if (finalValues.rings < 2) {
          // WIP, maybe some can still be together with just one ring
-         spacing = max(spacing, 2 - animRings); // if there's less than two rings, introduce forced gap
+         spacing = max(spacing, 2 - finalValues.rings); // if there's less than two rings, introduce forced gap
       }
    }
 
@@ -405,43 +405,43 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
       //extra special combinations
       if (font === "fonta") {
          if ("ktlcrfsxz".includes(char) && nextchar === "s") {
-            spaceBefore = -inner - weight - animStretchX;
+            spaceBefore = -inner - weight - finalValues.stretchX;
             beforeConnect = true;
          }
          else if ("ktlcrfsx".includes(char) && nextchar === "x") {
-            spaceBefore = -inner - weight - animStretchX;
+            spaceBefore = -inner - weight - finalValues.stretchX;
             beforeConnect = true;
          }
          else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
-            spaceBefore = -inner - weight - animStretchX;
+            spaceBefore = -inner - weight - finalValues.stretchX;
             beforeConnect = true;
          }
          else if ("sr".includes(char) && nextchar === "z") {
-            spaceBefore = -inner - weight - animStretchX;
+            spaceBefore = -inner - weight - finalValues.stretchX;
             beforeConnect = true;
          }
          else if ("ltkcfx".includes(char) && nextchar === "z") {
-            //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-animStretchX
-            spaceBefore = weight - outer / 2 - animStretchX / 2;
+            //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-finalValues.stretchX
+            spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
             beforeConnect = true;
             //-i-w+(o/2) //-o+i+2w
             //w-0.5o
          }
          else if ("z".includes(char) && nextchar === "z") {
-            spaceBefore = -2 - animStretchX;
+            spaceBefore = -2 - finalValues.stretchX;
             beforeConnect = true;
          }
          else if ("z".includes(char) && nextchar === "x") {
-            spaceBefore = weight - outer / 2 - animStretchX / 2;
+            spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
             beforeConnect = true;
          }
       } else if (font === "fontb") {
          if ("lct".includes(char) && "tj".includes(nextchar)) {
-            spaceBefore = -outer + weight * 2 + 1 - animStretchX;
+            spaceBefore = -outer + weight * 2 + 1 - finalValues.stretchX;
             beforeConnect = true;
          }
          if ("ef".includes(char) && "tj".includes(nextchar)) {
-            spaceBefore = -outer + weight * 2 + 2 - animStretchX;
+            spaceBefore = -outer + weight * 2 + 2 - finalValues.stretchX;
             beforeConnect = true;
          }
       }
@@ -491,12 +491,12 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
                if (charInSet(prevchar, ["gap", "dr"])) {
                   stretchWidth = extendOffset;
                } else {
-                  stretchWidth = (animStretchX + animSpreadX);
+                  stretchWidth = (finalValues.stretchX + finalValues.spreadX);
                }
                if (charInSet(nextchar, ["gap", "ul"])) {
                   stretchWidth += extendOffset;
                } else {
-                  stretchWidth += (animStretchX + animSpreadX);
+                  stretchWidth += (finalValues.stretchX + finalValues.spreadX);
                }
             }
             break;
@@ -504,7 +504,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
          case "w":
          case "x":
          case "z":
-            stretchWidth = (animStretchX) * 2;
+            stretchWidth = (finalValues.stretchX) * 2;
             break;
          case "i":
          case ".":
@@ -515,14 +515,14 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             stretchWidth = 0;
             break;
          default:
-            stretchWidth = (animStretchX + animSpreadX);
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX);
       }
    } else if (font === "fontb") {
       switch (char) {
          case "m":
          case "w":
          case "t":
-            stretchWidth = (animStretchX + animSpreadX) * 2;
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX) * 2;
             break;
          case "i":
          case ".":
@@ -533,13 +533,13 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             stretchWidth = 0;
             break;
          default:
-            stretchWidth = (animStretchX + animSpreadX);
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX);
       }
    } else if (font === "fontc") {
       switch (char) {
          case "m":
          case "w":
-            stretchWidth = (animStretchX + animSpreadX) * 2;
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX) * 2;
             break;
          case "i":
          case "l":
@@ -551,7 +551,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             stretchWidth = 0;
             break;
          default:
-            stretchWidth = (animStretchX + animSpreadX);
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX);
       }
    }
 
