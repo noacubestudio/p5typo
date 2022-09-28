@@ -1355,8 +1355,8 @@ function drawText (lineNum) {
          // get characters
          // pretend there is a space before the first and after the last character
          char: lineText[layerArray.indexOf(layerPos)],
-         nextChar: (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " ",
-         prevChar: (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " ",
+         next: (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " ",
+         previous: (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " ",
          //for entire line, but need while drawing
          midlineSpots: lineStyle.midlineSpots,
          caretSpots: lineStyle.caretSpots,

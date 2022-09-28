@@ -3,11 +3,8 @@ import { mode, charInSet, sortIntoArray, waveValue } from "../sketch.mjs";
 
 export function drawLetter (letter, font) {
 
-   const char = letter.char
-   const nextchar = letter.nextchar
-   const prevchar = letter.prevchar
-   const ascenders = letter.ascenders
-   const descenders = letter.ascenders
+   const char = letter.char, nextchar = letter.next, prevchar = letter.previous
+   const ascenders = letter.ascenders, descenders = letter.ascenders
 
    const sizeOuter = letter.sizes[0]
    const sizeInner = letter.sizes[letter.sizes.length - 1]
@@ -56,7 +53,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {type:"linecut", at:"end"})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             if (ascenders >= letter.weight+sizeInner-1) {
                const modifiedLetter = {...letter}
                modifiedletter.sizes = []
@@ -157,7 +154,7 @@ export function drawLetter (letter, font) {
             }
             drawModule(letter, "round", 4, 4, 0, 0, {})
             // SECOND LAYER
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
             if (char === "ä") {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + dotgap, noStretch: true})
                drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + dotgap, noStretch: true})
@@ -171,11 +168,11 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 1, 1, 0, 0, {})
                drawModule(letter, "round", 2, 2, 0, 0, {})
             }
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "m":
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             if (mode.altM) {
                drawModule(letter, "square", 1, 1, 0, 0, {})
                drawModule(letter, "square", 2, 2, 0, 0, {})
@@ -191,8 +188,8 @@ export function drawLetter (letter, font) {
                drawModule(letter, "diagonal", 2, 1, wideOffset + letter.stretchX*2 + letter.spreadX*2, 0, {})
                drawModule(letter, "diagonal", 1, 2, wideOffset, 0, {})
             }
-            drawModule(letter, "vert", 4, 3, wideOffset, 0, {})
-            drawModule(letter, "vert", 3, 4, wideOffset + letter.stretchX*2 + letter.spreadX*2, 0, {})
+            drawModule(letter, "vert", 4, 3, wideOffset, 0, {cap: true})
+            drawModule(letter, "vert", 3, 4, wideOffset + letter.stretchX*2 + letter.spreadX*2, 0, {cap: true})
             break;
          case "s":
             if (!mode.altS) {
@@ -288,8 +285,8 @@ export function drawLetter (letter, font) {
          case "u":
          case "ü":
          case "y":
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             // SECOND LAYER
@@ -301,12 +298,12 @@ export function drawLetter (letter, font) {
             }
             break;
          case "w":
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "diagonal", 3, 3, 0, 0, {})
             drawModule(letter, "diagonal", 4, 4, 0, 0, {})
             letter.flipped = true
-            drawModule(letter, "vert", 2, 1, wideOffset + letter.stretchX*2 +letter.spreadX*2, 0, {})
-            drawModule(letter, "vert", 1, 2, wideOffset, 0, {})
+            drawModule(letter, "vert", 2, 1, wideOffset + letter.stretchX*2 +letter.spreadX*2, 0, {cap: true})
+            drawModule(letter, "vert", 1, 2, wideOffset, 0, {cap: true})
             drawModule(letter, "diagonal", 4, 3, wideOffset, 0, {})
             drawModule(letter, "diagonal", 3, 4, wideOffset + letter.stretchX*2 +letter.spreadX*2, 0, {})
             break;
@@ -319,7 +316,7 @@ export function drawLetter (letter, font) {
                   drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                }
             }
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "l":
          case "t":
@@ -367,7 +364,7 @@ export function drawLetter (letter, font) {
             break;
          case "k":
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             drawModule(letter, "diagonal", 1, 1, letter.weight+letter.spreadX/2, 0, {})
             drawModule(letter, "diagonal", 4, 4, letter.weight+letter.spreadX/2, 0, {})
             if (!"zx".includes(nextchar)) {
@@ -391,12 +388,12 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 1, 1, 0, 0, {})
                drawModule(letter, "round", 2, 2, 0, 0, {})
             }
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "v":
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             if (((sizeOuter-sizeInner)/2+1)*tan(HALF_PI/4) < sizeInner/2-2){
                drawModule(letter, "diagonal", 3, 3, 0, 0, {})
                drawModule(letter, "diagonal", 4, 4, 0, 0, {})
@@ -427,8 +424,8 @@ export function drawLetter (letter, font) {
             break;
          case "i":
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + dotgap, noStretch: true})
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "j":
             let leftOffset = 0
@@ -544,8 +541,8 @@ export function drawLetter (letter, font) {
             letter.stack = 0
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "b":
          case "p":
@@ -565,12 +562,12 @@ export function drawLetter (letter, font) {
                letter.flipped = true
                drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                letter.flipped = false
-               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             } else {
                drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
                drawModule(letter, "diagonal", 2, 2, 0, 0, {})
-               drawModule(letter, "vert", 3, 3, 0, 0, {})
-               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             }
             break;
          case "c":
@@ -586,7 +583,7 @@ export function drawLetter (letter, font) {
                   }
                }
             } else {
-               drawModule(letter, "vert", 1, 1, 0, 0, {})
+               drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             }
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.stack = 0
@@ -625,7 +622,7 @@ export function drawLetter (letter, font) {
                }
                drawModule(letter, "square", 4, 4, 0, 0, {})
             } else if (char === "f"){
-               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             }
             break;
          case "g":
@@ -643,23 +640,23 @@ export function drawLetter (letter, font) {
             break;
          case "h":
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "vert", 3, 3, 0, 0, {})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.stack = 0
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "i":
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.stack = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "j":
             letter.stack = 1
@@ -680,15 +677,15 @@ export function drawLetter (letter, font) {
             break;
          case "k":
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "diagonal", 3, 3, 0, 0, {})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.stack = 0
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "diagonal", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "m":
             letter.stack = 1
@@ -704,13 +701,13 @@ export function drawLetter (letter, font) {
             letter.stack = 0
             letter.flipped = false
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             // right side
             letter.flipped = true
             drawModule(letter, "vert", 1, 2, wideOffset, 0, {})
             drawModule(letter, "vert", 2, 1, wideOffset + letter.stretchX*2, 0, {})
-            drawModule(letter, "vert", 3, 4, wideOffset + letter.stretchX*2, 0, {})
-            drawModule(letter, "vert", 4, 3, wideOffset, 0, {})
+            drawModule(letter, "vert", 3, 4, wideOffset + letter.stretchX*2, 0, {cap: true})
+            drawModule(letter, "vert", 4, 3, wideOffset, 0, {cap: true})
             break;
          case "n":
             letter.stack = 1
@@ -721,8 +718,8 @@ export function drawLetter (letter, font) {
             letter.stack = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
             drawModule(letter, "vert", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "o":
          case "ö":
@@ -743,7 +740,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             if (char === "q") {
-               drawModule(letter, "vert", 3, 3, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
                drawModule(letter, "diagonal", 2, 2, 0, 0, {})
             }
             break;
@@ -779,16 +776,16 @@ export function drawLetter (letter, font) {
          case "v":
          case "w":
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             if (char !== "w") {
-               drawModule(letter, "vert", 2, 2, 0, 0, {})
+               drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
                drawModule(letter, "vert", 3, 3, 0, 0, {})
             }
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             if (char === "w") {
                //right side
-               drawModule(letter, "vert", 1, 1, wideOffset  + letter.stretchX, 0, {})
-               drawModule(letter, "vert", 2, 2, wideOffset  + letter.stretchX, 0, {})
+               drawModule(letter, "vert", 1, 1, wideOffset  + letter.stretchX, 0, {cap: true})
+               drawModule(letter, "vert", 2, 2, wideOffset  + letter.stretchX, 0, {cap: true})
                drawModule(letter, "vert", 3, 3, wideOffset  + letter.stretchX, 0, {})
                drawModule(letter, "vert", 4, 4, wideOffset  + letter.stretchX, 0, {})
             }
@@ -812,17 +809,17 @@ export function drawLetter (letter, font) {
             break;
          case "x":
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "diagonal", 4, 4, 0, 0, {})
             letter.stack = 0
             drawModule(letter, "diagonal", 1, 1, 0, 0, {})
             drawModule(letter, "diagonal", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             letter.stack = 1
             letter.flipped = true
             drawModule(letter, "diagonal", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             break;
          case "y":
             letter.stack = 0
@@ -831,8 +828,8 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "vert", 3, 3, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -861,7 +858,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "-":
             letter.sizes = [sizeOuter]
@@ -893,7 +890,7 @@ export function drawLetter (letter, font) {
          case "!":
             // wip
             letter.stack = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.stack = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
