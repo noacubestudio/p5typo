@@ -181,6 +181,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             break;
          case "i":
          case "l":
+         case "1":
          case ".":
          case ",":
          case "!":
@@ -543,6 +544,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             break;
          case "i":
          case "l":
+         case "1":
          case ".":
          case ",":
          case "!":

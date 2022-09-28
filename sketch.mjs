@@ -31,7 +31,7 @@ const numberInputsObj = {
    spreadY: {element: document.getElementById('number-spreadY'), min: 0, max: 50},
 }
 let linesArray = ["the quick green","alien jumps over","the lazy dog."]
-const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ "
+const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 "
 
 
 // setup
