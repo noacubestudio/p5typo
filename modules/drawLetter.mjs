@@ -7,13 +7,16 @@ export function drawLetter (letter, font, style) {
    // maybe move into drawModule and use when necessary via style object boolean properties
 
    // redefining these, bad... WIP
-   const letterInner = style.sizes[0]
-   const letterOuter = style.sizes[style.sizes.length]
+   const letterOuter = style.sizes[0]
+   const letterInner = style.sizes[style.sizes.length]
 
    const oneoffset = (letterOuter>3 && letterInner>2) ? 1 : 0
-   const wideOffset = 0.5*letterOuter + 0.5*letterInner -finalValues.spreadX*0.5
+   const wideOffset = 0.5*letterOuter + 0.5*letterInner - finalValues.spreadX*0.5
    const extendOffset = waveValue(letterOuter, 0, 0.5) + ((finalValues.stretchX+finalValues.spreadX)-(finalValues.stretchX+finalValues.spreadX)%2)*0.5
    const dotgap = (style.endCap === "round") ? map(style.weight, 0, 1, 1, 0, true) : 1
+
+   const ascenders = finalValues.ascenders
+   const descenders = finalValues.ascenders
 
    if (font === "fonta") {
       const isFlipped = (!"cktfe".includes(letter))

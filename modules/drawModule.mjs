@@ -560,19 +560,19 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   // slow, try to optimize...
                   const layerGroup = (shapeParams.type === "linecut") ? fillCornerLayers.linecut : fillCornerLayers.roundcut;
                   if (layerGroup[size] === undefined) {
-                     layerGroup[size] = createGraphics((size) * finalValues.Zoom, (size) * finalValues.Zoom);
+                     layerGroup[size] = createGraphics((size) * finalValues.zoom, (size) * finalValues.zoom);
                      if (viewMode === "xray")
                         layerGroup[size].background((mode.dark) ? "#FFFFFF20" : "#00000010");
-                     layerGroup[size].scale(finalValues.Zoom);
+                     layerGroup[size].scale(finalValues.zoom);
                      layerGroup[size].noFill();
                      layerGroup[size].stroke((viewMode === "xray") ? palette.xrayBgCorner : palette.bg);
                      layerGroup[size].strokeCap(SQUARE);
                      layerGroup[size].strokeWeight(style.weight * strokeScaleFactor);
                      arcType(size, size, size, size, HALF_PI * 2, HALF_PI * 3, layerGroup[size]);
                      if (shapeParams.type === "linecut") {
-                        for (let x = 0; x < size * finalValues.Zoom; x++) {
+                        for (let x = 0; x < size * finalValues.zoom; x++) {
                            const lineUntil = (size + style.weight) * 0.5 + 1 + (style.stroke / 10) * 0.5;
-                           for (let y = 0; y < lineUntil * finalValues.Zoom; y++) {
+                           for (let y = 0; y < lineUntil * finalValues.zoom; y++) {
                               layerGroup[size].set(x, y, color("#00000000"));
                            }
                         }
