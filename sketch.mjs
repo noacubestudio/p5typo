@@ -327,9 +327,19 @@ function loadFromURL () {
       mode.svg = true
       print("Loaded with URL Mode: SVG")
    }
+   if (params.color !== null && params.color.length > 0) {
+      const colArray = String(params.color).split(".")
+      values.hueLight.from = parseInt(colArray[0])
+      values.hueDark.from = parseInt(colArray[1])
+      print("Loaded with URL Colors", colArray)
+   }
    if (params.wave === "true" || params.wave === "1") {
       mode.wave = true
       print("Loaded with URL Mode: Wave")
+   }
+   if (params.centerfx === "true" || params.centerfx === "1") {
+      mode.centeredEffect = true
+      print("Loaded with URL Mode: Centered Effect")
    }
    if (params.view !== undefined) {
       switch (params.view) {
@@ -442,12 +452,12 @@ function loadFromURL () {
       }
    }
    if (params.lines !== null && params.lines.length > 0) {
-      linesArray = String(params.lines).split("\\")
+      linesArray = String(params.lines).split("~")
       print("Loaded with URL Text", linesArray)
    }
    if (params.values !== null && params.values.length > 0) {
       const valString = String(params.values)
-      const valArray = valString.split('_')
+      const valArray = valString.split(/_|\./)
 
       if (valString.match("[0-9_-]+") && valArray.length === 12) {
          print("Loaded with parameters", valArray)
@@ -464,7 +474,7 @@ function loadFromURL () {
          values.weight.from = parseInt(valArray[10])
          values.ascenders.from = parseInt(valArray[11])
       } else {
-         print("Has to be 12 negative or positive numbers with _ in between")
+         print("Has to be 12 negative or positive numbers with _ or . in between")
       }
    }
 }
@@ -478,15 +488,19 @@ function writeToURL (noReload) {
 
    const newParams = new URLSearchParams();
 
+
+   // for the main array of animated values
+   function getValue(key) {
+      if (values[key].to === undefined) {
+         return values[key].from
+      } else {
+         return values[key].to
+      }
+   }
+
    // add all setting parameters if any of them are not default
    if (!mode.auto) {
-      function getValue(key) {
-         if (values[key].to === undefined) {
-            return values[key].from
-         } else {
-            return values[key].to
-         }
-      }
+
       let valueArr = []
       valueArr.push(""+getValue("zoom"))
       valueArr.push(""+getValue("size"))
@@ -500,13 +514,15 @@ function writeToURL (noReload) {
       valueArr.push(""+getValue("spreadY"))
       valueArr.push(""+getValue("weight"))
       valueArr.push(""+getValue("ascenders"))
-     
 
-      newParams.append("values",valueArr.join("_"))
+      newParams.append("values",valueArr.join("."))
    }
 
    if (linesArray[0] !== "hamburgefonstiv" || linesArray.length >= 1) {
-      newParams.append("lines", linesArray.join("\\"))
+      newParams.append("lines", linesArray.join("~"))
+   }
+   if (getValue("hueLight") !== "123" || getValue("hueDark") !== "123") {
+      newParams.append("color", getValue("hueLight") + "." + getValue("hueDark"))
    }
 
    // add other parameters afterwards
@@ -543,6 +559,9 @@ function writeToURL (noReload) {
       if (value !== "none") {
          newParams.append("caps", value)
       }
+   }
+   if (mode.centeredEffect) {
+      newParams.append("centerfx",true)
    }
    if (effect !== undefined) {
       let value = "none"
