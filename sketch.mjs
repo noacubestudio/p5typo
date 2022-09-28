@@ -294,7 +294,6 @@ function createGUI () {
          focusedEl = property
          wiggleMode = true
          caretTimer = 0
-         print(focusedEl)
       })
       numberInput.element.addEventListener("focusout", () => {
          focusedEl = "none"
@@ -1328,12 +1327,6 @@ function drawText (lineNum) {
 
       // VALUES -----------------------------------------------------------------------------
 
-      // get characters
-      // pretend there is a space before the first and after the last character
-      const letter = lineText[layerArray.indexOf(layerPos)]
-      const nextLetter = (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " "
-      const prevLetter = (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " "
-
       // ring sizes for this character
       let letterInner = getInnerSize(finalValues.size, finalValues.rings) //+ [2,4,3,-2,0,2,4,5][i % 8]
       let letterOuter = finalValues.size //+ [2,4,3,-2,0,2,4,5][i % 8]
@@ -1358,7 +1351,12 @@ function drawText (lineNum) {
       }
 
       // style per letter, modify during drawing when needed
-      const style = {
+      const letter = {
+         // get characters
+         // pretend there is a space before the first and after the last character
+         char: lineText[layerArray.indexOf(layerPos)],
+         nextChar: (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " ",
+         prevChar: (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " ",
          //for entire line, but need while drawing
          midlineSpots: lineStyle.midlineSpots,
          caretSpots: lineStyle.caretSpots,
@@ -1371,7 +1369,10 @@ function drawText (lineNum) {
          // basics
          sizes: ringSizes,
          opacity: 1,
+         // simply copy values - could do some adjustments per letter, though!
          stroke: finalValues.weight,
+         spacing: finalValues.spacing,
+         ascenders: finalValues.ascenders,
          offsetX: (effect==="staircase")? 0 : finalValues.offsetX,
          offsetY: (effect==="staircase")? finalValues.offsetX : finalValues.offsetY,
          stretchX: finalValues.stretchX,
@@ -1381,9 +1382,6 @@ function drawText (lineNum) {
          spreadY: finalValues.spreadY,
          spreadFillSteps: SPREADFILLSTEPSX,
          endCap: endCapStyle,
-         letter: letter,
-         nextLetter: nextLetter,
-         prevLetter: prevLetter,
          stack: 0, // for letters with more than 1 level
          flipped: false, // for gradients
          // convenient values
@@ -1391,7 +1389,7 @@ function drawText (lineNum) {
       }
 
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
-      drawLetter(letter, font, style)
+      drawLetter(letter, font)
    }
 
    if (midlineEffects.includes(effect)) {

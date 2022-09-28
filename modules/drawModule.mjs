@@ -434,7 +434,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   const x = Math.sqrt(size ** 2 - y ** 2);
                   const dangerousOverlap = ((size - x) < 0.6);
-                  const inNextLetter = (size >= (OUTERSIZE + finalValues.spacing * 2));
+                  const inNextLetter = (size >= (OUTERSIZE + letter.spacing * 2));
                   if (dangerousOverlap && isCutVertical && inNextLetter) {
                      // might have to be removed
                      //but depends on what letter is adjacent
@@ -629,7 +629,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                      if (Math.abs(outerSpreadY) !== SPREADY / 2) {
                         // change branch length of the ones getting shorter again because of spread
-                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + finalValues.spreadY*0.5;
+                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + SPREADY/2;
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (branchLengthY));
                      }
                      // from inside
@@ -648,7 +648,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                      if (Math.abs(outerSpreadX) !== SPREADX / 2) {
                         // change branch length of the ones getting shorter again because of spread
-                        branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + finalValues.spreadX*0.5;
+                        branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + SPREADX/2;
                         lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (branchLengthX), baseY);
                      }
                      // from inside
