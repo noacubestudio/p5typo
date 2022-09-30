@@ -1508,7 +1508,7 @@ function drawText (lineNum) {
          let untilSpaceIndex = 0
          
             singleSpreadFillSpots.forEach((pos) => {
-               const spaceSpot = spaceSpots[untilSpaceIndex] - finalValues.offsetX*layer
+               const spaceSpot = spaceSpots[untilSpaceIndex] + finalValues.offsetX * ((layer === 0) ? 1 : -1)
                if (pos > spaceSpot && untilSpaceIndex < spaceSpots.length) {
                   // check in the next word now
                   untilSpaceIndex++
@@ -1524,9 +1524,10 @@ function drawText (lineNum) {
          if (frameCount === 1) print("Line:", lineText, ", Layer:", layer, ", Mid Connection Spots:", wordSpots)
          if (frameCount === 1  && stopSpots !== undefined) print(stopSpots)
          // show spaces
-         //lineStyle.spaceSpots.forEach((pos) => {
-         //   lineType(pos,5, pos, 7)
-         //})
+         // lineStyle.spaceSpots.forEach((pos) => {
+            // const x = pos + finalValues.offsetX * ((layer === 0) ? 1 : -1)
+            // lineType(x,0, x+0.5, -3)
+         // })
 
          wordSpots.forEach((word) => {
             const total = word.length-1
