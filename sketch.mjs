@@ -60,6 +60,7 @@ export const mode = {
    wave: false,
    centeredEffect: false,
    // use alt letters?
+   noLigatures: false,
    altS: false,
    altM: false,
    altNH: true,
@@ -1182,6 +1183,29 @@ export function charInSet (char, sets) {
                   // letters that overlap with next letter in the two centers
                   // doesn't include P for now... s? x z?
                   found ||= "abdghijkmnoqsuvwyz".includes(char)
+                  break;
+            }
+         } else if (font === "fontc") {
+            switch (set) {
+               case "ul":
+                  //up left sharp
+                  found ||= "bhijkltuüvwxyz1457".includes(char)
+                  break;
+               case "dl":
+                  //down left sharp
+                  found ||= "fhiklmnprvxzß1247".includes(char)
+                  break;
+               case "ur":
+                  //up right sharp
+                  found ||= "dfijkltuüvwxyz1457".includes(char)
+                  break;
+               case "dr":
+                  //down right sharp
+                  found ||= "fghiklmnqrxyz1247".includes(char)
+                  break;
+               case "gap":
+                  //separating regular letters
+                  found ||= "., :;-_!?‸|".includes(char)
                   break;
             }
          }

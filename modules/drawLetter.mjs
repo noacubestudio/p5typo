@@ -1018,18 +1018,39 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
          case "f":
-            letter.stack = 1
-            drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {})
-            letter.stack = 0
-            drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight -1})
-            drawModule(letter, "hori", 3, 3, 0, 0, {cap: true})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
-            drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+            if (mode.noLigatures) {
+               letter.stack = 1
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               drawModule(letter, "square", 2, 2, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               letter.stack = 0
+               drawModule(letter, "vert", 1, 1, 0, 0, {})
+               drawModule(letter, "vert", 2, 2, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight -1})
+               drawModule(letter, "hori", 3, 3, 0, 0, {cap: true})
+               drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
+               drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+            } else {
+               letter.stack = 1
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               if (charInSet(nextchar,["ul"])) {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+               } else if (charInSet(nextchar,["gap"])) {
+                  drawModule(letter, "hori", 2, 2, 0, 0, {cap: true})
+               } else {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+               }
+               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               letter.stack = 0
+               drawModule(letter, "square",1, 1, 0, 0, {type: "branch", at:"end"})
+               if (charInSet(nextchar,["gap"])) {
+                  drawModule(letter, "hori", 2, 2, 0, 0, {cap: true})
+               } else {
+                  drawModule(letter, "hori", 2, 2, 0, 0, {extend: -letter.weight -1})
+               }
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            }
             break;
          case "g":
             if (descenders >= 1) {
@@ -1154,16 +1175,34 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 3, wideOffset, 0, {cap: true})
             break;
          case "r":
-            letter.stack = 1
-            drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {broken: true})
-            letter.stack = 0
-            drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
-            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            if (mode.noLigatures) {
+               letter.stack = 1
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {broken: true})
+               letter.stack = 0
+               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            } else {
+               letter.stack = 1
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               if (charInSet(nextchar,["ul"])) {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+               } else if (charInSet(nextchar,["gap"])) {
+                  drawModule(letter, "round", 2, 2, 0, 0, {})
+                  drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+               } else {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+               }
+               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               letter.stack = 0
+               drawModule(letter, "vert", 1, 1, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            }
+            
             break;
          case "s":
             letter.stack = 1
@@ -1455,6 +1494,12 @@ export function drawLetter (letter, font) {
             break;
          case ",":
             drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders, from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
+            break;
+         case ":":
+            letter.stack = 1
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
+            letter.stack = 0
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
             break;
          case " ":
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)

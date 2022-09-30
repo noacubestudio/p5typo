@@ -184,6 +184,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
          case "1":
          case ".":
          case ",":
+         case ":":
          case "!":
             charWidth = weight;
             break;
@@ -323,6 +324,16 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
                if (!charInSet(nextchar, ["gap"])) {
                   minSpaceAfter = 1;
                }
+         }
+      } else if (font === "fontc" && !mode.noLigatures) {
+         switch (char) {
+            case "f":
+            case "r":
+               if (!charInSet(nextchar, ["gap"])) {
+                  spaceAfter = -weight;
+                  afterConnect = true;
+               }
+               break;
          }
       }
 
