@@ -10,15 +10,15 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    //if (shape === "round") shape = "square"
 
    // size
-   const SIZES = [...style.sizes]
+   const SIZES = [...style.sizes];
 
    // testing new effect, WIP
    // if (SIZES.length > 1) {
-   //    if (style.stack === 1 && offQ >= 3 || style.stack === 0 && offQ <= 2) {
+   //    if (style.ytier === 1 && offQ >= 3 || style.ytier === 0 && offQ <= 2) {
    //       SIZES.forEach((s, i, arr) => {
    //          arr[i] = s -2
    //       })
-   //    } else if (style.stack === 0 && offQ >=3) {
+   //    } else if (style.ytier === 0 && offQ >=3) {
    //       SIZES.forEach((s, i, arr) => {
    //          arr[i] = s -4
    //       })
@@ -42,71 +42,73 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (SIZES.length >= 2);
    const DRAWREVCAP = (shapeParams.from !== undefined) && (SIZES.length >= 2);
 
-   // position
+   // offset halfs
+   const OFFSETBOTTOM = (offQ === 3 || offQ === 4) ? 1 : 0;
+   const OFFSETRIGHT  = (offQ === 2 || offQ === 3) ? 1 : 0;
+
+
+   // modify the module position before drawing
    const basePos = {
       x: style.posFromLeft + tx + (OUTERSIZE / 2),
       y: style.posFromTop + ty
    };
-   //based on quarter
-   const bottomHalf = (offQ === 3 || offQ === 4) ? 1 : 0;
-   const rightHalf = (offQ === 2 || offQ === 3) ? 1 : 0;
-   // offset based on quarter and previous vertical offset
-   basePos.x += bottomHalf * style.offsetX;
-   basePos.y += (style.vOffset + rightHalf) * style.offsetY; //% 2==0 ? style.offsetY : 0
-
+   // offset based on quarter parameter, as well as previous vertical offset and side of letter
+   basePos.x += style.offsetX * (OFFSETBOTTOM - style.ytier);
+   basePos.y += style.offsetY * (OFFSETRIGHT  + style.vOffset + style.xtier);
    // offset based on quarter and stretch
-   basePos.x += rightHalf * PLUSX;
-   basePos.y += bottomHalf * PLUSY * ((font === "fontb" || font === "fontc") ? 0.5 : 1);
-   // modify based on stack (top half)
-   basePos.y -= style.stack * (OUTERSIZE - style.weight + PLUSY * 0.5);
-   // modify based on offset
-   if (effect !== "staircase")
-      basePos.x -= style.stack * style.offsetX; (function drawModuleBG() {
-         if (webglEffects.includes(effect))
-            return;
-         if (SIZES.length <= 1)
-            return;
-         if (style.weight <= 0)
-            return;
-         if (!mode.drawFills)
-            return;
+   basePos.x += OFFSETRIGHT * PLUSX;
+   basePos.y += OFFSETBOTTOM * PLUSY * ((font === "fontb" || font === "fontc") ? 0.5 : 1);
+   // modify based on tier (top/right half)
+   basePos.y -= style.ytier * (OUTERSIZE - style.weight + PLUSY * 0.5);
+   basePos.x += style.xtier * (OUTERSIZE - style.weight + PLUSX * 0.5);
 
-         // old corner fill requirements:
-         // ! ((smallest <= 2 || letterOuter+2 <= 2) && noSmol)
-         let palettePickBg = palette.bg;
-         if (viewMode === "xray") {
-            if (shape === "vert" || shape === "hori") {
-               palettePickBg = palette.xrayBg;
-            } else {
-               palettePickBg = palette.xrayBgCorner;
-            }
+
+   ;(function drawModuleBG() {
+      if (webglEffects.includes(effect))
+         return;
+      if (SIZES.length <= 1)
+         return;
+      if (style.weight <= 0)
+         return;
+      if (!mode.drawFills)
+         return;
+
+      // old corner fill requirements:
+      // ! ((smallest <= 2 || letterOuter+2 <= 2) && noSmol)
+      let palettePickBg = palette.bg;
+      if (viewMode === "xray") {
+         if (shape === "vert" || shape === "hori") {
+            palettePickBg = palette.xrayBg;
+         } else {
+            palettePickBg = palette.xrayBgCorner;
          }
+      }
 
-         // fill style
-         stroke(palettePickBg);
-         strokeWeight(style.weight * strokeScaleFactor);
-         strokeCap(SQUARE);
-         strokeJoin(MITER);
+      // fill style
+      stroke(palettePickBg);
+      strokeWeight(style.weight * strokeScaleFactor);
+      strokeCap(SQUARE);
+      strokeJoin(MITER);
 
-         // draw fill for moduleonce
-         drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, 0);
+      // draw fill for moduleonce
+      drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, 0);
 
-         // only keep going if there are more fills to draw, shifted inwards
-         if (SPREADY <= 0)
-            return;
-         if (shapeParams.noStretchY)
-            return;
-         if (shapeParams.noStretch)
-            return;
+      // only keep going if there are more fills to draw, shifted inwards
+      if (SPREADY <= 0)
+         return;
+      if (shapeParams.noStretchY)
+         return;
+      if (shapeParams.noStretch)
+         return;
 
-         if (font === "fonta" || ((bottomHalf === 0 && style.stack === 1) || (bottomHalf === 1 && style.stack === 0))) {
-            let outerSpreadY = -(OUTERSIZE - INNERSIZE) * spreadYScale;
-            for (let betweenStep = 0; betweenStep > outerSpreadY; betweenStep -= style.weight) {
-               drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, betweenStep);
-            }
-            drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, outerSpreadY);
+      if (font === "fonta" || ((OFFSETBOTTOM === 0 && style.ytier === 1) || (OFFSETBOTTOM === 1 && style.ytier === 0))) {
+         let outerSpreadY = -(OUTERSIZE - INNERSIZE) * spreadYScale;
+         for (let betweenStep = 0; betweenStep > outerSpreadY; betweenStep -= style.weight) {
+            drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, betweenStep);
          }
-      })();
+         drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, outerSpreadY);
+      }
+   })();
 
    // foreground colors
    let INNERCOLOR = lerpColor(palette.fg, palette.bg, (effect === "gradient") ? 0.5 : 0);
@@ -130,7 +132,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          let outerSpreadY = 0;
          let outerSpreadX = 0;
          if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
-            if (font === "fonta" || ((bottomHalf === 0 && style.stack === 1) || (bottomHalf === 1 && style.stack === 0))) {
+            if (font === "fonta" || ((OFFSETBOTTOM === 0 && style.ytier === 1) || (OFFSETBOTTOM === 1 && style.ytier === 0))) {
                outerSpreadY = -(OUTERSIZE - size) * spreadYScale;
             }
          }
@@ -240,12 +242,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (midlineEffects.includes(effect) && mode.centeredEffect && (font === "fontb" || font === "fontc")) {
 
                // relevant possible spots
-               if ((style.stack === 1 && sideY === 1) || (style.stack === 0 && sideY === -1)) {
+               if ((style.ytier === 1 && sideY === 1) || (style.ytier === 0 && sideY === -1)) {
                   if (!shapeParams.broken && shapeParams.extend === undefined && shapeParams.from === undefined) {
-                     if (style.stack === 1 && sideY === 1) {
+                     if (style.ytier === 1 && sideY === 1) {
                         if (layer === "fg") includeInCenteredEffect()
                         return
-                     } else if (style.stack === 0 && sideY === -1) {
+                     } else if (style.ytier === 0 && sideY === -1) {
                         return
                      }
                   } else if (layer === "fg") {
@@ -440,13 +442,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      //but depends on what letter is adjacent
                      if (font === "fonta") {
                         // only really matters for e
-                        if (charInSet(style.nextchar, ["ml"]) && rightHalf === 1)
+                        if (charInSet(style.nextchar, ["ml"]) && OFFSETRIGHT === 1)
                            return 0;
                      } else if (font === "fontb") {
                         // matters for s,z,y
-                        if (charInSet(style.nextchar, ["ml"]) && rightHalf === 1)
+                        if (charInSet(style.nextchar, ["ml"]) && OFFSETRIGHT === 1)
                            return 0;
-                        if (charInSet(style.prevchar, ["mr"]) && rightHalf === 0)
+                        if (charInSet(style.prevchar, ["mr"]) && OFFSETRIGHT === 0)
                            return 0;
                      }
                   }
@@ -783,13 +785,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          if (stretchMode === "extra") {
             if (font === "fontb" || font === "fontc") {
-               if (style.stack === 1 && sideY === -1 || style.stack === 0 && sideY === 1) {
+               if (style.ytier === 1 && sideY === -1 || style.ytier === 0 && sideY === 1) {
                   return;
                }
             } 
          } else {
             if ((font === "fontb" || font === "fontc") && axis === "vert") {
-               if (style.stack === 1 && sideY === 1 || style.stack === 0 && sideY === -1) {
+               if (style.ytier === 1 && sideY === 1 || style.ytier === 0 && sideY === -1) {
                   return;
                }
             }
@@ -868,7 +870,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                   if (!midlineEffects.includes(effect) || mode.centeredEffect || stretchMode === "extra") {
                      if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
-                        if ((style.stack === 1 && sideY === -1) || (style.stack === 0 && sideY === 1)) {
+                        if ((style.ytier === 1 && sideY === -1) || (style.ytier === 0 && sideY === 1)) {
                            lineType(sPos.x - offsetShift, sPos.y + stretchDifference, sPos.x - offsetShift, sPos.y);
                         }
                      } else {
@@ -878,20 +880,20 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                   // if vertical line goes down, set those connection spots in the array
                   if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect && stretchMode !== "extra") {
-                     // (sideY===-1&&style.stack===1||sideY===1&&style.stack===0)
+                     // (sideY===-1&&style.ytier===1||sideY===1&&style.ytier===0)
                      // ^ does nothing....already the correct ones
                      if (style.char === "‸") {
                         //caret counts separately
                         style.caretSpots[0] = sPos.x;
                      } else {
                         const midlineSpotX = sPos.x;
-                        sortIntoArray(style.midlineSpots[style.stack][fillIndexX], midlineSpotX);
+                        sortIntoArray(style.midlineSpots[style.ytier][fillIndexX], midlineSpotX);
 
                         //add the remaining stretch spot on the end while fillIndex is on
                         // for some reason size is never OUTERSIZE then, so this is needed for now
                         //should only add this once, like only if size is smallest
                         if (size === INNERSIZE && fillIndexX !== 0) {
-                           sortIntoArray(style.midlineSpots[style.stack][fillIndexX], outerSPosX);
+                           sortIntoArray(style.midlineSpots[style.ytier][fillIndexX], outerSPosX);
                         }
 
                      }

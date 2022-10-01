@@ -1425,7 +1425,8 @@ function drawText (lineNum) {
          spreadY: finalValues.spreadY,
          spreadFillSteps: SPREADFILLSTEPSX,
          endCap: endCapStyle,
-         stack: 0, // for letters with more than 1 level
+         xtier: 0, // for wider letters - also inverts flipped if on
+         ytier: 0, // for letters with more than 1 level
          flipped: false, // for gradients
          // convenient values
          weight: (letterOuter-letterInner)*0.5,
