@@ -5,10 +5,7 @@ import { font, finalValues, effect, webglEffects, viewMode, mode, palette, strok
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    noFill();
-
-   // fun experiment, could turn into toggle:
-   //if (shape === "round") shape = "square"
-   //if (shape !== "vert") shape = "round"
+   push();
 
    // size
    const SIZES = [...style.sizes];
@@ -62,6 +59,16 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    // modify based on tier (top/right half)
    basePos.y -= style.ytier * (OUTERSIZE - style.weight + PLUSY * 0.5);
    basePos.x += style.xtier * (OUTERSIZE - style.weight + SPREADX * 0.5 + STRETCHX);
+
+
+   // fun experiment, could turn into toggle:
+   //if (shape === "round") shape = "square"
+   //if (shape !== "vert") shape = "round"
+   //style.stroke *= 1.11
+   const mouseDist = dist(mouseX/finalValues.zoom-5, mouseY/finalValues.zoom-10, basePos.x, basePos.y)
+   // make thin and rotate a bit the closer to mouse
+   style.stroke = finalValues.weight * map(mouseDist, 20, 0, 1, 0.3, true)
+   rotate(map(mouseDist, 20, 0, 0, 0.08, true))
 
 
    ;(function drawModuleBG() {
@@ -924,6 +931,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       //   if (frameCount === 1) print(xpos, ypos, fWidth, fHeight)
       //}
    }
+   pop();
 }
 
 function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
