@@ -8,6 +8,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    // fun experiment, could turn into toggle:
    //if (shape === "round") shape = "square"
+   //if (shape !== "vert") shape = "round"
 
    // size
    const SIZES = [...style.sizes];
@@ -60,7 +61,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    basePos.y += OFFSETBOTTOM * PLUSY * ((font === "fontb" || font === "fontc") ? 0.5 : 1);
    // modify based on tier (top/right half)
    basePos.y -= style.ytier * (OUTERSIZE - style.weight + PLUSY * 0.5);
-   basePos.x += style.xtier * (OUTERSIZE - style.weight + PLUSX * 0.5);
+   basePos.x += style.xtier * (OUTERSIZE - style.weight + SPREADX * 0.5 + STRETCHX);
 
 
    ;(function drawModuleBG() {
