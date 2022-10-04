@@ -33,7 +33,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const SPREADY = style.spreadY;
    const STRETCHX = style.stretchX;
    const STRETCHY = style.stretchY;
-   const EXTRAY = style.extraY;
+   const EXTRAY =  style.extraY; 
+   const drawExtra = (shapeParams.extra !== undefined) ? (shapeParams.extra) : (shapeParams.extend === undefined);
    const PLUSX = STRETCHX + SPREADX;
    const PLUSY = STRETCHY + SPREADY + EXTRAY;
 
@@ -50,8 +51,9 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       x: style.posFromLeft + tx + (OUTERSIZE / 2),
       y: style.posFromTop + ty
    };
-   // offset based on quarter parameter, as well as previous vertical offset and side of letter
-   basePos.x += style.offsetX * (OFFSETBOTTOM - style.ytier);
+   // x offset based on quarter parameter and tier
+   basePos.x += ((style.ytier === 1) ? style.offsetX1 : style.offsetX) * (OFFSETBOTTOM - style.ytier);
+   // y offset based on quarter parameter as well as previous vertical offset and side of letter
    basePos.y += style.offsetY * (OFFSETRIGHT  + style.vOffset + style.xtier);
    // offset based on quarter and stretch
    basePos.x += OFFSETRIGHT * PLUSX;
@@ -62,13 +64,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
 
    // fun experiment, could turn into toggle:
-   //if (shape === "round") shape = "square"
-   //if (shape !== "vert") shape = "round"
+   //if (shape === "round" && shapeParams.type === undefined) shape = "square"
    //style.stroke *= 1.11
    const mouseDist = dist(mouseX/finalValues.zoom-5, mouseY/finalValues.zoom-10, basePos.x, basePos.y)
    // make thin and rotate a bit the closer to mouse
-   style.stroke = finalValues.weight * map(mouseDist, 20, 0, 1, 0.3, true)
-   rotate(map(mouseDist, 20, 0, 0, 0.08, true))
+   //style.stroke = finalValues.weight * map(mouseDist, 20, 0, 1, 0.3, true)
+   //rotate(map(mouseDist, 20, 0, 0, 0.08, true))
 
 
    ;(function drawModuleBG() {
@@ -315,11 +316,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (PLUSY > 0 && LINE_FROM === 0) {
                if (STRETCHY > 0)
                   drawStretchLines("stretch", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
-               if (EXTRAY > 0 && sideY * (linePos.y2 - linePos.y1) >= 0)
+               if (EXTRAY > 0 && drawExtra && sideY * (linePos.y2 - linePos.y1) >= 0)
                   drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
                if (SPREADY > 0)
                   drawStretchLines("spread", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
             }
+
+            if (layer === "fg") drawDot(linePos.x1, linePos.y1)
          }
 
          function drawHorizontalModule(linePos, spreadFillStepX, spreadFillStepY, fillIndexX) {
@@ -363,6 +366,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (SPREADX > 0)
                   drawStretchLines("spread", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0);
             }
+
+            if (layer === "fg") drawDot(linePos.x1, linePos.y1)
          }
 
       } else { // CORNER
@@ -419,6 +424,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   break;
             }
             //drawCornerFillCaps(xpos, ypos, spreadFillStepX, spreadFillStepY) //WIP BROKEN/USELESS?
+            if (layer === "fg") drawDot(xpos + sideX * size / 2, ypos)
+            if (layer === "fg") drawDot(xpos, ypos + sideY * size / 2)
             drawCornerStretch(xpos, ypos, spreadFillStepX, spreadFillStepY, fillIndexX); // UHHH DOESN"T ACTUALLY MAKE COPIES
          }
 
@@ -830,11 +837,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                // the offset can be in between the regular lines vertically if it would staircase nicely
                let offsetShift = 0;
-               let stairDir = (style.vOffset + (offQ === 2 || offQ === 3) ? 1 : 0) % 2 === 0 ? -1 : 1;
+               //let stairDir = (style.vOffset + (offQ === 2 || offQ === 3) ? 1 : 0) % 2 === 0 ? -1 : 1;
                if (Math.abs(style.offsetY) > 2 && Math.abs(style.offsetY) < 4) {
-                  offsetShift = (style.offsetY / 3) * stairDir;
+                  offsetShift = (style.offsetY / 3) * -sideX;
                } else if (Math.abs(style.offsetY) > 1 && Math.abs(style.offsetY) < 3) {
-                  offsetShift = (style.offsetY / 2) * stairDir;
+                  offsetShift = (style.offsetY / 2) * -sideX;
                }
 
                // draw
@@ -870,10 +877,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (layer === "fg" || outerSpreadY === 0) { //only draw once
                   // the offset can be in between the regular lines horizontally if it would staircase nicely
                   let offsetShift = 0;
-                  if (Math.abs(style.offsetX) > 2 && Math.abs(style.offsetX) < 4) {
-                     offsetShift = style.offsetX / 3 * sideY;
-                  } else if (Math.abs(style.offsetX) > 1 && Math.abs(style.offsetX) < 3) {
-                     offsetShift = style.offsetX / 2 * sideY;
+                  let tierOffsetX = (style.ytier === 1) ? style.offsetX1 : style.offsetX
+                  if (Math.abs(tierOffsetX) > 2 && Math.abs(tierOffsetX) < 4) {
+                     offsetShift = tierOffsetX / 3 * sideY;
+                  } else if (Math.abs(tierOffsetX) > 1 && Math.abs(tierOffsetX) < 3) {
+                     offsetShift = tierOffsetX / 2 * sideY;
                   }
 
                   if (!midlineEffects.includes(effect) || mode.centeredEffect || stretchMode === "extra") {
@@ -932,6 +940,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       //}
    }
    pop();
+
+   function drawDot (x, y) {
+      //noStroke()
+      //fill(palette.bg)
+      //ellipse(x, y, (style.stroke/10)*0.5)
+      //noFill()
+   }
 }
 
 function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {

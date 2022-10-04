@@ -44,7 +44,7 @@ export let midlineEffects = ["compress", "spread", "twist", "split", "sway", "te
 export let stripeEffects = ["vstripes", "hstripes"]
 export let webglEffects = ["spheres"]
 
-export let endCapStyle = "round"
+export let endCapStyle = "none"
 export let viewMode = "default"
 
 let initialDraw = true
@@ -59,6 +59,7 @@ export const mode = {
    spreadFills: true,
    wave: false,
    centeredEffect: false,
+   centeredOffset: false,
    // use alt letters?
    noLigatures: false,
    altS: false,
@@ -1417,6 +1418,7 @@ function drawText (lineNum) {
          spacing: finalValues.spacing,
          ascenders: finalValues.ascenders,
          offsetX: (effect==="staircase")? 0 : finalValues.offsetX,
+         offsetX1: (effect==="staircase")? 0 : finalValues.offsetX * ((mode.centeredOffset)? -1 : 1), //top tier in font b/c
          offsetY: (effect==="staircase")? finalValues.offsetX : finalValues.offsetY,
          stretchX: finalValues.stretchX,
          stretchY: finalValues.stretchY,
