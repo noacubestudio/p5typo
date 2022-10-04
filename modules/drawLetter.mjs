@@ -1230,7 +1230,9 @@ export function drawLetter (letter, font) {
             break;
          case "t":
             letter.ytier = 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            // the ascender of the t can be shorter than other ascenders because it has a max relative to size and weight
+            // but is always at least 1
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: min(ascenders, max(sizeOuter - letter.weight - 1, 1))})
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: horiRightAdd})
             drawModule(letter, "vert", 2, 2, 0, 0, {extend: -letter.weight -1})
