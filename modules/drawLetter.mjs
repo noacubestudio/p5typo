@@ -1077,15 +1077,15 @@ export function drawLetter (letter, font) {
                //drawModule(letter, "vert", 3, 3, 1, 0, {extend: (descenders >= 2) ? descenders - sizeOuter*0.5 : 1})
                if (descenders < sizeOuter*0.5+1 || ascenders < 2) {
                   if (descenders > sizeOuter*0.5) {
-                     drawModule(letter, "vert", 2, 2, 0, descenders, {extend: -sizeOuter*0.5+1})
+                     drawModule(letter, "vert", 2, 3, 0, descenders, {extend: -sizeOuter*0.5+1})
                      drawModule(letter, "round", 3, 3, 0, descenders, {noStretchY: true})
                   } else {
                      drawModule(letter, "square", 3, 3, 0, descenders, {noStretchY: true})
                   }
                   drawModule(letter, "hori", 4, 4, 0, descenders, {cap: true, noStretchY: true})
                } else {
-                  drawModule(letter, "vert", 1, 1, 0, descenders, {extend: -letter.weight - 1})
-                  drawModule(letter, "vert", 2, 2, 0, descenders, {extend: -(sizeOuter-descenders-0.5)})
+                  drawModule(letter, "vert", 1, 4, 0, descenders, {extend: descenders-sizeOuter-1})
+                  drawModule(letter, "vert", 2, 3, 0, descenders, {extend: -(sizeOuter-descenders-0.5)})
                   drawModule(letter, "round", 3, 3, 0, descenders, {noStretchY: true})
                   drawModule(letter, "round", 4, 4, 0, descenders, {noStretchY: true})
                }
