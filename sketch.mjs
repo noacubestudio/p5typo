@@ -879,10 +879,23 @@ window.draw = function () {
 
    finalValues.size = lerpValues("size")
    finalValues.rings = lerpValues("rings")
+
+   // if there is no room for extra rings, then don't display them
+   // if rings would cover more than half the size, cut to nearest integer so that there is a gap of 1 at least in the middle)
+   if (finalValues.rings > finalValues.size/2+1) {finalValues.rings = Math.ceil(finalValues.size/2-1) +1}
+   // if they only go a bit too far, like <1 into that gap, let it go halfway and then back to show the problem visually
+   const ringsWeightMax = (finalValues.size - 1) / 2
+   if (finalValues.rings > ringsWeightMax+1) {
+      finalValues.rings = ringsWeightMax+1 - (finalValues.rings-ringsWeightMax-1)
+   }
+
    // if inner size is below 2, add 1 grid size of vertical stretch
    animExtraY = map(getInnerSize(finalValues.size, finalValues.rings), 1,2, 1,0, true)
 
    finalValues.spacing = lerpValues("spacing")
+   // if less than 2 rings, approach a minimum forced spacing of 1 no matter what - right now just for font c
+   // something similar happens in the letterKerning function...
+   if (font === "fontc" && finalValues.rings < 2) finalValues.spacing = max(2-finalValues.rings, finalValues.spacing)
    finalValues.offsetX = lerpValues("offsetX")
    finalValues.offsetY = lerpValues("offsetY")
    finalValues.stretchX = lerpValues("stretchX")
@@ -1109,10 +1122,12 @@ function drawElements() {
 function getInnerSize (size, rings) {
    let innerSize = min(size - (rings-1) * 2, size)
 
-   if (finalValues.size % 2 === 0) {
-      return max(2, innerSize)
-   }
-   return max(1, innerSize)
+   //if (finalValues.size % 2 === 0) {
+   //   return max(2, innerSize)
+   //}
+   //return max(1, innerSize)
+
+   return innerSize
 }
 
 export function charInSet (char, sets) {
