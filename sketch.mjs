@@ -53,8 +53,6 @@ export const mode = {
    // visual
    svg: false,
    dark: true,
-   mono: false,
-   xray: false,
    drawFills: true,
    spreadFills: true,
    wave: false,
@@ -104,6 +102,9 @@ export const finalValues = {
    spreadX: undefined,
    spreadY: undefined,
 }
+// used for debug purposes, doesn't need to be global otherwise
+// because everything happens in drawText
+let letterInfo = []
 
 let animColorDark, animColorLight
 // calculated from above but also used everywhere
@@ -995,6 +996,7 @@ function drawElements() {
 
       // draw the whole text
       for (let i = 0; i < linesArray.length; i++) {
+         letterInfo[i] = []
          drawText(i)
       }
       pop()
@@ -1117,6 +1119,44 @@ function drawElements() {
          pop()
       }
    pop()
+
+   if (viewMode === "xray") {
+      textFont("monospace")
+      textSize(12)
+      push()
+
+      // final values, not rounded
+      let textColumnsFinal = [[], []]
+      for (const [key, value] of Object.entries(finalValues)) {
+         const el0 = key;
+         const el1 = roundTo(value, 100);
+         textColumnsFinal[0].push(el0)
+         textColumnsFinal[1].push(el1)
+      }
+      translate(15, height-20)
+      fill(palette.fg)
+      text(textColumnsFinal[0].join("\n"), 0, - textColumnsFinal[0].length*15)
+      fill(palette.xrayFg)
+      text(textColumnsFinal[1].join("\n"), 70, - textColumnsFinal[0].length*15)
+
+      // per letter
+      let textColumnsLetters = [[], []]
+      letterInfo[0].forEach((letter) => {
+         textColumnsLetters[0].push(letter[0])
+         let properties = []
+         for (const [key, value] of Object.entries(letter[1])) {
+            properties.push(key + ":" + value)
+         }
+         textColumnsLetters[1].push(properties.join(" "))
+      })
+      
+      translate(120, 0)
+      fill(palette.fg)
+      text(textColumnsLetters[0].join("\n"), 0, - textColumnsLetters[0].length*15)
+      fill(palette.xrayFg)
+      text(textColumnsLetters[1].join("\n"), 12, - textColumnsLetters[0].length*15)
+      pop()
+   }
 }
 
 function getInnerSize (size, rings) {
@@ -1451,6 +1491,12 @@ function drawText (lineNum) {
 
       // DESCRIBING THE FILLED BACKGROUND SHAPES AND LINES OF EACH LETTER
       drawLetter(letter, font)
+
+      // DEBUG
+      letterInfo[lineNum].push([letter.char, {
+         x: roundTo(letter.posFromLeft, 100), 
+         y: roundTo(letter.posFromTop, 100),
+      }])
    }
 
    if (midlineEffects.includes(effect)) {
