@@ -1495,8 +1495,13 @@ function drawText (lineNum) {
       // DEBUG
       letterInfo[lineNum].push([letter.char, {
          x: roundTo(letter.posFromLeft, 100), 
-         y: roundTo(letter.posFromTop, 100),
+         // y: roundTo(letter.posFromTop, 100),
       }])
+      if (layerPos === lineText.length-1) {
+         letterInfo[lineNum].push([">", {
+            s:  letter.sizes.map(s => roundTo(s, 100)),
+         }])
+      }
    }
 
    if (midlineEffects.includes(effect)) {
