@@ -271,13 +271,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   style.caretSpots[0] = linePos.x1;
                } else {
                   const midlineSpotX = linePos.x1;
-                  sortIntoArray(style.midlineSpots[0][fillIndexX], midlineSpotX);
+                  sortIntoArray(style.centerFxSpots[0][fillIndexX], midlineSpotX);
 
                   //add the remaining stretch spot on the end while fillIndex is on
                   // for some reason size is never OUTERSIZE then, so this is needed for now
                   //should only add this once, like only if size is smallest
                   if (size === INNERSIZE && fillIndexX !== 0) {
-                     sortIntoArray(style.midlineSpots[0][fillIndexX], linePos.x1+sideX*(OUTERSIZE*0.5));
+                     sortIntoArray(style.centerFxSpots[0][fillIndexX], linePos.x1+sideX*(OUTERSIZE*0.5));
                   }
                }
             }
@@ -884,7 +884,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      offsetShift = tierOffsetX / 2 * sideY;
                   }
 
-                  if (!midlineEffects.includes(effect) || mode.centeredEffect || stretchMode === "extra") {
+                  if (!midlineEffects.includes(effect) || stretchMode === "extra") {
                      if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
                         if ((style.ytier === 1 && sideY === -1) || (style.ytier === 0 && sideY === 1)) {
                            lineType(sPos.x - offsetShift, sPos.y + stretchDifference, sPos.x - offsetShift, sPos.y);
@@ -895,21 +895,22 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   // if vertical line goes down, set those connection spots in the array
-                  if (layer === "fg" && midlineEffects.includes(effect) && !mode.centeredEffect && stretchMode !== "extra") {
+                  if (layer === "fg" && midlineEffects.includes(effect) && stretchMode !== "extra") {
                      // (sideY===-1&&style.ytier===1||sideY===1&&style.ytier===0)
                      // ^ does nothing....already the correct ones
+
                      if (style.char === "‸") {
                         //caret counts separately
                         style.caretSpots[0] = sPos.x;
                      } else {
                         const midlineSpotX = sPos.x;
-                        sortIntoArray(style.midlineSpots[style.ytier][fillIndexX], midlineSpotX);
+                        sortIntoArray(style.stretchFxSpots[style.ytier][fillIndexX], midlineSpotX);
 
                         //add the remaining stretch spot on the end while fillIndex is on
                         // for some reason size is never OUTERSIZE then, so this is needed for now
                         //should only add this once, like only if size is smallest
                         if (size === INNERSIZE && fillIndexX !== 0) {
-                           sortIntoArray(style.midlineSpots[style.ytier][fillIndexX], outerSPosX);
+                           sortIntoArray(style.stretchFxSpots[style.ytier][fillIndexX], outerSPosX);
                         }
 
                      }

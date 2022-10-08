@@ -667,6 +667,14 @@ window.keyTyped = function () {
    } else if (key === "c") {
       toggles.roundcapsToggle.click()
       toggles.roundcapsToggle.checked = (endCapStyle === "round")
+   } else if (key === "1") {
+      dropdownTextToEffect("default look")
+   } else if (key === "2") {
+      dropdownTextToEffect("x-ray")
+   } else if (key === "3") {
+      dropdownTextToEffect("more colorful")
+   } else if (key === "4") {
+      dropdownTextToEffect("monochrome")
    }
 }
 
@@ -1405,15 +1413,23 @@ function drawText (lineNum) {
    const lineStyle = {
       // array has 1 or 2 arrays inside based on module height of font
       // these in turn contoin an array for every fill step
-      midlineSpots: [[...Array(SPREADFILLSTEPSX+1)].map(x => [])],
+      stretchFxSpots: [[...Array(SPREADFILLSTEPSX+1)].map(x => [])],
+      centerFxSpots: [[...Array(SPREADFILLSTEPSX+1)].map(x => [])],
       stopSpots: [],
       caretSpots: [],
       spaceSpots: [],
    }
-   if (font === "fontb" || font === "fontc") lineStyle.midlineSpots = [
-      [...Array(SPREADFILLSTEPSX+1)].map(x => []), 
-      [...Array(SPREADFILLSTEPSX+1)].map(x => [])
-   ]
+   if (font === "fontb" || font === "fontc") {
+      lineStyle.stretchFxSpots = [
+         [...Array(SPREADFILLSTEPSX+1)].map(x => []), 
+         [...Array(SPREADFILLSTEPSX+1)].map(x => [])
+      ]
+      lineStyle.centerFxSpots = [
+         [...Array(SPREADFILLSTEPSX+1)].map(x => []), 
+         [...Array(SPREADFILLSTEPSX+1)].map(x => [])
+      ]
+   }
+   
 
    fillCornerLayers = {
       linecut: {},
@@ -1457,7 +1473,8 @@ function drawText (lineNum) {
          next: (lineText[layerArray.indexOf(layerPos)+1] !== undefined) ? lineText[layerArray.indexOf(layerPos)+1] : " ",
          previous: (lineText[layerArray.indexOf(layerPos)-1] !== undefined) ? lineText[layerArray.indexOf(layerPos)-1] : " ",
          //for entire line, but need while drawing
-         midlineSpots: lineStyle.midlineSpots,
+         stretchFxSpots: lineStyle.stretchFxSpots,
+         centerFxSpots: lineStyle.centerFxSpots,
          caretSpots: lineStyle.caretSpots,
          spaceSpots: lineStyle.spaceSpots,
          stopSpots: lineStyle.stopSpots,
@@ -1499,7 +1516,8 @@ function drawText (lineNum) {
       }])
       if (layerPos === lineText.length-1) {
          letterInfo[lineNum].push([">", {
-            s:  letter.sizes.map(s => roundTo(s, 100)),
+            s: letter.sizes.map(s => roundTo(s, 100)),
+            w: roundTo(letter.weight, 100)
          }])
       }
    }
@@ -1514,46 +1532,60 @@ function drawText (lineNum) {
       // run for each stage
       if (font === "fontb" || font === "fontc") {
          if (mode.centeredEffect) {
-            drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots, lineStyle.stopSpots)
-         } else {
-            push()
-            translate(0, -finalValues.size+(finalValues.rings-1)- finalValues.stretchY - finalValues.spreadY)
-            drawMidlineEffects(1, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
-            pop()
-
-            push()
-            translate(-finalValues.offsetX,0)
-            drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
-            pop()
-
+            drawMidlineEffects(0, "centered", lineStyle)
          }
-         
-         //if (frameCount === 1) print("Midlines:", lineStyle.midlineSpots)
+
+         push()
+         translate(0, -finalValues.size+(finalValues.rings-1)- finalValues.stretchY - finalValues.spreadY)
+         drawMidlineEffects(1, "stretch", lineStyle)
+         pop()
+
+         push()
+         translate(-finalValues.offsetX,0)
+         drawMidlineEffects(0, "stretch", lineStyle)
+         pop()
+
+         //if (frameCount === 1) print("Midlines:", lineStyle.stretchFxSpots)
       } else {
-         drawMidlineEffects(0, lineStyle.midlineSpots, lineStyle.caretSpots, lineStyle.spaceSpots)
+         drawMidlineEffects(0, lineStyle)
       }
       
    }
 
-   function drawMidlineEffects (layer, midlineSpots, caretSpots, spaceSpots, stopSpots) {
+   function drawMidlineEffects (ytier, positionMode, lineStyle) {
       push()
-
       stroke(palette.fg)
+
+      // remove stretch fx spots where center fx spots are to prevent overlaps
+      if (mode.centeredEffect && positionMode === "stretch") {
+         for (let i = 0; i < lineStyle.stretchFxSpots[ytier].length; i++) {
+            // compare only tier 0 for now, but do for every spread (i)
+            const myArray = lineStyle.stretchFxSpots[ytier][i];
+            const toRemove = lineStyle.centerFxSpots[0][i];
+
+            lineStyle.stretchFxSpots[ytier][i] = myArray.filter((el) => !toRemove.includes(el));
+         }
+      }
+
+      const stretchFxSpots = (positionMode === "centered") ? lineStyle.centerFxSpots : lineStyle.stretchFxSpots;
+      const caretSpots = lineStyle.caretSpots;
+      const spaceSpots = lineStyle.spaceSpots;
+      const stopSpots = lineStyle.stopSpots;
 
       let stretchHeight = finalValues.stretchY
       if (font === "fontb" || font === "fontc") {
-         if (mode.centeredEffect) {
-            stretchHeight = (finalValues.size - finalValues.rings) + 1
+         if (positionMode === "centered") {
+            stretchHeight = (finalValues.size - finalValues.rings) + 1 + finalValues.stretchY
          } else {
             stretchHeight = finalValues.stretchY*0.5
          }
       }
 
       if ((font === "fontb" || font === "fontc")) {
-         if (mode.centeredEffect) {
-            translate(0, -stretchHeight*0.5)
+         if (positionMode === "centered") {
+            translate(0, -stretchHeight*0.5 + finalValues.stretchY*0.5)
          } else {
-            const layerDir = (layer > 0) ? 0.75 : 0.25
+            const layerDir = (ytier > 0) ? 0.75 : 0.25
             translate(0, (Math.abs(finalValues.offsetY) + finalValues.stretchY + finalValues.spreadY)*layerDir)
          }
       } else {
@@ -1567,30 +1599,37 @@ function drawText (lineNum) {
       rowLines("bezier", [caretSpots[0], caretSpots[0]+finalValues.offsetX], finalValues.stretchY)
       stroke(palette.fg)
 
-      for (let i = 0; i < midlineSpots[layer].length; i++) {
+      for (let i = 0; i < stretchFxSpots[ytier].length; i++) {
 
          //strokeWeight((finalValues.weight/10)*strokeScaleFactor)
-         //if (Math.floor(frameCount/20) % midlineSpots[layer].length !== i) strokeWeight(0.03)
-         const singleSpreadFillSpots = midlineSpots[layer][i]
+         //if (Math.floor(frameCount/20) % stretchFxSpots[layer].length !== i) strokeWeight(0.03)
+         const singleSpreadFillSpots = stretchFxSpots[ytier][i]
 
          const wordSpots = []
          let untilSpaceIndex = 0
          
-            singleSpreadFillSpots.forEach((pos) => {
-               const spaceSpot = spaceSpots[untilSpaceIndex] + finalValues.offsetX * ((layer === 0) ? 1 : -1)
-               if (pos > spaceSpot && untilSpaceIndex < spaceSpots.length) {
-                  // check in the next word now
-                  untilSpaceIndex++
-               }
-               // for this word
-               if (wordSpots[untilSpaceIndex] === undefined) {
-                  wordSpots[untilSpaceIndex] = new Array
-               }
-               wordSpots[untilSpaceIndex].push(pos)
-            })
-         
-         
-         if (frameCount === 1) print("Line:", lineText, ", Layer:", layer, ", Mid Connection Spots:", wordSpots)
+         singleSpreadFillSpots.forEach((pos) => {
+            const spaceSpot = spaceSpots[untilSpaceIndex] + finalValues.offsetX*((ytier === 0)?1:-1)
+            if (pos > spaceSpot && untilSpaceIndex < spaceSpots.length) {
+               // check in the next word now
+               untilSpaceIndex++
+            }
+            // for this word
+            if (wordSpots[untilSpaceIndex] === undefined) {
+               wordSpots[untilSpaceIndex] = new Array
+            }
+            wordSpots[untilSpaceIndex].push(pos)
+         })
+
+         // split words into segments further if positionMode is centered
+         //if (positionMode === "centered") {
+         //   wordSpots.forEach((word) => {
+         //      word = word
+         //   })
+         //}
+
+
+         if (frameCount === 1) print("Line:", lineText, ", Layer:", ytier, ", Mid Connection Spots:", wordSpots)
          if (frameCount === 1  && stopSpots !== undefined) print(stopSpots)
          // show spaces
          // lineStyle.spaceSpots.forEach((pos) => {
@@ -1618,14 +1657,21 @@ function drawText (lineNum) {
                }
                
                const xBend = (mode.centeredEffect) ? 0 : finalValues.offsetX
+               if (mode.centeredEffect && positionMode === "stretch") {
+                  // move the top tier with offset also
+                  if (ytier === 1) pos = pos + finalValues.offsetX
+               }
+               const fx = (mode.centeredEffect && positionMode === "stretch") ? "none" : effect
 
-               if (effect === "spread") {
+               if (fx === "none") {
+                  rowLines("line", [pos, pos+xBend], stretchHeight)
+               } else if (fx === "spread") {
                   const midX = map(counter, 0, total, leftPos, rightPos) + xBend*0.5
                   rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
-               } else if (effect === "compress") {
+               } else if (fx === "compress") {
                   const midX = (rightPos - total + leftPos + xBend)*0.5 + counter
                   rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
-               } else if (effect === "turn") {
+               } else if (fx === "turn") {
                   //const midX = (counter < total/2) ? leftPos + counter: rightPos - (total-counter)
                   //rowLines("sharpbezier", [pos, midX, pos+xBend], stretchHeight)
                   if (chainLength > 0) {
@@ -1648,23 +1694,23 @@ function drawText (lineNum) {
                      // last straight piece of word
                      rowLines("bezier", [pos, pos+xBend], stretchHeight)
                   }
-               } else if (effect === "split") {
+               } else if (fx === "split") {
                   if (counter > 0) {
                      rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                      rowLines("bezier", [lastPos, pos+xBend], stretchHeight)
                   }
-               } else if (effect === "twist") {
+               } else if (fx === "twist") {
                   if (counter % 2 === 1) {
                      rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                      rowLines("bezier", [lastPos, pos+xBend], stretchHeight)
                   } else if (counter === total) {
                      rowLines("bezier", [pos, pos+xBend], stretchHeight)
                   }
-               } else if (effect === "sway") {
+               } else if (fx === "sway") {
                   if (counter > 0) {
                      rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                   }
-               } else if (effect === "teeth") {
+               } else if (fx === "teeth") {
                   if (counter % 2 === 1) {
                      const x = lastPos + (pos-lastPos)*0.5
                      const w = pos-lastPos
