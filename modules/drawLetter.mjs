@@ -1138,11 +1138,11 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "vert", 4, 4, 0, 0, {broken: true})
             letter.ytier = 0
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"start"})
             drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
@@ -1166,11 +1166,11 @@ export function drawLetter (letter, font) {
          case "m":
             letter.ytier = 1
             drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             // right side
             letter.xtier = 1
-            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at:"start"})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
@@ -1280,14 +1280,14 @@ export function drawLetter (letter, font) {
             letter.xtier = 0
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at:"start"})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             // right side
             letter.xtier = 1
             drawModule(letter, "vert", 1, 1, 0, 0, {})
             drawModule(letter, "vert", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "round", 4, 4, 0, 0, {})
+            drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at:"end"})
             break;
          case "x":
             letter.ytier = 1

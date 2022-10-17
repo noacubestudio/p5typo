@@ -1852,6 +1852,8 @@ export function lineType (x1, y1, x2, y2) {
    //   stroke("#FFFFFF30")
    //   line(x1, y1, partialX, partialY)
    //}
+   // const distance = dist(x1,y1,x2,y2)
+   // drawingContext.setLineDash([0, distance/(Math.floor(distance)-1)]);
    line(x1, y1, x2, y2)
 }
 
@@ -1897,6 +1899,8 @@ export function arcType (x, y, w, h, start, stop, layer) {
    //    stroke("#FFFFFF30")
    //    arc(x, y, w, h, start, partialStop)
    // }
+   // const distance = (stop-start)*w*0.5
+   // drawingContext.setLineDash([0, distance/(Math.floor(distance)-1)]);
    arc(x, y, w, h, start, stop)
 }
 

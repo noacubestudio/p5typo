@@ -491,7 +491,6 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
 
                if (shapeParams.type === "linecut") {
-
                   if (INNERSIZE - 2 <= 0 && shapeParams.alwaysCut) {
                      drawCurve = false;
                   }
@@ -524,6 +523,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                            line(xpos + (offsetX) * sideX, ypos + distance, xpos + (offsetX + fWidth) * sideX, ypos + distance);
                         }
                      }
+                  }
+               } else if (shapeParams.type === "branch") {
+                  if (layer === "fg") {
+                     const mediumSize = (OUTERSIZE+INNERSIZE)/2
+                     cutDifference = HALF_PI - arcUntilLineAt(min(size, mediumSize)).angle;
                   }
 
                } else if (shapeParams.type === "roundcut") {
@@ -565,12 +569,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             // draw the line (until the cut angle if foreground)
             if (drawCurve) {
 
+               const wipGraphics = false;
+
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
 
                   // basic curve for lines, shortened if needed
                   arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
 
-               } else if (layer === "bg" && (mode.svg || viewMode === "xray" || stripeEffects.includes(effect))) {
+               } else if (wipGraphics && layer === "bg" && (mode.svg || viewMode === "xray" || stripeEffects.includes(effect))) {
 
                   // background segment with cutoff is displayed as an image instead
                   // this only happens in svg mode or while xray view is on
