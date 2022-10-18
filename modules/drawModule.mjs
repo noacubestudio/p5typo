@@ -119,17 +119,6 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       }
    })();
 
-   // foreground colors
-   let INNERCOLOR = lerpColor(palette.fg, palette.bg, (effect === "gradient") ? 0.5 : 0);
-   if (viewMode === "xray") {
-      if (shape === "hori" || shape === "vert") {
-         INNERCOLOR = palette.xrayFg;
-      } else {
-         INNERCOLOR = palette.xrayFgCorner;
-      }
-   }
-   const OUTERCOLOR = palette.fg; 
-   
    (function drawModuleFG() {
       // draw the foreground
       strokeCap(ROUND);
@@ -160,7 +149,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       if (layer === "fg") {
          // style may differ per ring if it's in the foreground
          // gradient from inside to outside - color or weight
-         ringStyle(size, INNERSIZE, OUTERSIZE, INNERCOLOR, OUTERCOLOR, style.flipped, arcQ, offQ, style.opacity, style.stroke);
+         ringStyle(style, shape, size, INNERSIZE, OUTERSIZE);
       }
       // get orientations in both axes
       const sideX = (arcQ === 1 || arcQ === 4) ? -1 : 1;
@@ -956,25 +945,27 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    }
 }
 
-function ringStyle (size, smallest, biggest, innerColor, outerColor, isFlipped, arcQ, offQ, opacity, strokeWidth) {
-   //strokeweight
-   if ((effect==="weightgradient") && viewMode !== "xray") {
-      strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,0.3,1))
-      if ((arcQ !== offQ) !== isFlipped) {
-         strokeWeight((strokeWidth/10)*strokeScaleFactor*map(size,smallest,biggest,1,0.3))
-      }
+function ringStyle (style, shape, size, smallest, biggest) {
+   //const distToCenter = Math.abs(map(size+frameCount*0.1 % biggest, smallest, biggest, -1, 1))
+   const distToCenter = Math.abs(map(size, smallest, biggest, -1, 1))
+   // weight
+   if (viewMode === "xray") {
+      strokeWeight(2/10*strokeScaleFactor)
+   } else if ((effect==="weightgradient") && biggest-smallest > 2) {
+      strokeWeight((style.stroke/10) * strokeScaleFactor * map(distToCenter, 0, 1, 1.0, 0.5))
+   } else {
+      strokeWeight((style.stroke/10) * strokeScaleFactor)
    }
-
-   //color
-   let innerEdgeReference = smallest
-   //1-2 rings
-   if ((biggest-smallest) <1) {
-      innerEdgeReference = biggest-2
+   // color
+   let strokeColor = palette.fg;
+   if (viewMode === "xray") {
+      const outerColor = palette.fg;
+      const innerColor = (shape === "hori" || shape === "vert") ? palette.xrayFg : palette.xrayFgCorner;
+      strokeColor = lerpColor(innerColor, outerColor, map(size, smallest, biggest, 0, 1));
+   } else if (effect==="gradient" && biggest-smallest > 2) {
+      const outerColor = lerpColor(palette.fg, palette.bg, 0.5);
+      const innerColor = lerpColor(palette.fg, palette.bg, 0.0);
+      strokeColor = lerpColor(innerColor, outerColor, distToCenter);
    }
-   let lerpedColor = lerpColor(innerColor, outerColor, map(size,innerEdgeReference,biggest,0,1))
-   if ((arcQ !== offQ) !== isFlipped ) {
-      lerpedColor = lerpColor(innerColor, outerColor, map(size,biggest,innerEdgeReference,0,1))
-   }
-   lerpedColor = lerpColor(palette.bg, lerpedColor, opacity)
-   stroke(lerpedColor)
+   stroke(lerpColor(palette.bg, strokeColor, style.opacity));
 }

@@ -19,8 +19,8 @@ export function drawLetter (letter, font) {
    const capGap = (letter.endCap === "round") ? map(letter.weight, 0, 1, 1, 0, true) : 1
    const centersDistance = letter.weight + sizeInner //keep distance of 1, approaching center of double ytier letters
 
-   const horiRightAdd = (letter.spacing > 0 || nextchar === " ") ? 0 : letter.spacing - capGap //WIP
-   const horiLeftAdd  = (letter.spacing > 0 || prevchar === " ") ? 0 : letter.spacing - capGap //WIP
+   const horiRightAdd = (letter.spacing > 0 || charInSet(nextchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
+   const horiLeftAdd  = (letter.spacing > 0 || charInSet(prevchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
 
    if (font === "fonta") {
       const isFlipped = (!"cktfe".includes(char))
