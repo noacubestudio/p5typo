@@ -1662,14 +1662,17 @@ function drawText (lineNum) {
                   if (ytier === 1) pos = pos + finalValues.offsetX
                }
                const fx = (mode.centeredEffect && positionMode === "stretch") ? "none" : effect
+               const strength = 1 //sin(frameCount/10) * 0.5 + 0.5
 
                if (fx === "none") {
                   rowLines("line", [pos, pos+xBend], stretchHeight)
                } else if (fx === "spread") {
-                  const midX = map(counter, 0, total, leftPos, rightPos) + xBend*0.5
+                  const spreadX = map(counter, 0, total, leftPos, rightPos) + xBend*0.5
+                  const midX = lerp(pos+0.5*xBend, spreadX, strength)
                   rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
                } else if (fx === "compress") {
-                  const midX = (rightPos - total + leftPos + xBend)*0.5 + counter
+                  const compressX = (rightPos - total + leftPos + xBend)*0.5 + counter
+                  const midX = lerp(pos+0.5*xBend, compressX, strength)
                   rowLines("bezier", [pos, midX, pos+xBend], stretchHeight)
                } else if (fx === "turn") {
                   //const midX = (counter < total/2) ? leftPos + counter: rightPos - (total-counter)
@@ -1711,15 +1714,20 @@ function drawText (lineNum) {
                      rowLines("bezier", [pos, lastPos+xBend], stretchHeight)
                   }
                } else if (fx === "teeth") {
-                  if (counter % 2 === 1) {
-                     const x = lastPos + (pos-lastPos)*0.5
-                     const w = pos-lastPos
-                     arc(x, -(stretchHeight)*0.5,w,w, 0, PI)
-                  } else {
-                     //bottom
-                     const x = lastPos + (pos-lastPos)*0.5 +xBend
-                     const w = pos-lastPos
-                     arc(x, (stretchHeight)*0.5,w,w, PI, TWO_PI)
+                  const isTop = (counter % 2 === 1);
+                  const x = lastPos + (pos-lastPos)*0.5 + ((isTop)? 0:xBend)
+                  const y = stretchHeight*-0.5* ((isTop)? 1:-1)
+                  const w = pos-lastPos
+                  const h = max(0, (stretchHeight-w-1) / 2)
+                  if (isTop) {arc(x, y + h, w, w, 0, PI)} else {arc(x, y - h, w, w, PI, TWO_PI)}
+                  if (h > 0) {
+                     line(x-w/2, y, x-w/2, y + h * ((isTop)? 1:-1))
+                     line(x+w/2, y, x+w/2, y + h * ((isTop)? 1:-1))
+                  }
+                  if (pos === rightPos) {
+                     line(x+w/2, -y, x+w/2, -y + max(0, (stretchHeight-1) / 2) * ((isTop)? -1:1))
+                  } else if (lastPos === leftPos) {
+                     line(x-w/2, -y, x-w/2, -y + max(0, (stretchHeight-1) / 2) * ((isTop)? -1:1))
                   }
                }
                lastPos = pos

@@ -961,7 +961,8 @@ function ringStyle (style, shape, size, smallest, biggest) {
    if (viewMode === "xray") {
       const outerColor = palette.fg;
       const innerColor = (shape === "hori" || shape === "vert") ? palette.xrayFg : palette.xrayFgCorner;
-      strokeColor = lerpColor(innerColor, outerColor, map(size, smallest, biggest, 0, 1));
+      if (smallest !== biggest) strokeColor = lerpColor(innerColor, outerColor, map(size, smallest, biggest, 0, 1));
+      else strokeColor = outerColor;
    } else if (effect==="gradient" && biggest-smallest > 2) {
       const outerColor = lerpColor(palette.fg, palette.bg, 0.5);
       const innerColor = lerpColor(palette.fg, palette.bg, 0.0);
