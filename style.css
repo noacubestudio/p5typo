@@ -56,6 +56,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  width: 280px;
 }
 .main-column {
   overflow: hidden;
@@ -121,15 +122,6 @@ kbd {
   margin-left: 0em;
   gap: 0.5em;
 }
-#button-randomText {
-  position: absolute;
-  right: 0px;
-  top: 0px;
-}
-.textarea-container {
-  position: relative;
-}
-
 .buttons-container {
   display: flex;
   flex-direction: row;
@@ -153,6 +145,12 @@ kbd {
   grid-column-gap: 1.0em;
 }
 
+.textarea-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
 textarea, input {
   background-color: rgb(var(--bg-color));
   color: rgba(var(--fg-color), 0.8);
@@ -168,9 +166,9 @@ textarea, input {
 }
 
 textarea {
-  min-width: 5em;
-  max-width: 24em;
   height: max-content;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 textarea:focus, input:focus {
@@ -180,6 +178,13 @@ textarea:focus, input:focus {
 
 textarea::-webkit-scrollbar {
   display: none;
+}
+
+#button-randomText {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  padding-top: 10px;
 }
 
 /* Customize the label (the container) */
@@ -288,7 +293,6 @@ button {
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  max-width: 10em;
   max-height: 3em;
 }
 
@@ -341,22 +345,6 @@ button {
   outline: 2px solid rgba(var(--fg-color), 0.2);
   color: rgb(var(--fg-color));
 }
-
-/* .toggle-button {
-  width: 2.1em;
-  height: 2.1em;
-  margin: 0.2em;
-  padding-bottom: 1em;
-  padding-left: 0em;
-  padding-right: 0em;
-  padding-top: 0.3em;
-  border-radius: 2em;
-  position: relative;
-  left: -0.5em;
-}
-.toggle-button:hover {
-  background-color: rgba(var(--fg-color), 0.3);
-} */
 
 ::-moz-selection { /* Code for Firefox */
   color: #fff;
@@ -467,9 +455,11 @@ input[type=number] {
   overflow: hidden;
   border: 4px solid transparent;
   border-radius: 0.6em;
-  width:auto;
-  flex-direction: row;
+
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
 }
 
 /* Style the buttons that are used to open the tab content */
