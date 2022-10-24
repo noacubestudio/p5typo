@@ -15,6 +15,8 @@ export function drawLetter (letter, font) {
    // redefining these, bad... WIP
    const oneoffset = (sizeOuter>3 && sizeInner>2) ? 1 : 0
    const extendOffset = waveValue(sizeOuter, 0, 0.5) + ((letter.stretchX+letter.spreadX)-(letter.stretchX+letter.spreadX)%2)*0.5
+   const spreadWeightX = letter.weight + letter.spreadX/2
+   const spreadWeightY = letter.weight + letter.spreadY/2
 
    const capGap = (letter.endCap === "round") ? map(letter.weight, 0, 1, 1, 0, true) : 1
    const centersDistance = letter.weight + sizeInner //keep distance of 1, approaching center of double ytier letters
@@ -60,9 +62,9 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             if (ascenders >= letter.weight+sizeInner-1) {
                const modifiedLetter = {...letter}
-               modifiedletter.sizes = []
+               modifiedLetter.sizes = []
                for (let s = 0; s < letter.sizes.length; s++) {
-                  modifiedletter.sizes.push(letter.sizes[s]-1)
+                  modifiedLetter.sizes.push(letter.sizes[s]-1)
                }
                drawModule(letter, "hori", 1, 1, 0, 0, {extend: -sizeOuter*0.5+0.5, noStretchY: true})
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders-sizeOuter*0.5+0.5})
@@ -552,10 +554,10 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 1, 1, 0, 0, {})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -spreadWeightY -1})
             letter.ytier = 0
             drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
@@ -567,7 +569,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {extend: -sizeOuter*0.5+(centersDistance-1)*0.5})
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: -sizeOuter*0.5+(centersDistance-1)*0.5})
-            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -spreadWeightX -1})
             drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"start"})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -589,10 +591,10 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "square", 1, 1, 0, 0, {})
             drawModule(letter, "square", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             letter.ytier = 0
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -601,7 +603,7 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "round", 1, 1, 0, 0, {})
             drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "vert", 4, 4, 0, 0, {broken: true})
             letter.ytier = 0
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at: "end"})
@@ -620,7 +622,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {extend: ascenders})
             drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "hori", 4, 4, 0, 0, {cap: true})
             break;
          case "8":
@@ -642,7 +644,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             letter.ytier = 0
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "square", 2, 2, 0, 0, {type: "branch", at: "start"})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -665,8 +667,8 @@ export function drawLetter (letter, font) {
 
             // drawModule(letter, "diagonal", 1, 1, 0, 0, {})
 
-            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -letter.weight -1})
-            drawModule(letter, "hori", 2, 2, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -spreadWeightX -1})
+            drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
             break;
       }
    } else if (font === "fontb") {
@@ -1172,7 +1174,7 @@ export function drawLetter (letter, font) {
                letter.ytier = 0
                drawModule(letter, "vert", 1, 1, 0, 0, {})
                drawModule(letter, "vert", 2, 2, 0, 0, {})
-               drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight -1})
+               drawModule(letter, "vert", 3, 3, 0, 0, {extend: -spreadWeightY -1})
                drawModule(letter, "hori", 3, 3, 0, 0, {cap: true})
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
                drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
@@ -1192,7 +1194,7 @@ export function drawLetter (letter, font) {
                if (charInSet(nextchar,["gap"])) {
                   drawModule(letter, "hori", 2, 2, 0, 0, {cap: true})
                } else {
-                  drawModule(letter, "hori", 2, 2, 0, 0, {extend: -letter.weight -1})
+                  drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
                }
                drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             }
@@ -1256,7 +1258,7 @@ export function drawLetter (letter, font) {
          case "j":
             letter.ytier = 1
             drawModule(letter, "hori", 1, 1, 0, 0, {cap: true, extend: horiLeftAdd})
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretch: true})
             drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {})
@@ -1353,11 +1355,11 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "round", 1, 1, 0, 0, {})
             drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight -1})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             letter.ytier = 0
             letter.flipped = true
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight -1})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -1369,7 +1371,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: min(ascenders, max(sizeOuter - letter.weight - 1, 1))})
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
             drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: horiRightAdd})
-            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "vert", 3, 3, 0, 0, {extra: false})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
@@ -1453,7 +1455,7 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 4, 4, 0, 0, {})
                drawModule(letter, "vert", 3, 3, 0, 0, {})
                letter.ytier = 0
-               drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight - 1})
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
                drawModule(letter, "vert", 2, 2, 0, 0, {})
                drawModule(letter, "round", 3, 3, 0, 0, {})
                drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -1464,11 +1466,11 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 1, 1, 0, 0, {})
             drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -spreadWeightY -1})
             letter.ytier = 0
             letter.flipped = true
             drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -letter.weight - 1})
+            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
@@ -1480,10 +1482,10 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -spreadWeightX -1})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -letter.weight -1})
+            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -spreadWeightX -1})
             drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
             break;
          case "-":

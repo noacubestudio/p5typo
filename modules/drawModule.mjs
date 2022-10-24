@@ -26,8 +26,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    // useful numbers
    const INNERSIZE = SIZES[SIZES.length - 1];
    const OUTERSIZE = SIZES[0];
-   const spreadXScale = (style.spreadX / 2) / (style.weight) / 2;
-   const spreadYScale = (style.spreadY / 2) / (style.weight) / 2;
+   const spreadXScale = (style.spreadX / 2) / (style.weight + ((mode.spreadFills)?1:0)) / 2;
+   const spreadYScale = (style.spreadY / 2) / (style.weight + ((mode.spreadFills)?1:0)) / 2;
 
    const SPREADX = style.spreadX;
    const SPREADY = style.spreadY;
@@ -99,7 +99,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       strokeCap(SQUARE);
       strokeJoin(MITER);
 
-      // draw fill for moduleonce
+      // draw fill for module once
       drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, 0);
 
       // only keep going if there are more fills to draw, shifted inwards
@@ -126,24 +126,32 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       strokeWeight((style.stroke / 10) * strokeScaleFactor);
       if (viewMode === "xray") { strokeWeight(0.2 * strokeScaleFactor); }
 
+      // only draw spread fills in outer
+      const useSpreadX = (
+         SPREADX > 0 && shapeParams.noStretchX === undefined && shapeParams.noStretch === undefined
+      )
+      const useSpreadY = (
+         (SPREADY > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) &&
+         (font === "fonta" || (OFFSETBOTTOM===0&&style.ytier===1) || (OFFSETBOTTOM===1&&style.ytier===0))
+      )
+
       SIZES.forEach((size) => {
          let outerSpreadY = 0;
          let outerSpreadX = 0;
-         if (SPREADY > 0 && style.weight > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) {
-            if (font === "fonta" || ((OFFSETBOTTOM === 0 && style.ytier === 1) || (OFFSETBOTTOM === 1 && style.ytier === 0))) {
-               outerSpreadY = -(OUTERSIZE - size) * spreadYScale;
-            }
+
+         if (useSpreadY) {
+            outerSpreadY = -(OUTERSIZE - size) * spreadYScale;
          }
-         if (SPREADX > 0 && style.weight > 0 && shapeParams.noStretchX === undefined && shapeParams.noStretch === undefined) {
+         if (useSpreadX) {
             outerSpreadX = -(OUTERSIZE - size) * spreadXScale;
          }
-         drawSinglePathOfModule(size, "fg", outerSpreadX, outerSpreadY);
+         drawSinglePathOfModule(size, "fg", outerSpreadX, outerSpreadY, useSpreadX, useSpreadY);
       });
    })();
 
 
 
-   function drawSinglePathOfModule(size, layer, outerSpreadX, outerSpreadY) {
+   function drawSinglePathOfModule(size, layer, outerSpreadX, outerSpreadY, useSpreadX, useSpreadY) {
       // relevant for any module:
 
       if (layer === "fg") {
@@ -203,17 +211,19 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          pickLineModule(linePos, 0, 0, 0);
 
          // fill spread effect
-         if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
+         if (layer === "fg" && mode.spreadFills && (useSpreadX || useSpreadY)) {
             for (let i = 1; i <= style.spreadFillSteps; i++) {
                let fillStep = (i / style.spreadFillSteps) * 2;
-               let movedPosX = ((SPREADX > 0 && shape === "vert") ? spreadXScale * fillStep * sideX : 0);
-               let movedPosY = ((SPREADY > 0 && shape === "hori") ? spreadYScale * fillStep * sideY : 0);
+               let movedPosX = ((SPREADX > 0 && shape === "vert") ? spreadXScale * fillStep * -sideX : 0);
+               let movedPosY = ((SPREADY > 0 && shape === "hori") ? spreadYScale * fillStep * -sideY : 0);
                pickLineModule({
-                  x1: basePos.x + movedPosX, x2: basePos.x + movedPosX, y1: basePos.y + movedPosY, y2: basePos.y + movedPosY
+                  x1: basePos.x + movedPosX, x2: basePos.x + movedPosX, 
+                  y1: basePos.y + movedPosY, y2: basePos.y + movedPosY
                }, movedPosX, movedPosY, ((SPREADX > 0) ? i : 0));
                if (SPREADX > 0) {
                   pickLineModule({
-                     x1: basePos.x + movedPosX, x2: basePos.x + movedPosX, y1: basePos.y + movedPosY, y2: basePos.y + movedPosY
+                     x1: basePos.x + movedPosX, x2: basePos.x + movedPosX, 
+                     y1: basePos.y + movedPosY, y2: basePos.y + movedPosY
                   }, movedPosX, movedPosY, i);
                }
             }
@@ -270,7 +280,6 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                }
             }
-
 
 
             //only draw the non-stretch part if it is long enough to be visible
@@ -385,11 +394,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          pickCornerModule(xpos, ypos, 0, 0, 0);
 
          // offset effect
-         if (layer === "fg" && mode.spreadFills && size !== OUTERSIZE && (outerSpreadY !== 0 || outerSpreadX !== 0) && style.weight >= 1) {
+         if (layer === "fg" && mode.spreadFills && (useSpreadX || useSpreadY)) {
             for (let i = 1; i <= style.spreadFillSteps; i++) { // dont draw first step again
                let fillStep = (i / style.spreadFillSteps) * 2;
-               let fillOffsetX = (SPREADX > 0) ? spreadXScale * fillStep * sideX : 0;
-               let fillOffsetY = (SPREADY > 0) ? spreadYScale * fillStep * sideY : 0;
+               let fillOffsetX = (SPREADX > 0) ? spreadXScale * fillStep * -sideX : 0;
+               let fillOffsetY = (SPREADY > 0) ? spreadYScale * fillStep * -sideY : 0;
                pickCornerModule(xpos + fillOffsetX, ypos + fillOffsetY, fillOffsetX, fillOffsetY, ((SPREADX > 0) ? i : 0));
                if (SPREADX > 0) {
                   pickCornerModule(xpos, ypos, fillOffsetX, fillOffsetY, i);

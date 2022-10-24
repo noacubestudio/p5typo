@@ -909,8 +909,10 @@ window.draw = function () {
    finalValues.offsetY = lerpValues("offsetY")
    finalValues.stretchX = lerpValues("stretchX")
    finalValues.stretchY = lerpValues("stretchY")
-   finalValues.spreadX = lerpValues("spreadX") * (finalValues.rings-1) * 2 //WIP, means it always aligns with grid though
-   finalValues.spreadY = lerpValues("spreadY") * (finalValues.rings-1) * 2
+   //WIP, means it always aligns with grid though
+   const ringCountToSpread = (mode.spreadFills) ? finalValues.rings : finalValues.rings-1
+   finalValues.spreadX = lerpValues("spreadX") * (ringCountToSpread) * 2 
+   finalValues.spreadY = lerpValues("spreadY") * (ringCountToSpread) * 2
    finalValues.weight = lerpValues("weight")
    finalValues.ascenders = lerpValues("ascenders") * 0.5
    animColorDark = switchColors("hueDark", false)
@@ -1164,7 +1166,85 @@ function drawElements() {
       fill(palette.xrayFg)
       text(textColumnsLetters[1].join("\n"), 12, - textColumnsLetters[0].length*15)
       pop()
+
+      push()
+      translate(300, height-100)
+      graph(caretTimer, "size", 0, 0, 80, 80); translate(90, 0);
+      graph(caretTimer, "rings", 0, 0, 80, 80); translate(90, 0);
+      graph(caretTimer, "spacing", 0, 0, 80, 80); translate(90, 0);
+      graph(caretTimer, "fps", 0, 0, 80, 80); translate(90, 0);
+      pop()
    }
+}
+
+const graphs = {}
+
+function graph (time, key, x, y, w, h) {
+
+   const currentVal = (finalValues[key] !== undefined) ? finalValues[key] : findVariable(key)
+
+   function findVariable (key) {
+      if (key === "fps") return frameRate();
+   }
+
+   if (time < 60) {
+      if (graphs[key] === undefined || time === 1) {
+         if (currentVal === 0) {
+            graphs[key] = {arr:[], min:-2, max:2}
+         } else {
+            graphs[key] = {arr:[], min:currentVal/2, max:currentVal*2}
+         }
+         if (graphs[key].min < 0 && key === "fps") graphs[key].min = 0;
+      }
+   } else {
+      graphs[key].arr.shift()
+   }
+
+   if (graphs[key] !== undefined) {
+      graphs[key].arr.push(currentVal)
+      if (currentVal > graphs[key].max) graphs[key].max = currentVal;
+      if (currentVal < graphs[key].min) graphs[key].min = currentVal;
+   }
+
+   noStroke()
+   fill(palette.fg)
+   const roundingFactor = (key === "fps") ? 1 : 100
+   text(key + " " + roundTo(currentVal, roundingFactor), x, y - 10)
+
+   palette.fg.setAlpha(100)
+   fill(palette.fg)
+   text(roundTo(graphs[key].max, roundingFactor), x, y+10)
+   text(roundTo(graphs[key].min, roundingFactor), x, y+h)
+
+   palette.fg.setAlpha(20)
+   fill(palette.fg)
+   rect(x, y, w, h)
+   
+
+   strokeWeight(1)
+
+   if (time > 60) {
+      stroke(palette.fg)
+      const linePos = map(60 - time % 60, 0, 60, x, x+w)
+      line(linePos, y, linePos, y+h)
+   }
+
+   stroke(palette.xrayFg)
+   palette.fg.setAlpha(255)
+   
+
+   //draw graph
+   graphs[key].arr.forEach((value, index) => {
+      if (index > 0) {
+         const prevValue = graphs[key].arr[index-1]
+         line(
+            map(index-1, 0, graphs[key].arr.length, x, x+w), 
+            map(prevValue, graphs[key].min, graphs[key].max, y+h, y), 
+            map(index, 0, graphs[key].arr.length, x, x+w), 
+            map(value, graphs[key].min, graphs[key].max, y+h, y)
+         )
+      }
+   })
 }
 
 function getInnerSize (size, rings) {
@@ -1661,7 +1741,7 @@ function drawText (lineNum) {
                   // move the top tier with offset also
                   if (ytier === 1) pos = pos + finalValues.offsetX
                }
-               const fx = (mode.centeredEffect && positionMode === "stretch") ? "none" : effect
+               const fx = (mode.centeredEffect && positionMode === "stretch" || leftPos === rightPos) ? "none" : effect
                const strength = 1 //sin(frameCount/10) * 0.5 + 0.5
 
                if (fx === "none") {
