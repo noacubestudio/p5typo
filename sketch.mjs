@@ -1194,7 +1194,7 @@ function graph (time, key, x, y, w, h) {
          } else {
             graphs[key] = {arr:[], min:currentVal/2, max:currentVal*2}
          }
-         if (graphs[key].min < 0 && key === "fps") graphs[key].min = 0;
+         if (key === "fps") graphs[key].min = 0;
       }
    } else {
       graphs[key].arr.shift()
@@ -1211,7 +1211,7 @@ function graph (time, key, x, y, w, h) {
    const roundingFactor = (key === "fps") ? 1 : 100
    text(key + " " + roundTo(currentVal, roundingFactor), x, y - 10)
 
-   palette.fg.setAlpha(100)
+   palette.fg.setAlpha(150)
    fill(palette.fg)
    text(roundTo(graphs[key].max, roundingFactor), x, y+10)
    text(roundTo(graphs[key].min, roundingFactor), x, y+h)
@@ -1627,7 +1627,7 @@ function drawText (lineNum) {
 
          //if (frameCount === 1) print("Midlines:", lineStyle.stretchFxSpots)
       } else {
-         drawMidlineEffects(0, lineStyle)
+         drawMidlineEffects(0, "centered", lineStyle)
       }
       
    }
@@ -1637,7 +1637,7 @@ function drawText (lineNum) {
       stroke(palette.fg)
 
       // remove stretch fx spots where center fx spots are to prevent overlaps
-      if (mode.centeredEffect && positionMode === "stretch") {
+      if (mode.centeredEffect && positionMode === "stretch" && (font === "fontb" || font === "fontc")) {
          for (let i = 0; i < lineStyle.stretchFxSpots[ytier].length; i++) {
             // compare only tier 0 for now, but do for every spread (i)
             const myArray = lineStyle.stretchFxSpots[ytier][i];
@@ -1647,7 +1647,7 @@ function drawText (lineNum) {
          }
       }
 
-      const stretchFxSpots = (positionMode === "centered") ? lineStyle.centerFxSpots : lineStyle.stretchFxSpots;
+      const stretchFxSpots = (positionMode === "centered" && (font === "fontb" || font === "fontc")) ? lineStyle.centerFxSpots : lineStyle.stretchFxSpots;
       const caretSpots = lineStyle.caretSpots;
       const spaceSpots = lineStyle.spaceSpots;
       const stopSpots = lineStyle.stopSpots;
