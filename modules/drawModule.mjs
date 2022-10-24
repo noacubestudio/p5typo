@@ -1,6 +1,6 @@
 'use strict';
 import { font, finalValues, effect, webglEffects, viewMode, mode, palette, strokeScaleFactor, lineType, charInSet, arcType, stripeEffects, 
-   fillCornerLayers, midlineEffects, sortIntoArray } from "../sketch.mjs";
+   fillCornerLayers, midlineEffects, sortIntoArray, defaultRenderer } from "../sketch.mjs";
 
 export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
@@ -96,8 +96,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       // fill style
       stroke(palettePickBg);
       strokeWeight(style.weight * strokeScaleFactor);
-      strokeCap(SQUARE);
-      strokeJoin(MITER);
+      if (!webglEffects.includes(effect) && defaultRenderer !== WEBGL) {
+         strokeCap(SQUARE);
+         strokeJoin(MITER);
+      }
+      
 
       // draw fill for module once
       drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, 0);
@@ -121,8 +124,10 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
    (function drawModuleFG() {
       // draw the foreground
-      strokeCap(ROUND);
-      strokeJoin(ROUND);
+      if (!webglEffects.includes(effect) && defaultRenderer !== WEBGL) {
+         strokeCap(ROUND);
+         strokeJoin(ROUND);
+      }
       strokeWeight((style.stroke / 10) * strokeScaleFactor);
       if (viewMode === "xray") { strokeWeight(0.2 * strokeScaleFactor); }
 

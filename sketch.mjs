@@ -43,6 +43,7 @@ export let effect = "none"
 export let midlineEffects = ["compress", "spread", "twist", "split", "sway", "teeth", "turn"]
 export let stripeEffects = ["vstripes", "hstripes"]
 export let webglEffects = ["spheres"]
+export let defaultRenderer = undefined //use p5 WEBGL or SVG or "" below
 
 export let endCapStyle = "none"
 export let viewMode = "default"
@@ -124,17 +125,18 @@ window.setup = function () {
    loadFromURL()
    createGUI()
 
-   canvasEl = createCanvas(windowWidth-300, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:"")
+   defaultRenderer = "";
+
+   canvasEl = createCanvas(windowWidth-300, windowHeight,(webglEffects.includes(effect))?WEBGL:(mode.svg)?SVG:defaultRenderer)
    canvasEl.parent('sketch-holder')
-   if (!webglEffects.includes(effect)) {
+   if (!webglEffects.includes(effect) && defaultRenderer !== WEBGL) {
       strokeCap(ROUND)
       textFont("Courier Mono")
-      frameRate(60)
       if (mode.svg) strokeScaleFactor = values.zoom.from
    } else {
-      frameRate(60)
       strokeScaleFactor = values.zoom.from
    }
+   frameRate(60)
    rectMode(CORNERS)
 
    writeToURL("noReload")
@@ -985,7 +987,7 @@ window.draw = function () {
 
 function drawElements() {
    push()
-   if (webglEffects.includes(effect)) translate(-width/2, -height/2)
+   if (webglEffects.includes(effect) || defaultRenderer === WEBGL) translate(-width/2, -height/2)
    translate(40, 40)
    scale(finalValues.zoom)
 
