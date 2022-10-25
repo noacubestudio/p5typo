@@ -532,13 +532,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      const mediumSize = (OUTERSIZE+INNERSIZE)/2
                      cutDifference = HALF_PI - arcUntilLineAt(min(size, mediumSize)).angle;
                   }
-
                } else if (shapeParams.type === "roundcut") {
 
                   if ((INNERSIZE <= 2 || OUTERSIZE + 2 <= 2) && shapeParams.alwaysCut) {
                      drawCurve = false;
                   }
-                  if (layer === "fg" && INNERSIZE > 2) {
+                  if (layer === "fg" && INNERSIZE > 1) {
 
                      let heightDistance = Math.abs(outerSpreadY) - spreadFillStepY * sideY;
 
@@ -547,6 +546,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         cutDifference = HALF_PI - arcUntilLineAt(INNERSIZE - 2).angle;
                      } else {
                         // use round cut
+                        // WIP should use spreadFillStepX here somehow
                         let circleDistance = INNERSIZE + style.weight - (SPREADX / 2 - Math.abs(outerSpreadX));
 
                         // adjust angle to account for this diagonal because of spread...

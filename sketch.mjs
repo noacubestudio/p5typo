@@ -13,7 +13,7 @@ let playToggleEl
 const toggles = {}
 
 let focusedEl = "none"
-let caretTimer = 0
+let framesSinceInteract = 0
 let wiggleMode = false
 const newLineChar = String.fromCharCode(13, 10)
 
@@ -298,7 +298,7 @@ function createGUI () {
       numberInput.element.addEventListener("focusin", () => {
          focusedEl = property
          wiggleMode = true
-         caretTimer = 0
+         framesSinceInteract = 0
       })
       numberInput.element.addEventListener("focusout", () => {
          focusedEl = "none"
@@ -682,9 +682,9 @@ window.keyTyped = function () {
 
 window.keyPressed = function () {
    if (keyCode === LEFT_ARROW) {
-      caretTimer = 0
+      framesSinceInteract = 0
    } else if (keyCode === RIGHT_ARROW) {
-      caretTimer = 0
+      framesSinceInteract = 0
    }
 }
 
@@ -799,7 +799,7 @@ window.draw = function () {
    if (mode.auto) {
       autoValues()
    }
-   caretTimer++ // like frameCount
+   framesSinceInteract++ // like frameCount
 
    Object.keys(values).forEach(key => {
       const slider = values[key]
@@ -874,7 +874,7 @@ window.draw = function () {
          // just return the base value, but add wiggle if active
          let wiggle = 0
          if (focusedEl === key && wiggleMode) {
-            const animDuration = caretTimer / 20
+            const animDuration = framesSinceInteract / 20
             if (animDuration <= 1) {
                wiggle += (animDuration < 0.5) ? easeInOutCubic(animDuration*2) : easeInOutCubic((1-animDuration)*2)
             }
@@ -1171,10 +1171,10 @@ function drawElements() {
 
       push()
       translate(300, height-100)
-      graph(caretTimer, "size", 0, 0, 80, 80); translate(90, 0);
-      graph(caretTimer, "rings", 0, 0, 80, 80); translate(90, 0);
-      graph(caretTimer, "spacing", 0, 0, 80, 80); translate(90, 0);
-      graph(caretTimer, "fps", 0, 0, 80, 80); translate(90, 0);
+      graph(framesSinceInteract, "size", 0, 0, 80, 80); translate(90, 0);
+      graph(framesSinceInteract, "rings", 0, 0, 80, 80); translate(90, 0);
+      graph(framesSinceInteract, "spacing", 0, 0, 80, 80); translate(90, 0);
+      graph(framesSinceInteract, "fps", 0, 0, 80, 80); translate(90, 0);
       pop()
    }
 }
@@ -1375,7 +1375,7 @@ function drawText (lineNum) {
          //found current line
          if (l === lineNum) {
             for (let c = 0; c < lineText.length+1; c++) {
-               if (caretTimer % 40 < 25 && totalChars+c === writeEl.selectionStart) {
+               if (framesSinceInteract % 40 < 25 && totalChars+c === writeEl.selectionStart) {
                   //insert caret character at position
                   lineText = lineText.slice(0,c) + "‸" + lineText.slice(c)
                   break;
@@ -2103,6 +2103,7 @@ function dropdownTextToEffect (text) {
          break;
       case "x-ray":
          viewMode = "xray"
+         framesSinceInteract = 0
          break;
       case "Lowercase 2x2":
          font = "fonta"
