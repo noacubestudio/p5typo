@@ -62,8 +62,8 @@ export const mode = {
    // use alt letters?
    noLigatures: false,
    altS: false,
-   altM: false,
-   altNH: true,
+   altDia: false,
+   altSquare: false,
    // animation
    auto: false,
 }
@@ -247,16 +247,16 @@ function createGUI () {
       mode.centeredEffect = toggles.centerEffectsToggle.checked
       writeToURL()
    })
-   toggles.altMToggle = document.getElementById('checkbox-altM')
-   toggles.altMToggle.checked = mode.altM
-   toggles.altMToggle.addEventListener('click', () => {
-      mode.altM = toggles.altMToggle.checked
+   toggles.altDiaToggle = document.getElementById('checkbox-altDia')
+   toggles.altDiaToggle.checked = mode.altDia
+   toggles.altDiaToggle.addEventListener('click', () => {
+      mode.altDia = toggles.altDiaToggle.checked
       writeToURL()
    })
-   toggles.altNHToggle = document.getElementById('checkbox-altNH')
-   toggles.altNHToggle.checked = mode.altNH
-   toggles.altNHToggle.addEventListener('click', () => {
-      mode.altNH = toggles.altNHToggle.checked
+   toggles.altSquareToggle = document.getElementById('checkbox-altSquare')
+   toggles.altSquareToggle.checked = mode.altSquare
+   toggles.altSquareToggle.addEventListener('click', () => {
+      mode.altSquare = toggles.altSquareToggle.checked
       writeToURL()
    })
    toggles.altSToggle = document.getElementById('checkbox-altS')
@@ -728,11 +728,11 @@ function defaultStyle () {
    values.spreadY.to = 0
 }
 
-function activeWiggle () {
-   if (focusedEl !== "none" && focusedEl !== "text") {
-      values[focusedEl].to
-   }
-}
+// function activeWiggle () {
+//    if (focusedEl !== "none" && focusedEl !== "text") {
+//       values[focusedEl].to
+//    }
+// }
 
 function randomStyle () {
 
@@ -792,14 +792,15 @@ function randomStyle () {
 }
 
 window.draw = function () {
-   // if a "to" value in the values object is not undefined, get closer to it by increasing that "lerp"
-   // when the "lerp" value is at 6, the "to" value has been reached,
-   // and can be cleared again, new "from" value set.
+   framesSinceInteract++ // like frameCount, but since last interaction
 
    if (mode.auto) {
       autoValues()
    }
-   framesSinceInteract++ // like frameCount
+
+   // if a "to" value in the values object is not undefined, get closer to it by increasing that "lerp"
+   // when the "lerp" value is at 6, the "to" value has been reached,
+   // and can be cleared again, new "from" value set.
 
    Object.keys(values).forEach(key => {
       const slider = values[key]
@@ -878,9 +879,6 @@ window.draw = function () {
             if (animDuration <= 1) {
                wiggle += (animDuration < 0.5) ? easeInOutCubic(animDuration*2) : easeInOutCubic((1-animDuration)*2)
             }
-            
-            //wiggle += (sin(((caretTimer % 60) / 60) * PI * 2)+1) * 0.2
-            //wiggle += (sin(((frameCount % 200) / 200) * PI * 2)+1) * 0.5
          }
          return slider.from + wiggle
       } else {
@@ -1269,24 +1267,28 @@ export function charInSet (char, sets) {
             switch (set) {
                case "ul":
                   //up left sharp
-                  found ||= "bhikltuüvwym".includes(char)
-                  found ||= (mode.altNH && "n".includes(char))
+                  found ||= "bhikltuüvwy".includes(char)
+                  found ||= (mode.altSquare && "n".includes(char))
+                  found ||= (mode.altDia && "m".includes(char))
                   found ||= !validLetters.includes(char)
                   break;
                case "dl":
                   //down left sharp
-                  found ||= "hikmnprfvw".includes(char)
+                  found ||= "hikmnprfv".includes(char)
+                  found ||= (mode.altDia && "w".includes(char))
                   found ||= !validLetters.includes(char)
                   break;
                case "ur":
                   //up right sharp
-                  found ||= "dijuüvwymgl".includes(char)
-                  found ||= (mode.altNH && "nh".includes(char))
+                  found ||= "dijuüvwygl".includes(char)
+                  found ||= (mode.altSquare && "nh".includes(char))
+                  found ||= (mode.altDia && "m".includes(char))
                   found ||= !validLetters.includes(char)
                   break;
                case "dr":
                   //down right sharp
-                  found ||= "aähimnqyew".includes(char)
+                  found ||= "aähimnqye".includes(char)
+                  found ||= (mode.altDia && "w".includes(char))
                   found ||= !validLetters.includes(char)
                   break;
                case "gap":

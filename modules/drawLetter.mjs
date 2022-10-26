@@ -167,7 +167,7 @@ export function drawLetter (letter, font) {
             }
             break;
          case "n":
-            if (mode.altNH) {
+            if (mode.altSquare) {
                drawModule(letter, "square", 1, 1, 0, 0, {})
                drawModule(letter, "square", 2, 2, 0, 0, {})
             } else {
@@ -179,20 +179,20 @@ export function drawLetter (letter, font) {
             break;
          case "m":
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
-            if (mode.altM) {
-               drawModule(letter, "square", 1, 1, 0, 0, {})
-               drawModule(letter, "square", 2, 2, 0, 0, {})
+            if (mode.altDia) {
+               drawModule(letter, "diagonal", 1, 1, 0, 0, {})
+               drawModule(letter, "diagonal", 2, 2, 0, 0, {})
                // SECOND LAYER
                letter.xtier = 1
-               drawModule(letter, "square", 2, 2, 0, 0, {})
-               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"start"})
+               drawModule(letter, "diagonal", 1, 1, 0, 0, {})
+               drawModule(letter, "diagonal", 2, 2, 0, 0, {})
             } else {
-               drawModule(letter, "diagonal", 1, 1, 0, 0, {})
-               drawModule(letter, "diagonal", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"end"})
                // SECOND LAYER
                letter.xtier = 1
-               drawModule(letter, "diagonal", 1, 1, 0, 0, {})
-               drawModule(letter, "diagonal", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at:"start"})
+               drawModule(letter, "round", 2, 2, 0, 0, {})
             }
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
@@ -250,6 +250,8 @@ export function drawLetter (letter, font) {
                } else if (prevchar !== "t"){
                   drawModule(letter, "round", 1, 1, leftXoffset, 0, {type: "roundcut", at:"start"})
                }
+            } else if (charInSet(prevchar, ["gap"])) {
+               drawModule(letter, "round", 1, 1, leftXoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
             }
             // bottom connection
             letter.flipped = isFlipped
@@ -261,11 +263,14 @@ export function drawLetter (letter, font) {
                } else {
                   drawModule(letter, "round", 4, 4, leftXoffset, 0, {type: "roundcut", at:"end"})
                }
+            } else if (charInSet(prevchar,["gap"])) {
+               drawModule(letter, "round", 4, 4, leftXoffset, 0, {type: "linecut", at:"end", alwaysCut:"true"})
             }
+
+
+            // middle and right side
             letter.flipped = false
-            if (charInSet(prevchar, ["gap"])) {
-               drawModule(letter, "round", 1, 1, leftXoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
-            }
+
             drawModule(letter, "round", 2, 2, leftXoffset, 0, {})
             letter.xtier = 1
             drawModule(letter, "round", 4, 4, leftXoffset, 0, {})
@@ -288,34 +293,43 @@ export function drawLetter (letter, font) {
             }
             letter.xtier = 0
             drawModule(letter, "diagonal", 3, 3, leftXoffset, 0, {})
-            if (charInSet(prevchar,["gap"])) {
-               drawModule(letter, "round", 4, 4, leftXoffset, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-            }
+            
             break;
          case "u":
          case "ü":
          case "y":
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "round", 4, 4, 0, 0, {})
-            // SECOND LAYER
             if (char === "y") {
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
-            } else if (char === "ü") {
+               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at: "end"})
+            } else {
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+            }
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            if (char === "ü") {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretch: true})
                drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretch: true})
             }
             break;
          case "w":
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
-            drawModule(letter, "diagonal", 3, 3, 0, 0, {})
-            drawModule(letter, "diagonal", 4, 4, 0, 0, {})
-            letter.xtier = 1
+            if (mode.altDia) {
+               drawModule(letter, "diagonal", 3, 3, 0, 0, {})
+               drawModule(letter, "diagonal", 4, 4, 0, 0, {})
+               letter.xtier = 1
+               drawModule(letter, "diagonal", 3, 3, 0, 0, {})
+               drawModule(letter, "diagonal", 4, 4, 0, 0, {})
+            } else {
+               drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at: "start"})
+               drawModule(letter, "round", 4, 4, 0, 0, {})
+               letter.xtier = 1
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+               drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "end"})
+            }
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
-            drawModule(letter, "diagonal", 4, 4, 0, 0, {})
-            drawModule(letter, "diagonal", 3, 3, 0, 0, {})
+            
             break;
          case "r":
             drawModule(letter, "round", 1, 1, 0, 0, {})
@@ -391,11 +405,10 @@ export function drawLetter (letter, font) {
          case "h":
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
             // SECOND LAYER
-            if (mode.altNH) {
-               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+            drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+            if (mode.altSquare) {
                drawModule(letter, "square", 2, 2, 0, 0, {})
             } else {
-               drawModule(letter, "round", 1, 1, 0, 0, {})
                drawModule(letter, "round", 2, 2, 0, 0, {})
             }
             drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
@@ -407,8 +420,11 @@ export function drawLetter (letter, font) {
             if (((sizeOuter-sizeInner)/2+1)*tan(HALF_PI/4) < sizeInner/2-2){
                drawModule(letter, "diagonal", 3, 3, 0, 0, {})
                drawModule(letter, "diagonal", 4, 4, 0, 0, {})
-            } else {
+            } else if (mode.altDia) {
                drawModule(letter, "diagonal", 3, 3, 0, 0, {})
+               drawModule(letter, "square", 4, 4, 0, 0, {})
+            } else {
+               drawModule(letter, "round", 3, 3, 0, 0, {})
                drawModule(letter, "square", 4, 4, 0, 0, {})
             }
             break;
