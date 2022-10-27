@@ -31,7 +31,11 @@ const numberInputsObj = {
    spreadY: {element: document.getElementById('number-spreadY'), min: 0, max: 50},
 }
 let linesArray = ["the quick green","alien jumps over","the lazy dog."]
-const validLetters = "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 "
+const validLetters = {
+   fonta: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ ",
+   fontb: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 ",
+   fontc: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 ",
+}
 
 
 // setup
@@ -1078,7 +1082,7 @@ function drawElements() {
    
             // markers for start of each letter
             push()
-            translate(0,i+gridHeight+finalValues.ascenders/2) //gridHeight*0.5
+            translate(0,i+gridHeight+Math.ceil(finalValues.ascenders/2)) //gridHeight*0.5
             if (finalValues.offsetX>0) translate(finalValues.offsetX * ((font === "fontb"||font==="fontc")?2:1),0)
 
             stroke((mode.dark) ? "#FFBB0080" : "#2222FF40")
@@ -1269,26 +1273,26 @@ export function charInSet (char, sets) {
                   found ||= "bhikltuüvwy".includes(char)
                   found ||= (mode.altSquare && "n".includes(char))
                   found ||= (mode.altDia && "m".includes(char))
-                  found ||= !validLetters.includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
                   found ||= "hikmnprfv".includes(char)
                   found ||= (mode.altDia && "w".includes(char))
-                  found ||= !validLetters.includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
                   found ||= "dijuüvwygl".includes(char)
                   found ||= (mode.altSquare && "nh".includes(char))
                   found ||= (mode.altDia && "m".includes(char))
-                  found ||= !validLetters.includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
                   found ||= "aähimnqye".includes(char)
                   found ||= (mode.altDia && "w".includes(char))
-                  found ||= !validLetters.includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
                   //separating regular letters
@@ -1304,18 +1308,22 @@ export function charInSet (char, sets) {
                case "ul":
                   //up left sharp
                   found ||= "abdefhijklmnprtuvwxyz".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
                   found ||= "abdefhikmnprvwxz".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
                   found ||= "aefhijkmntuvwxyz".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
                   found ||= "aefhikmnprvwxz".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
                   //separating regular letters
@@ -1337,18 +1345,22 @@ export function charInSet (char, sets) {
                case "ul":
                   //up left sharp
                   found ||= "bhijkltuüvwxyz1457".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
                   found ||= "fhiklmnprvxzß1247".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
                   found ||= "dfijkltuüvwxyz1457".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
                   found ||= "fghiklmnqrxyz1247".includes(char)
+                  found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
                   //separating regular letters

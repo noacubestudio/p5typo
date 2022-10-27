@@ -348,7 +348,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             if (!mode.altS) {
                charWidth = weight * 3 + inner * 2;
                if (charInSet(nextchar, ["gap", "ul"])) {
-                  charWidth += -0.5 * outer + optionalGap;
+                  charWidth += -0.5 * outer + optionalGap -1;
                }
                if (charInSet(prevchar, ["gap", "dr"])) {
                   charWidth += -0.5 * outer;
@@ -417,7 +417,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             }
             break;
          case "t":
-            charWidth = weight + inner * 2 - 1;
+            charWidth = weight + inner * 2 - 2;
             break;
          case "l":
             if (charInSet(nextchar, ["gap", "dl"])) {
@@ -431,6 +431,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             }
             break;
          case "i":
+         case "1":
          case ".":
          case ",":
          case "!":
