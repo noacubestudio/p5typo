@@ -1085,7 +1085,7 @@ function drawElements() {
             translate(0,i+gridHeight+Math.ceil(finalValues.ascenders/2)) //gridHeight*0.5
             if (finalValues.offsetX>0) translate(finalValues.offsetX * ((font === "fontb"||font==="fontc")?2:1),0)
 
-            stroke((mode.dark) ? "#FFBB0080" : "#2222FF40")
+            stroke(palette.fg)
             strokeWeight(0.8*strokeScaleFactor)
 
             const lineText = linesArray[lineNum]
@@ -1098,9 +1098,10 @@ function drawElements() {
 
                const xLeftPos = widthBefore
                const xRightPos = widthBefore + letterWidth
+               const yPos = (c % 2)
                widthBefore += letterWidth + letterKerning
 
-               line(xLeftPos, 0, xRightPos, 0)
+               line(xLeftPos, yPos, xRightPos, yPos)
             }
             pop()
          }

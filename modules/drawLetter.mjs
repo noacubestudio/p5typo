@@ -1197,21 +1197,15 @@ export function drawLetter (letter, font) {
             } else {
                letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
-               if (charInSet(nextchar,["ul"])) {
+               if (charInSet(nextchar,["ul", "gap"])) {
                   drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-               } else if (charInSet(nextchar,["gap"])) {
-                  drawModule(letter, "hori", 2, 2, 0, 0, {cap: true})
                } else {
                   drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                }
                drawModule(letter, "vert", 4, 4, 0, 0, {})
                letter.ytier = 0
                drawModule(letter, "square",1, 1, 0, 0, {type: "branch", at:"end"})
-               if (charInSet(nextchar,["gap"])) {
-                  drawModule(letter, "hori", 2, 2, 0, 0, {cap: true})
-               } else {
-                  drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
-               }
+               drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
                drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             }
             break;
@@ -1352,11 +1346,8 @@ export function drawLetter (letter, font) {
             } else {
                letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
-               if (charInSet(nextchar,["ul"])) {
+               if (charInSet(nextchar,["ul", "gap"])) {
                   drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
-               } else if (charInSet(nextchar,["gap"])) {
-                  drawModule(letter, "round", 2, 2, 0, 0, {})
-                  drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
                } else {
                   drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
                }
