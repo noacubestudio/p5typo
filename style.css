@@ -129,14 +129,25 @@ kbd {
 }
 
 .checkbox-grid-container {
-  margin-top: 0.3em;
+  margin-left: 0.5em;
   display: grid;
   grid-template-columns: repeat(2,1fr);
-  grid-template-rows: repeat(4, max-content);
+  grid-template-rows: repeat(2, max-content);
   grid-column-gap: 0.8em;
   grid-row-gap: 0.1em;
   grid-auto-flow: column;
   justify-content: space-between;
+}
+#checkboxes-view {
+  grid-template-rows: repeat(1, max-content);
+}
+#checkboxes-style {
+  grid-template-rows: repeat(2, max-content);
+}
+hr.solid {
+  width: 98%;
+  border: 0;
+  border-bottom: solid 0.2em rgba(var(--fg-color), 0.1);
 }
 
 .numbers-grid-container {

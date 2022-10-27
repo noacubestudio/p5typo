@@ -276,10 +276,10 @@ function createGUI () {
       endCapStyle = (toggles.roundcapsToggle.checked) ? "round" : "none"
       writeToURL()
    })
-   toggles.fillsToggle = document.getElementById('checkbox-fills')
-   toggles.fillsToggle.checked = mode.drawFills
-   toggles.fillsToggle.addEventListener('click', () => {
-      mode.drawFills = toggles.fillsToggle.checked
+   toggles.roundbranchesToggle = document.getElementById('checkbox-roundbranches')
+   toggles.roundbranchesToggle.checked = (branchStyle === "round")
+   toggles.roundbranchesToggle.addEventListener('click', () => {
+      branchStyle = (toggles.roundbranchesToggle.checked) ? "round" : "square"
       writeToURL()
    })
    toggles.spreadFillsToggle = document.getElementById('checkbox-spreadfills')
@@ -674,6 +674,9 @@ window.keyTyped = function () {
    } else if (key === "c") {
       toggles.roundcapsToggle.click()
       toggles.roundcapsToggle.checked = (endCapStyle === "round")
+   } else if (key === "b") {
+      toggles.roundbranchesToggle.click()
+      toggles.roundbranchesToggle.checked = (branchStyle === "round")
    } else if (key === "1") {
       dropdownTextToEffect("default look")
    } else if (key === "2") {
