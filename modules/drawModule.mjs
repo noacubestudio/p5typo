@@ -655,13 +655,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      if (SPREADY === 0) {
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (OUTERSIZE / 2 + (OUTERSIZE - revSizeY) / -2));
                      }
+                     // if not the innermost one (right one in t)
                      if (Math.abs(outerSpreadY) !== SPREADY / 2) {
                         // change branch length of the ones getting shorter again because of spread
-                        branchLengthY = revSizeY/2 - SPREADY/2 + outerSpreadY + SPREADY/2;
+                        branchLengthY = (OUTERSIZE + INNERSIZE - size)/2; // WIP still no idea
                         lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (branchLengthY));
                      }
                      // from inside
-                     branchLengthY = OUTERSIZE / 2 + (OUTERSIZE - size) / -2 + outerSpreadY;
+                     branchLengthY = size / 2 + outerSpreadY;
                      lineType(baseX, ypos + outerSpreadY * sideY, baseX, ypos + sideY * (branchLengthY));
 
                   } else {
