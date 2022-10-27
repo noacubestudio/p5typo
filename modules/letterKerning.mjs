@@ -3,17 +3,15 @@
 import { finalValues, font, charInSet, endCapStyle, waveValue, mode } from '../sketch.mjs';
 
 
-export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, inner, outer, extendOffset) {
+export function kerningAfter(char, nextchar, inner, outer) {
    const weight = (outer - inner) * 0.5 + finalValues.spreadX * 0.5;
 
    // negative spacing can't go past width of lines
-   spacing = max(spacing, -weight);
-   let optionalGap = map(inner, 1, 2, 0, 1, true);
+   let spacing = max(finalValues.spacing, -weight);
+   const optionalGap = map(inner, 1, 2, 0, 1, true);
 
    // spacing is used between letters that don't make a special ligature
    // some letters force a minimum spacing
-   // WIP: currently depends of number of rings - if there's only one, more space
-   // However, finalValues.rings isn't accurate to real number, also depends on size
    if (font === "fonta") {
       if (finalValues.rings >= 2) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
@@ -53,6 +51,267 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
    if ("|".includes(nextchar))
       spacing = max(spacing, 1);
 
+
+   // overlap after letter, overwrites default variable spacing
+   // only happens if it connects into next letter
+   let overwriteAfter = 0;
+   let ligatureAfter = false;
+   let minSpaceAfter;
+   if (font === "fonta") {
+      switch (char) {
+         case "s":
+            if (!mode.altS) {
+               if (!charInSet(nextchar, ["gap", "ul"])) {
+                  overwriteAfter = -weight;
+                  ligatureAfter = true;
+               } else {
+                  minSpaceAfter = 0;
+               }
+            }
+            break;
+         case "k":
+         case "z":
+            if (!charInSet(nextchar, ["gap", "dl"])) {
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case "x":
+            if (!(charInSet(nextchar, ["gap", "dl"]) && charInSet(nextchar, ["gap", "ul"]))) {
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case "t":
+         case "l":
+            if (!charInSet(nextchar, ["gap", "dl"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case "f":
+         case "c":
+         case "r":
+            if (!charInSet(nextchar, ["gap", "ul"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case ".":
+         case ",":
+         case "!":
+         case "?":
+            if (!charInSet(nextchar, ["gap"])) {
+               minSpaceAfter = 1;
+            }
+      }
+   } else if (font === "fontb") {
+      switch (char) {
+         case "t":
+            minSpaceAfter = 0;
+            break;
+         case "c":
+            if (!charInSet(nextchar, ["gap", "ul"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case "l":
+            if (!charInSet(nextchar, ["gap", "dl"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 0;
+            }
+            break;
+         case "e":
+         case "f":
+            minSpaceAfter = 1;
+            break;
+         case ".":
+         case ",":
+         case "!":
+         case "?":
+            if (!charInSet(nextchar, ["gap"])) {
+               minSpaceAfter = 1;
+            }
+      }
+   } else if (font === "fontc" && !mode.noLigatures) {
+      switch (char) {
+         case "f":
+         case "r":
+            if (!charInSet(nextchar, ["gap"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            }
+            break;
+      }
+   }
+
+   // depending on the next letter, adjust the spacing
+   // only if the current letter doesn't already overlap with it
+   let spaceBefore = 0;
+   let beforeConnect = false;
+   let minSpaceBefore;
+   if (ligatureAfter === false) {
+      if (font === "fonta") {
+         switch (nextchar) {
+            case "s":
+               if (!mode.altS) {
+                  if (!charInSet(char, ["gap", "dr"])) {
+                     spaceBefore = -weight;
+                     beforeConnect = true;
+                  } else {
+                     if ("e".includes(char)) {
+                        beforeConnect = true;
+                        spaceBefore = optionalGap;
+                     } else {
+                        minSpaceBefore = optionalGap;
+                     }
+                  }
+               } else {
+                  //alt s
+                  if (!charInSet(char, ["gap"])) {
+                     spaceBefore = -weight;
+                     beforeConnect = true;
+                  }
+               }
+               break;
+            case "x":
+               if (!(charInSet(char, ["gap", "ur"]) && charInSet(char, ["gap", "dr"]))) {
+                  spaceBefore = -weight;
+                  beforeConnect = true;
+               } else {
+                  if ("e".includes(char)) {
+                     beforeConnect = true;
+                  } else {
+                     minSpaceBefore = 1;
+                  }
+               }
+               break;
+            case "z":
+            case "j":
+               if (!(charInSet(char, ["gap"]))) {
+                  spaceBefore = -weight;
+                  beforeConnect = true;
+               }
+               break;
+            case ",":
+            case ".":
+            case "!":
+            case "?":
+               minSpaceBefore = 1;
+               break;
+         }
+      } else if (font === "fontb") {
+         switch (nextchar) {
+            case "j":
+               if (charInSet(char, ["dr"])) {
+                  spaceBefore = 1;
+                  beforeConnect = true;
+               }
+               minSpaceBefore = 1;
+               break;
+            case "t":
+               minSpaceBefore = 1;
+               break;
+            case ",":
+            case ".":
+            case "!":
+            case "?":
+               minSpaceBefore = 1;
+               break;
+         }
+      }
+   }
+
+   //extra special combinations
+   if (font === "fonta") {
+      if ("ktlcrfsxz".includes(char) && nextchar === "s") {
+         spaceBefore = -inner - weight - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      else if ("ktlcrfsx".includes(char) && nextchar === "x") {
+         spaceBefore = -inner - weight - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
+         spaceBefore = -inner - weight - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      else if ("sr".includes(char) && nextchar === "z") {
+         spaceBefore = -inner - weight - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      else if ("ltkcfx".includes(char) && nextchar === "z") {
+         //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-finalValues.stretchX
+         spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
+         beforeConnect = true;
+         //-i-w+(o/2) //-o+i+2w
+         //w-0.5o
+      }
+      else if ("z".includes(char) && nextchar === "z") {
+         spaceBefore = -2 - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      else if ("z".includes(char) && nextchar === "x") {
+         spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
+         beforeConnect = true;
+      }
+   } else if (font === "fontb") {
+      if ("lct".includes(char) && "tj".includes(nextchar)) {
+         spaceBefore = -outer + weight * 2 + 1 - finalValues.stretchX;
+         beforeConnect = true;
+      }
+      if ("ef".includes(char) && "tj".includes(nextchar)) {
+         spaceBefore = -outer + weight * 2 + 2 - finalValues.stretchX;
+         beforeConnect = true;
+      }
+   }
+
+   // remove overlap spacing if next to space
+   if (charInSet(nextchar, ["gap"])) {
+      spaceBefore = 0;
+      beforeConnect = false;
+   }
+   if (charInSet(char, ["gap"])) {
+      overwriteAfter = 0;
+      ligatureAfter = false;
+   }
+
+   let kerningResult = 0;
+   // if there is no special overlaps, use the global spacing
+   if (ligatureAfter === false && beforeConnect === false) {
+      //regular spacing, if above minspacing
+      if (minSpaceAfter !== undefined || minSpaceBefore !== undefined) {
+         if (minSpaceBefore !== undefined) {
+            kerningResult += max(spacing, minSpaceBefore);
+         } else {
+            kerningResult += max(spacing - 1, minSpaceAfter);
+         }
+      } else if (!"-_ ‸".includes(char) && !"-_ ‸".includes(nextchar)) {
+         kerningResult += spacing;
+      } else if ("‸".includes(nextchar)) {
+         kerningResult += 1;
+      } // other punctuation stays at default
+   } else {
+      kerningResult += overwriteAfter + spaceBefore;
+   }
+
+   return kerningResult;
+}
+
+export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset) {
+   const weight = (outer - inner) * 0.5 + finalValues.spreadX * 0.5;
+   const optionalGap = map(inner, 1, 2, 0, 1, true); // WIP why is this here lol
    // widths of letters without overlapping
    let charWidth = outer;
    if (font === "fonta") {
@@ -94,7 +353,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             }
             break;
          case " ":
-            charWidth = max([2, spacing * 2, inner-1]);
+            charWidth = max([2, finalValues.spacing * 2, inner-1]);
             break;
          case "i":
          case ".":
@@ -167,7 +426,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             charWidth = weight * 1 + inner - 1;
             break;
          case " ":
-            charWidth = max([2, spacing * 2, inner-1]);
+            charWidth = max([2, finalValues.spacing * 2, inner-1]);
             break;
          case "|":
             charWidth = 0;
@@ -195,7 +454,7 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
             }
             break;
          case " ":
-            charWidth = max([2, spacing * 2, inner-1]);
+            charWidth = max([2, finalValues.spacing * 2, inner-1]);
             break;
          case "|":
             charWidth = 0;
@@ -229,269 +488,6 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
          && !"|".includes(char)) {
          charWidth -= 1;
       }
-   }
-
-   let spacingResult = 0;
-   if (isLastLetter === false) {
-      // overlap after letter, overwrites default variable spacing
-      // only happens if it connects into next letter
-      let spaceAfter = 0;
-      let afterConnect = false;
-      let minSpaceAfter;
-      if (font === "fonta") {
-         switch (char) {
-            case "s":
-               if (!mode.altS) {
-                  if (!charInSet(nextchar, ["gap", "ul"])) {
-                     spaceAfter = -weight;
-                     afterConnect = true;
-                  } else {
-                     minSpaceAfter = 0;
-                  }
-               }
-               break;
-            case "k":
-            case "z":
-               if (!charInSet(nextchar, ["gap", "dl"])) {
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case "x":
-               if (!(charInSet(nextchar, ["gap", "dl"]) && charInSet(nextchar, ["gap", "ul"]))) {
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case "t":
-            case "l":
-               if (!charInSet(nextchar, ["gap", "dl"])) {
-                  spaceAfter = -weight;
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case "f":
-            case "c":
-            case "r":
-               if (!charInSet(nextchar, ["gap", "ul"])) {
-                  spaceAfter = -weight;
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case ".":
-            case ",":
-            case "!":
-            case "?":
-               if (!charInSet(nextchar, ["gap"])) {
-                  minSpaceAfter = 1;
-               }
-         }
-      } else if (font === "fontb") {
-         switch (char) {
-            case "t":
-               minSpaceAfter = 0;
-               break;
-            case "c":
-               if (!charInSet(nextchar, ["gap", "ul"])) {
-                  spaceAfter = -weight;
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case "l":
-               if (!charInSet(nextchar, ["gap", "dl"])) {
-                  spaceAfter = -weight;
-                  afterConnect = true;
-               } else {
-                  minSpaceAfter = 0;
-               }
-               break;
-            case "e":
-            case "f":
-               minSpaceAfter = 1;
-               break;
-            case ".":
-            case ",":
-            case "!":
-            case "?":
-               if (!charInSet(nextchar, ["gap"])) {
-                  minSpaceAfter = 1;
-               }
-         }
-      } else if (font === "fontc" && !mode.noLigatures) {
-         switch (char) {
-            case "f":
-            case "r":
-               if (!charInSet(nextchar, ["gap"])) {
-                  spaceAfter = -weight;
-                  afterConnect = true;
-               }
-               break;
-         }
-      }
-
-      // depending on the next letter, adjust the spacing
-      // only if the current letter doesn't already overlap with it
-      let spaceBefore = 0;
-      let beforeConnect = false;
-      let minSpaceBefore;
-      if (afterConnect === false) {
-         if (font === "fonta") {
-            switch (nextchar) {
-               case "s":
-                  if (!mode.altS) {
-                     if (!charInSet(char, ["gap", "dr"])) {
-                        spaceBefore = -weight;
-                        beforeConnect = true;
-                     } else {
-                        if ("e".includes(char)) {
-                           beforeConnect = true;
-                           spaceBefore = optionalGap;
-                        } else {
-                           minSpaceBefore = optionalGap;
-                        }
-                     }
-                  } else {
-                     //alt s
-                     if (!charInSet(char, ["gap"])) {
-                        spaceBefore = -weight;
-                        beforeConnect = true;
-                     }
-                  }
-                  break;
-               case "x":
-                  if (!(charInSet(char, ["gap", "ur"]) && charInSet(char, ["gap", "dr"]))) {
-                     spaceBefore = -weight;
-                     beforeConnect = true;
-                  } else {
-                     if ("e".includes(char)) {
-                        beforeConnect = true;
-                     } else {
-                        minSpaceBefore = 1;
-                     }
-                  }
-                  break;
-               case "z":
-               case "j":
-                  if (!(charInSet(char, ["gap"]))) {
-                     spaceBefore = -weight;
-                     beforeConnect = true;
-                  }
-                  break;
-               case ",":
-               case ".":
-               case "!":
-               case "?":
-                  minSpaceBefore = 1;
-                  break;
-            }
-         } else if (font === "fontb") {
-            switch (nextchar) {
-               case "j":
-                  if (charInSet(char, ["dr"])) {
-                     spaceBefore = 1;
-                     beforeConnect = true;
-                  }
-                  minSpaceBefore = 1;
-                  break;
-               case "t":
-                  minSpaceBefore = 1;
-                  break;
-               case ",":
-               case ".":
-               case "!":
-               case "?":
-                  minSpaceBefore = 1;
-                  break;
-            }
-         }
-      }
-
-      //extra special combinations
-      if (font === "fonta") {
-         if ("ktlcrfsxz".includes(char) && nextchar === "s") {
-            spaceBefore = -inner - weight - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         else if ("ktlcrfsx".includes(char) && nextchar === "x") {
-            spaceBefore = -inner - weight - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         else if ("ktlcrfsxz".includes(char) && nextchar === "j") {
-            spaceBefore = -inner - weight - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         else if ("sr".includes(char) && nextchar === "z") {
-            spaceBefore = -inner - weight - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         else if ("ltkcfx".includes(char) && nextchar === "z") {
-            //spaceBefore = -inner-weight+outer/2//-waveValue(outer, 0, 1)//-weight-2//-finalValues.stretchX
-            spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
-            beforeConnect = true;
-            //-i-w+(o/2) //-o+i+2w
-            //w-0.5o
-         }
-         else if ("z".includes(char) && nextchar === "z") {
-            spaceBefore = -2 - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         else if ("z".includes(char) && nextchar === "x") {
-            spaceBefore = weight - outer / 2 - finalValues.stretchX / 2;
-            beforeConnect = true;
-         }
-      } else if (font === "fontb") {
-         if ("lct".includes(char) && "tj".includes(nextchar)) {
-            spaceBefore = -outer + weight * 2 + 1 - finalValues.stretchX;
-            beforeConnect = true;
-         }
-         if ("ef".includes(char) && "tj".includes(nextchar)) {
-            spaceBefore = -outer + weight * 2 + 2 - finalValues.stretchX;
-            beforeConnect = true;
-         }
-      }
-
-      // remove overlap spacing if next to space
-      if (charInSet(nextchar, ["gap"])) {
-         spaceBefore = 0;
-         beforeConnect = false;
-      }
-      if (charInSet(char, ["gap"])) {
-         spaceAfter = 0;
-         afterConnect = false;
-      }
-
-      // if there is no special overlaps, use the global spacing
-      if (afterConnect === false && beforeConnect === false) {
-         //regular spacing, if above minspacing
-         if (minSpaceAfter !== undefined || minSpaceBefore !== undefined) {
-            if (minSpaceBefore !== undefined) {
-               spacingResult = charWidth + max(spacing, minSpaceBefore);
-            } else {
-               spacingResult = charWidth + max(spacing - 1, minSpaceAfter);
-            }
-         } else if (!"-_ ‸".includes(char) && !"-_ ‸".includes(nextchar)) {
-            spacingResult = charWidth + spacing;
-         } else if ("‸".includes(nextchar)) {
-            // other punctuation?
-            spacingResult = charWidth + 1;
-         } else {
-            // other punctuation?
-            spacingResult = charWidth;
-         }
-      } else {
-         spacingResult = charWidth + spaceAfter + spaceBefore;
-      }
-   } else {
-      // last letter
-      spacingResult = charWidth;
    }
 
    // stretchWidth
@@ -568,5 +564,5 @@ export function letterKerning(isLastLetter, prevchar, char, nextchar, spacing, i
       }
    }
 
-   return spacingResult + stretchWidth;
+   return charWidth + stretchWidth;
 }

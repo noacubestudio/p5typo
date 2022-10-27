@@ -1,7 +1,7 @@
 'use strict'
 
 import { drawLetter } from "./modules/drawLetter.mjs"
-import { letterKerning } from "./modules/letterKerning.mjs"
+import { kerningAfter, letterWidth } from "./modules/letterKerning.mjs"
 
 export let font = "fontc"
 
@@ -997,137 +997,136 @@ function drawElements() {
    strokeWeight((finalValues.weight/10)*strokeScaleFactor)
    palette.fg.setAlpha(255)
 
+   push()
+   // draw certain effects below everything
+   if (stripeEffects.includes(effect)) {
+      drawGrid(effect)
+   }
+   // draw the whole text
+   for (let i = 0; i < linesArray.length; i++) {
+      letterInfo[i] = []
+      drawText(i)
+   }
+   pop()
+
+   // draw debug grid always on top
+   if (viewMode === "xray") {
+      drawGrid("xray")
+   }
+
+   function drawGrid (type) {
       push()
+      if (webglEffects.includes(effect)) translate(0,0,-1)
+      let fontSize = finalValues.size
+      if (font === "fontb" || font === "fontc") fontSize = finalValues.size*2 - min(finalValues.rings, finalValues.size/2) + 1
+      const gridHeight = fontSize + Math.abs(finalValues.offsetY) + finalValues.stretchY + finalValues.spreadY + animExtraY
+      const gridWidth = (width-60)/finalValues.zoom
+      const asc = (font === "fontb") ? 0 : finalValues.ascenders
 
-      // draw certain effects below everything
-      if (stripeEffects.includes(effect)) {
-         drawGrid(effect)
-      }
-
-      // draw the whole text
-      for (let i = 0; i < linesArray.length; i++) {
-         letterInfo[i] = []
-         drawText(i)
-      }
-      pop()
-
-      // draw debug grid always on top
-      if (viewMode === "xray") {
-         drawGrid("xray")
-      }
-   
-      function drawGrid (type) {
-         push()
-         if (webglEffects.includes(effect)) translate(0,0,-1)
-         let fontSize = finalValues.size
-         if (font === "fontb" || font === "fontc") fontSize = finalValues.size*2 - min(finalValues.rings, finalValues.size/2) + 1
-         const gridHeight = fontSize + Math.abs(finalValues.offsetY) + finalValues.stretchY + finalValues.spreadY + animExtraY
-         const gridWidth = (width-60)/finalValues.zoom
-         const asc = (font === "fontb") ? 0 : finalValues.ascenders
-   
-         if (type === "xray") {
-            translate(0,0.5*finalValues.size)
-            for (let lineNum = 0; lineNum < linesArray.length; lineNum++) {
-               stroke("#00FFFF50")
-               strokeWeight(0.2*strokeScaleFactor)
-         
-               const i = lineNum * totalHeight[lineNum] - finalValues.size/2
+      if (type === "xray") {
+         translate(0,0.5*finalValues.size)
+         for (let lineNum = 0; lineNum < linesArray.length; lineNum++) {
+            stroke("#00FFFF50")
+            strokeWeight(0.2*strokeScaleFactor)
       
-               // special horizontal gridlines
-               lineType(0, i, gridWidth, i)
-               lineType(0, i+gridHeight, gridWidth, i+gridHeight)
-               if (font === "fonta") {
-                  //asc/desc
-                  lineType(0, i-asc, gridWidth, i-asc)
-                  lineType(0, i+gridHeight+asc, gridWidth, i+gridHeight+asc)
-                  //midlines
-                  //wip, finalValues.offsetY now unused - maybe still good that it's brighter?
-                  //what about staircase effect?
-                  lineType(0, i+gridHeight/2-finalValues.offsetY*0.5, gridWidth, i+gridHeight/2-finalValues.offsetY*0.5)
-                  lineType(0, i+gridHeight/2+finalValues.offsetY*0.5, gridWidth, i+gridHeight/2+finalValues.offsetY*0.5)   
-               } else if (font === "fontb")  {
-                  lineType(0, i + finalValues.size +finalValues.stretchY*0.5, gridWidth, i + finalValues.size+finalValues.stretchY*0.5)
-                  lineType(0, i+gridHeight -finalValues.size -finalValues.stretchY*0.5, gridWidth, i+gridHeight -finalValues.size -finalValues.stretchY*0.5)
-                  //halfway
-                  lineType(0, i + finalValues.size*0.5, gridWidth, i + finalValues.size*0.5)
-                  lineType(0, i+gridHeight -finalValues.size*0.5, gridWidth, i+gridHeight -finalValues.size*0.5)
-               } else if (font === "fontc") {
-                  lineType(0, i + finalValues.size +finalValues.stretchY*0.5, gridWidth, i + finalValues.size+finalValues.stretchY*0.5)
-                  lineType(0, i+gridHeight -finalValues.size -finalValues.stretchY*0.5, gridWidth, i+gridHeight -finalValues.size -finalValues.stretchY*0.5)
-                  //halfway
-                  lineType(0, i + finalValues.size*0.5, gridWidth, i + finalValues.size*0.5)
-                  lineType(0, i+gridHeight -finalValues.size*0.5, gridWidth, i+gridHeight -finalValues.size*0.5)
-               }
-               palette.fg.setAlpha(50)
-               strokeWeight(0.1*strokeScaleFactor)
-               stroke(palette.fg)
-
-               //horizontal gridlines
-               push()
-               translate(0,i)
-               for (let y = 0; y <= gridHeight; y++) {
-                  lineType(0, y, gridWidth, y)
-               }
-               pop()
-
-               //vertical gridlines
-               push()
-               translate(0,i+gridHeight*0.5)
-               for (let x = 0; x <= gridWidth; x++) {
-                  lineType(x, -gridHeight/2-asc, x, gridHeight/2+asc)
-               }
-               pop()
-      
-               // markers for start of each letter
-               push()
-               translate(0,i+gridHeight*0.5)
-               noStroke()
-               fill((mode.dark) ? "#FFBB00E0" : "#2222FFA0")
-               for (let c = 0; c <= linesArray[lineNum].length; c++) {
-                  const xpos = lineWidthUntil(linesArray[lineNum], c)
-                  if (finalValues.offsetX === 0) {
-                     ellipse(xpos, 0, 0.9, 0.9)
-                  } else {
-                     push()
-                     if (finalValues.offsetX<0) translate(-finalValues.offsetX,0)
-                     stroke((mode.dark) ? "#FFBB00A0" : "#2222FF60")
-                     strokeWeight(0.9*strokeScaleFactor)
-                     noFill()
-                     line(xpos, 0, xpos+finalValues.offsetX, 0)
-                     //ellipse(xpos, -1, 0.9, 0.9)
-                     //ellipse(xpos+finalValues.offsetX, 1, 0.9, 0.9)
-                     pop()
-                  }
-               }
-               pop()
+            const i = lineNum * totalHeight[lineNum] - finalValues.size/2
+   
+            // special horizontal gridlines
+            lineType(0, i, gridWidth, i)
+            lineType(0, i+gridHeight, gridWidth, i+gridHeight)
+            if (font === "fonta") {
+               //asc/desc
+               lineType(0, i-asc, gridWidth, i-asc)
+               lineType(0, i+gridHeight+asc, gridWidth, i+gridHeight+asc)
+               //midlines
+               //wip, finalValues.offsetY now unused - maybe still good that it's brighter?
+               //what about staircase effect?
+               lineType(0, i+gridHeight/2-finalValues.offsetY*0.5, gridWidth, i+gridHeight/2-finalValues.offsetY*0.5)
+               lineType(0, i+gridHeight/2+finalValues.offsetY*0.5, gridWidth, i+gridHeight/2+finalValues.offsetY*0.5)   
+            } else if (font === "fontb")  {
+               lineType(0, i + finalValues.size +finalValues.stretchY*0.5, gridWidth, i + finalValues.size+finalValues.stretchY*0.5)
+               lineType(0, i+gridHeight -finalValues.size -finalValues.stretchY*0.5, gridWidth, i+gridHeight -finalValues.size -finalValues.stretchY*0.5)
+               //halfway
+               lineType(0, i + finalValues.size*0.5, gridWidth, i + finalValues.size*0.5)
+               lineType(0, i+gridHeight -finalValues.size*0.5, gridWidth, i+gridHeight -finalValues.size*0.5)
+            } else if (font === "fontc") {
+               lineType(0, i + finalValues.size +finalValues.stretchY*0.5, gridWidth, i + finalValues.size+finalValues.stretchY*0.5)
+               lineType(0, i+gridHeight -finalValues.size -finalValues.stretchY*0.5, gridWidth, i+gridHeight -finalValues.size -finalValues.stretchY*0.5)
+               //halfway
+               lineType(0, i + finalValues.size*0.5, gridWidth, i + finalValues.size*0.5)
+               lineType(0, i+gridHeight -finalValues.size*0.5, gridWidth, i+gridHeight -finalValues.size*0.5)
             }
-         } else {
+            palette.fg.setAlpha(50)
+            strokeWeight(0.1*strokeScaleFactor)
             stroke(palette.fg)
-            if (viewMode === "xray") {
-               strokeWeight(0.2*strokeScaleFactor)
-            } else {
-               strokeWeight((finalValues.weight/10)*1*strokeScaleFactor)
-            }
+
+            //horizontal gridlines
             push()
-            translate(0,-asc)
-            if (type === "vstripes") {
-               const totalGridHeight = (height-80)/finalValues.zoom //+ (1)*(linesArray.length-1)
-               for (let j = 0; j <= gridWidth; j++) {
-                 lineType(j, 0, j, totalGridHeight)
-               }
+            translate(0,i)
+            for (let y = 0; y <= gridHeight; y++) {
+               lineType(0, y, gridWidth, y)
             }
-            if (type === "hstripes") {
-               const totalGridHeight = (height-80)/finalValues.zoom
-               for (let k = 0; k <= totalGridHeight; k++) {
-                 lineType(0, k, gridWidth, k)
-               }
+            pop()
+
+            //vertical gridlines
+            push()
+            translate(0,i+gridHeight*0.5)
+            for (let x = 0; x <= gridWidth; x++) {
+               lineType(x, -gridHeight/2-asc, x, gridHeight/2+asc)
+            }
+            pop()
+   
+            // markers for start of each letter
+            push()
+            translate(0,i+gridHeight+finalValues.ascenders/2) //gridHeight*0.5
+            if (finalValues.offsetX<0) translate(-finalValues.offsetX,0)
+
+            stroke((mode.dark) ? "#FFBB0080" : "#2222FF40")
+            strokeWeight(0.8*strokeScaleFactor)
+
+            const lineText = linesArray[lineNum]
+            let widthBefore = 0
+
+            for (let c = 0; c < lineText.length; c++) {
+
+               const letterWidth = getWidths(lineText, c, "width")
+               const letterKerning = getWidths(lineText, c, "kerningAfter")
+
+               const xLeftPos = widthBefore
+               const xRightPos = widthBefore + letterWidth
+               widthBefore += letterWidth + letterKerning
+
+               line(xLeftPos, 0, xRightPos, 0)
             }
             pop()
          }
-         palette.bg.setAlpha(255)
-         palette.fg.setAlpha(255)
+      } else {
+         stroke(palette.fg)
+         if (viewMode === "xray") {
+            strokeWeight(0.2*strokeScaleFactor)
+         } else {
+            strokeWeight((finalValues.weight/10)*1*strokeScaleFactor)
+         }
+         push()
+         translate(0,-asc)
+         if (type === "vstripes") {
+            const totalGridHeight = (height-80)/finalValues.zoom //+ (1)*(linesArray.length-1)
+            for (let j = 0; j <= gridWidth; j++) {
+               lineType(j, 0, j, totalGridHeight)
+            }
+         }
+         if (type === "hstripes") {
+            const totalGridHeight = (height-80)/finalValues.zoom
+            for (let k = 0; k <= totalGridHeight; k++) {
+               lineType(0, k, gridWidth, k)
+            }
+         }
          pop()
       }
+      palette.bg.setAlpha(255)
+      palette.fg.setAlpha(255)
+      pop()
+   }
    pop()
 
    if (viewMode === "xray") {
@@ -1411,7 +1410,15 @@ function drawText (lineNum) {
    }
 
    // go through the letters once to get total spacing
-   totalWidth[lineNum] = lineWidthUntil(lineText, lineText.length)
+   const lineCharWidths = []
+   for (let c = 0; c < lineText.length; c++) {
+      const letterWidth = getWidths(lineText, c, "width")
+      const letterKerning = (c < lineText.length) ? getWidths(lineText, c, "kerningAfter") : 0
+      lineCharWidths.push(letterWidth+letterKerning)
+   }
+
+   // used for svg width
+   totalWidth[lineNum] = lineCharWidths.reduce((a, b) => a + b, 0)
 
    // total height
    let fontSize = finalValues.size
@@ -1563,7 +1570,7 @@ function drawText (lineNum) {
          spaceSpots: lineStyle.spaceSpots,
          stopSpots: lineStyle.stopSpots,
          // position and offset after going through all letters in the line until this point
-         posFromLeft: lineWidthUntil(lineText, layerArray.indexOf(layerPos)),
+         posFromLeft: lineCharWidths.slice(0, layerArray.indexOf(layerPos)).reduce((a, b) => a + b, 0),
          posFromTop: calcPosFromTop,
          vOffset: offsetUntil(lineText, layerArray.indexOf(layerPos)),
          // basics
@@ -1846,24 +1853,30 @@ function rowLines (type, xValues, height) {
    }
 }
 
-function lineWidthUntil (lineText, charIndex) {
-   let total = 0
-   //add to total letter per letter until index is reached
-   for (let c = 0; c < charIndex; c++) {
-      // get characters
-      const char = lineText[c]
-      const nextchar = (lineText[c+1] !== undefined) ? lineText[c+1] : " "
-      const prevchar = (lineText[c-1] !== undefined) ? lineText[c-1] : " "
-      // WIP not writing this twice lol
-      let letterInner = getInnerSize(finalValues.size, finalValues.rings) //+ [2,4,3,-2,0,2,4,5][i % 8]
-      let letterOuter = finalValues.size //+ [2,4,3,-2,0,2,4,5][i % 8]
-      //letterInner = waveInner(c, letterInner, letterOuter)
+// function widthBetweenLetters (lineText, startIndex, endIndex) {
+//    let total = 0
+//    //add to total letter per letter until index is reached
+//    for (let c = startIndex; c < endIndex; c++) {
+//       total
+//    }
+//    return total
+// }
 
+function getWidths (lineText, position, type) {
+   // get characters
+   const char = lineText[position]
+   const nextchar = (lineText[position+1] !== undefined) ? lineText[position+1] : " "
+   const prevchar = (lineText[position-1] !== undefined) ? lineText[position-1] : " "
+   // WIP not writing this twice lol
+   let letterInner = getInnerSize(finalValues.size, finalValues.rings) //+ [2,4,3,-2,0,2,4,5][i % 8] //letterInner = waveInner(c, letterInner, letterOuter)
+   let letterOuter = finalValues.size //+ [2,4,3,-2,0,2,4,5][i % 8] 
+
+   if (type === "kerningAfter") {
+      return (lineText[position+1] !== undefined) ? kerningAfter(char, nextchar, letterInner, letterOuter) : 0
+   } else if (type === "width") {
       const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + ((finalValues.stretchX+finalValues.spreadX)-((finalValues.stretchX+finalValues.spreadX)%2))*0.5
-      const isLastLetter = (c === charIndex)
-      total += letterKerning(isLastLetter, prevchar, char, nextchar, finalValues.spacing, letterInner, letterOuter, extendOffset)
+      return letterWidth(prevchar, char, nextchar, letterInner, letterOuter, extendOffset)
    }
-   return total
 }
 
 
