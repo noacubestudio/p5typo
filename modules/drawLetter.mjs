@@ -483,6 +483,7 @@ export function drawLetter (letter, font) {
          case "z":
             let oddOffset = waveValue(sizeOuter, 0, 0.5)
             let leftZoffset = 0
+            const lowerZoffset = letter.weight
             if (charInSet(prevchar,["gap"])) {
                leftZoffset = -letter.weight-1
             } else if ("czfkxt".includes(prevchar)) {
@@ -500,16 +501,16 @@ export function drawLetter (letter, font) {
             }
             drawModule(letter, "hori", 2, 2, leftZoffset, 0, {extend: 1+oddOffset*2})
             letter.flipped = true
-            drawModule(letter, "diagonal", 1, 2, sizeOuter*0.5 +1+oddOffset+leftZoffset, 0, {})
+            drawModule(letter, "diagonal", 1, 2, sizeOuter*0.5 +1+oddOffset+leftZoffset-letter.spreadX*0.5, 0, {})
             // BOTTOM RIGHT OVERLAP
-            drawModule(letter, "diagonal", 3, 3, letter.weight+1-sizeOuter*0.5+oddOffset+leftZoffset, 0, {})
+            drawModule(letter, "diagonal", 3, 3, lowerZoffset+1-sizeOuter*0.5+oddOffset+leftZoffset, 0, {})
             letter.flipped = false
-            drawModule(letter, "hori", 4, 3, letter.weight+2+oddOffset*2+leftZoffset, 0, {extend: 1+oddOffset*2})
+            drawModule(letter, "hori", 4, 3, lowerZoffset+2+oddOffset*2+leftZoffset, 0, {extend: 1+oddOffset*2})
             if (!"zxj".includes(nextchar)) {
                if (charInSet(nextchar,["dl", "gap"])) {
-                  drawModule(letter, "round", 3, 4, letter.weight+2+letter.stretchX*2+oddOffset*2+leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+                  drawModule(letter, "round", 3, 4, lowerZoffset+2+letter.stretchX*2+letter.spreadX*2+oddOffset*2+leftZoffset, 0, {type: "linecut", at:"start", alwaysCut:"true"})
                } else {
-                  drawModule(letter, "round", 3, 4, letter.weight+2+letter.stretchX*2+oddOffset*2+leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
+                  drawModule(letter, "round", 3, 4, lowerZoffset+2+letter.stretchX*2+letter.spreadX*2+oddOffset*2+leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
                }
             }
             break;

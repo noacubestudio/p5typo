@@ -384,6 +384,9 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          const isCutHorizontal = (shapeParams.at === "end" && arcQ % 2 === 0 || shapeParams.at === "start" && arcQ % 2 === 1);
 
          if (shapeParams.type === "linecut" && font === "fonta") {
+            if (isCutVertical) useSpreadY = false; // fix the inside of e
+            if (isCutHorizontal) useSpreadX = false; // fix the inside of a
+
             // move corner inwards vertically if it's cut and facing to middle
             if (isCutVertical && SPREADY > 0) {
                outerSpreadY = 0;
@@ -500,30 +503,29 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (layer === "fg") {
                      let overlapWeight = INNERSIZE;
                      // wip - inside e
-                     if (outerSpreadY !== 0 && isCutVertical)
-                        overlapWeight = INNERSIZE + outerSpreadY + style.stretchY / 2;
+                     // if (outerSpreadY !== 0 && isCutVertical)
+                     //    overlapWeight = INNERSIZE + outerSpreadY + style.stretchY / 2;
                      // wip - inside a
-                     if (outerSpreadX !== 0 && isCutHorizontal)
-                        overlapWeight = INNERSIZE + outerSpreadX + style.stretchX / 2;
+                     // if (outerSpreadX !== 0 && isCutHorizontal)
+                     //    overlapWeight = INNERSIZE + outerSpreadX + style.stretchX / 2;
 
                      cutDifference = HALF_PI - arcUntilLineAt(overlapWeight - 2).angle;
 
                      //now draw the straight line if spread fill
                      if (mode.spreadFills) {
                         //vertical
-                        if (outerSpreadY !== 0 && spreadFillStepY === 0) {
-                           const fHeight = (SPREADY * 0.5) / style.weight;
+                        if (spreadFillStepY === 0 && useSpreadY) {
+                           const fHeight = spreadYScale*2;
                            const offsetY = -Math.abs(outerSpreadY) + arcUntilLineAt(overlapWeight - 2).position;
-                           const distance = INNERSIZE / 2 - 1;
-                           line(xpos + distance, ypos + (offsetY) * sideY, xpos + distance, ypos + (offsetY + fHeight) * sideY);
+                           const distance = (INNERSIZE / 2 - 1)*sideX;
+                           line(xpos + distance, ypos + (offsetY) * sideY, xpos + distance, ypos + (offsetY - fHeight) * sideY);
                         }
-
                         //horizontal
-                        if (outerSpreadX !== 0 && spreadFillStepX === 0) {
-                           const fWidth = (SPREADX * 0.5) / style.weight;
+                        if (spreadFillStepX === 0 && useSpreadX) {
+                           const fWidth = spreadXScale*2;
                            const offsetX = -Math.abs(outerSpreadX) + arcUntilLineAt(overlapWeight - 2).position;
-                           const distance = INNERSIZE / 2 - 1;
-                           line(xpos + (offsetX) * sideX, ypos + distance, xpos + (offsetX + fWidth) * sideX, ypos + distance);
+                           const distance = (INNERSIZE / 2 - 1)*sideY;
+                           line(xpos + (offsetX) * sideX, ypos + distance, xpos + (offsetX - fWidth) * sideX, ypos + distance);
                         }
                      }
                   }
@@ -547,7 +549,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      } else {
                         // use round cut
                         // WIP should use spreadFillStepX here somehow
-                        let circleDistance = INNERSIZE + style.weight - (SPREADX / 2 - Math.abs(outerSpreadX));
+                        let circleDistance = INNERSIZE + style.weight - (SPREADX / 2 - Math.abs(outerSpreadX) + spreadFillStepX*sideX);
 
                         // adjust angle to account for this diagonal because of spread...
                         // if the circles are vertically offset, get the proper distance of the diagonal
