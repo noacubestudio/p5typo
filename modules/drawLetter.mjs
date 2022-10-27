@@ -1383,9 +1383,10 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             // the ascender of the t can be shorter than other ascenders because it has a max relative to size and weight
             // but is always at least 1
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: min(ascenders, max(sizeOuter - letter.weight - 1, 1))})
+            const tAscHeight = min(ascenders, max(sizeInner*0.5-1, 1))
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: tAscHeight})
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-            if ((charInSet(nextchar,["gap"]) && !mode.noLigatures) || "i".includes(nextchar)) {
+            if (!mode.noLigatures || "i".includes(nextchar)) {
                drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: -spreadWeightX-1})
             } else {
                drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: horiRightAdd})
@@ -1395,8 +1396,12 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            if ((charInSet(nextchar,["gap"]) && !mode.noLigatures) || "i".includes(nextchar)) {
-               drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at: "start"})
+            if (!mode.noLigatures || "i".includes(nextchar)) {
+               if (charInSet(nextchar,["gap", "dl"])) {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at: "start"})
+               } else {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "roundcut", at: "start"})
+               }
             } else {
                drawModule(letter, "vert", 2, 2, 0, 0, {})
                drawModule(letter, "round", 3, 3, 0, 0, {})

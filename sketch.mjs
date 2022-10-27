@@ -1291,7 +1291,7 @@ export function charInSet (char, sets) {
                   break;
                case "dr":
                   //down right sharp
-                  found ||= "aähimnqye".includes(char)
+                  found ||= "aähimnqyeg".includes(char)
                   found ||= (mode.altDia && "w".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;

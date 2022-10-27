@@ -101,6 +101,14 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
                minSpaceAfter = 1;
             }
             break;
+         case "t":
+            if (!charInSet(nextchar, ["gap", "dl"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 1;
+            }
+            break;
       }
    }
 
@@ -214,10 +222,6 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
       }
    } else if (font === "fontc") {
       if ("l".includes(char) && "i".includes(nextchar) && !"l".includes(prevchar)) {
-         overwriteAfter = -weight;
-         ligatureAfter = true;
-      }
-      if ("t".includes(char) && "i".includes(nextchar)) {
          overwriteAfter = -weight;
          ligatureAfter = true;
       }
@@ -463,7 +467,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             }
             break;
          case "t":
-            if (charInSet(nextchar, ["gap"])) {
+            if (charInSet(nextchar, ["gap", "dl"])) {
                charWidth = outer - weight - 1;
             }
             break;
