@@ -50,6 +50,7 @@ export let webglEffects = ["spheres"]
 export let defaultRenderer = undefined //use p5 WEBGL or SVG or "" below
 
 export let endCapStyle = "none"
+let branchStyle = "round"
 export let viewMode = "default"
 
 let initialDraw = true
@@ -1603,6 +1604,7 @@ function drawText (lineNum) {
          spreadY: finalValues.spreadY,
          spreadFillSteps: SPREADFILLSTEPSX,
          endCap: endCapStyle,
+         branchStyle: branchStyle,
          xtier: 0, // for wider letters - also inverts flipped if on
          ytier: 0, // for letters with more than 1 level
          flipped: false, // for gradients

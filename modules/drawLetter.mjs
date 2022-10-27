@@ -35,22 +35,31 @@ export function drawLetter (letter, font) {
          case "p":
          case "q":
             // circle
-            drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "round", 4, 4, 0, 0, {})
-            // SECOND LAYER
-            if (char === "d") {
-               drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders})
-            }
-            else if (char === "b") {
+            if (char !== "b") {
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+            } else {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+               drawModule(letter, letter.branchStyle, 1, 1, 0, 0, {type: "branch", at: "end"})
             }
-            else if (char === "q") {
+            if (char !== "d") {
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+            } else {
+               drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders})
+               drawModule(letter, letter.branchStyle, 2, 2, 0, 0, {type: "branch", at: "start"})
+            }
+            if (char !== "q") {
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+            } else {
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
-            } else if (char === "p") {
+               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
+            }
+            if (char !== "p") {
+               drawModule(letter, "round", 4, 4, 0, 0, {})
+            } else {
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
-            } else if (char === "ö") {
+               drawModule(letter, letter.branchStyle, 4, 4, 0, 0, {type: "branch", at: "start"})
+            }
+            if (char === "ö") {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretch: true})
                drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretch: true})
             }
@@ -99,7 +108,8 @@ export function drawLetter (letter, font) {
                drawModule(letter, "square", 3, 3, 0, descenders, {noStretchY: true})
                drawModule(letter, "hori", 4, 4, 0, descenders, {extend: -1, noStretchY: true})
             }
-            drawModule(letter, "round", 3, 3, 0, 0, {})
+            if (descenders > letter.weight) drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
+            else drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             drawModule(letter, "hori", 2, 2, 0, 0, {})
             break;
@@ -302,7 +312,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             if (char === "y") {
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
-               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at: "end"})
+               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
             } else {
                drawModule(letter, "round", 3, 3, 0, 0, {})
             }
@@ -405,7 +415,7 @@ export function drawLetter (letter, font) {
          case "h":
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
             // SECOND LAYER
-            drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+            drawModule(letter, letter.branchStyle, 1, 1, 0, 0, {type: "branch", at:"end"})
             if (mode.altSquare) {
                drawModule(letter, "square", 2, 2, 0, 0, {})
             } else {
@@ -995,8 +1005,7 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
-            drawModule(letter, "vert", 3, 3, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
          case "z":
@@ -1130,12 +1139,12 @@ export function drawLetter (letter, font) {
             if (char !== "b") drawModule(letter, "round", 1, 1, 0, 0, {})
             else {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, letter.branchStyle, 1, 1, 0, 0, {type: "branch", at:"end"})
             }
             if (char !== "d") drawModule(letter, "round", 2, 2, 0, 0, {})
             else {
                drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders})
-               drawModule(letter, "square", 2, 2, 0, 0, {type: "branch", at:"start"})
+               drawModule(letter, letter.branchStyle, 2, 2, 0, 0, {type: "branch", at:"start"})
             }
             drawModule(letter, "vert", 3, 3, 0, 0, {})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
@@ -1149,12 +1158,12 @@ export function drawLetter (letter, font) {
             if (char !== "q") drawModule(letter, "round", 3, 3, 0, 0, {})
             else {
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: ascenders})
-               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at:"end"})
             }
             if (char !== "p") drawModule(letter, "round", 4, 4, 0, 0, {})
             else {
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
-               drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+               drawModule(letter, letter.branchStyle, 4, 4, 0, 0, {type: "branch", at:"start"})
             }
             break;
          case "c":
@@ -1237,7 +1246,7 @@ export function drawLetter (letter, font) {
                   drawModule(letter, "round", 4, 4, 0, descenders, {noStretchY: true})
                }
                // branch over
-               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at:"end"})
             } else {
                letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
@@ -1307,7 +1316,7 @@ export function drawLetter (letter, font) {
             if (char !== "h") drawModule(letter, "round", 1, 1, 0, 0, {})
             else {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, letter.branchStyle, 1, 1, 0, 0, {type: "branch", at:"end"})
             }
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {})
@@ -1477,7 +1486,7 @@ export function drawLetter (letter, font) {
                drawModule(letter, "vert", 1, 1, 0, 0, {})
                drawModule(letter, "vert", 2, 2, 0, 0, {})
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
-               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at:"end"})
                drawModule(letter, "round", 4, 4, 0, 0, {})
             } else {
                drawModule(letter, "round", 3, 3, 0, 0, {})
