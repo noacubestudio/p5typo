@@ -588,11 +588,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                // basic curve for lines, shortened if needed
                arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
 
+               // now draw the lines
+               let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert";
+
                if (layer === "fg") {
-                  // now draw the lines
-                  let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert";
-                  let swappedSize = (INNERSIZE!==OUTERSIZE) ? map(size, INNERSIZE, OUTERSIZE, OUTERSIZE, INNERSIZE) : OUTERSIZE
                   
+                  let swappedSize = (INNERSIZE!==OUTERSIZE) ? map(size, INNERSIZE, OUTERSIZE, OUTERSIZE, INNERSIZE) : OUTERSIZE
                   const revSizeX = outerSpreadX + cutPosition;
                   const revSizeY = outerSpreadY + cutPosition;
 
@@ -602,6 +603,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   } else {
                      const baseX = xpos + sideX * (swappedSize / 2 + outerSpreadX);
                      lineType(baseX, ypos + revSizeY * sideY, baseX, ypos + sideY * OUTERSIZE / 2);
+                  }
+               } else {
+                  if (branchAxis === "hori") {
+                     const baseY = ypos + sideY * (size / 2 + outerSpreadY);
+                     lineType(xpos, baseY, xpos + sideX * OUTERSIZE / 2, baseY);
+                  } else {
+                     const baseX = xpos + sideX * (size / 2 + outerSpreadX);
+                     lineType(baseX, ypos, baseX, ypos + sideY * OUTERSIZE / 2);
                   }
                }
             } else if (drawCurve) { // draw the line (until the cut angle if foreground)
@@ -797,6 +806,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (type === undefined)
                   return false;
                if (type === "branch")
+                  return false;
+               if (type === "linecutM")
                   return false;
                //if (type === "extend") return false
                const cutX = (arcQ % 2 === 0) === (shapeParams.at === "start");

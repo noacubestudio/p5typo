@@ -88,8 +88,8 @@ export function drawLetter (letter, font) {
             }
             break;
          case "g":
-            drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"start", alwaysCut: true})
             drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"start"})
             if (descenders <= letter.weight) {
                // if only one ring, move line down so there is a gap
                const extragap = (sizeOuter > sizeInner) ? 0:1
@@ -111,7 +111,6 @@ export function drawLetter (letter, font) {
             if (descenders > letter.weight) drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
             else drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
-            drawModule(letter, "hori", 2, 2, 0, 0, {})
             break;
          case "c":
             drawModule(letter, "round", 1, 1, 0, 0, {})
