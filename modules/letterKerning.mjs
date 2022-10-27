@@ -546,14 +546,16 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             stretchWidth = 0;
             break;
          default:
-            stretchWidth = (finalValues.stretchX + finalValues.spreadX);
+            stretchWidth = finalValues.stretchX + finalValues.spreadX;
       }
    } else if (font === "fontb") {
       switch (char) {
          case "m":
          case "w":
+            stretchWidth = finalValues.stretchX*2;
+            break;
          case "t":
-            stretchWidth = (finalValues.stretchX + finalValues.spreadX) * 2;
+            stretchWidth = finalValues.stretchX*2;
             break;
          case "i":
          case ".":
@@ -570,7 +572,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
       switch (char) {
          case "m":
          case "w":
-            stretchWidth = (finalValues.stretchX + finalValues.spreadX) * 2;
+            stretchWidth = finalValues.stretchX*2;
             break;
          case "i":
          case "l":
