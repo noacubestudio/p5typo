@@ -443,11 +443,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             let endAngle = startAngle + HALF_PI;
 
             let drawCurve = true; // gets updated in function
-            let cutDifference = shortenAngleBy();
-
+            const cutResult = shortenAngleBy();
+            let cutDifference = cutResult.angle;
+            let cutPosition = cutResult.position;
 
             function shortenAngleBy() {
                let cutDifference = 0;
+               let cutPosition = undefined
 
                function arcUntilLineAt(y) {
                   const altValue = HALF_PI;
@@ -529,10 +531,17 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         }
                      }
                   }
-               } else if (shapeParams.type === "branch") {
+               } else if (shapeParams.type === "linecutM") {
                   if (layer === "fg") {
                      const mediumSize = (OUTERSIZE+INNERSIZE)/2
                      cutDifference = HALF_PI - arcUntilLineAt(min(size, mediumSize)).angle;
+                  }
+               } else if (shapeParams.type === "branch") {
+                  if (layer === "fg") {
+                     const mediumSize = (OUTERSIZE+INNERSIZE)/2
+                     const cutSize = (size > mediumSize) ? 2*mediumSize - size : size
+                     cutDifference = HALF_PI - arcUntilLineAt(cutSize).angle;
+                     cutPosition = arcUntilLineAt(cutSize).position
                   }
                } else if (shapeParams.type === "roundcut") {
 
@@ -560,19 +569,42 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      }
                   }
                }
-               return cutDifference;
+               return {angle: cutDifference, position: cutPosition};
             }
 
 
             // pick which end to cut
-            if (shapeParams.at === "start") {
-               startAngle += cutDifference;
-            } else if (shapeParams.at === "end") {
-               endAngle -= cutDifference;
+            if (shapeParams.at === "start" || shapeParams.at === "end") {
+               if ((shapeParams.at === "start" && shapeParams.type !== "branch") 
+                     || (shapeParams.at === "end" && shapeParams.type === "branch")) {
+                  startAngle += cutDifference;
+               } else {
+                  endAngle -= cutDifference;
+               }
             }
 
-            // draw the line (until the cut angle if foreground)
-            if (drawCurve) {
+            if (drawCurve && shapeParams.type === "branch") {
+
+               // basic curve for lines, shortened if needed
+               arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
+
+               if (layer === "fg") {
+                  // now draw the lines
+                  let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert";
+                  let swappedSize = (INNERSIZE!==OUTERSIZE) ? map(size, INNERSIZE, OUTERSIZE, OUTERSIZE, INNERSIZE) : OUTERSIZE
+                  
+                  const revSizeX = outerSpreadX + cutPosition;
+                  const revSizeY = outerSpreadY + cutPosition;
+
+                  if (branchAxis === "hori") {
+                     const baseY = ypos + sideY * (swappedSize / 2 + outerSpreadY);
+                     lineType(xpos + revSizeX * sideX, baseY, xpos + sideX * OUTERSIZE / 2, baseY);
+                  } else {
+                     const baseX = xpos + sideX * (swappedSize / 2 + outerSpreadX);
+                     lineType(baseX, ypos + revSizeY * sideY, baseX, ypos + sideY * OUTERSIZE / 2);
+                  }
+               }
+            } else if (drawCurve) { // draw the line (until the cut angle if foreground)
 
                const wipGraphics = false;
 
