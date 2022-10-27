@@ -515,14 +515,14 @@ export function drawLetter (letter, font) {
             break;
          case "-":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 1, 1, 0, +sizeOuter*0.5, {extend: -1})
-            drawModule(letter, "hori", 2, 2, 0, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "_":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 3, 3, 0, 0, {extend: -1})
-            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -1})
+            drawModule(letter, "hori", 3, 3, -1, 0, {extend: -1})
+            drawModule(letter, "hori", 4, 4, -1, 0, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case " ":
@@ -1026,14 +1026,14 @@ export function drawLetter (letter, font) {
             break;
          case "-":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 1, 1, 0, +sizeOuter*0.5, {extend: -1})
-            drawModule(letter, "hori", 2, 2, 0, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "_":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 3, 3, 0, 0, {extend: -1})
-            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -1})
+            drawModule(letter, "hori", 3, 3, -1, 0, {extend: -1})
+            drawModule(letter, "hori", 4, 4, -1, 0, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "|":
@@ -1506,14 +1506,14 @@ export function drawLetter (letter, font) {
             break;
          case "-":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 1, 1, 0, +sizeOuter*0.5, {extend: -1})
-            drawModule(letter, "hori", 2, 2, 0, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "_":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 3, 3, 0, 0, {extend: -1})
-            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -1})
+            drawModule(letter, "hori", 3, 3, -1, 0, {extend: -1})
+            drawModule(letter, "hori", 4, 4, -1, 0, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "|":
@@ -1536,6 +1536,26 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
             letter.ytier = 0
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
+            break;
+         case "!":
+            // wip
+            letter.ytier = 1
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 4, 4, 0, 0, {})
+            letter.ytier = 0
+            drawModule(letter, "vert", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight-1.5})
+            drawModule(letter, "vert", 4, 4, 0, 0, {from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
+            break;
+         case "?":
+            // wip
+            letter.ytier = 1
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 3, 3, 0, 0, {})
+            letter.ytier = 0
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {from: sizeOuter*0.5 - (letter.weight+0.5), noStretch: true})
             break;
          case " ":
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)

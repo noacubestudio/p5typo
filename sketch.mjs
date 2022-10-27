@@ -1079,7 +1079,7 @@ function drawElements() {
             // markers for start of each letter
             push()
             translate(0,i+gridHeight+finalValues.ascenders/2) //gridHeight*0.5
-            if (finalValues.offsetX<0) translate(-finalValues.offsetX,0)
+            if (finalValues.offsetX>0) translate(finalValues.offsetX * ((font === "fontb"||font==="fontc")?2:1),0)
 
             stroke((mode.dark) ? "#FFBB0080" : "#2222FF40")
             strokeWeight(0.8*strokeScaleFactor)
