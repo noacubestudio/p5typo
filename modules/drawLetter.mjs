@@ -1256,14 +1256,22 @@ export function drawLetter (letter, font) {
             if (char === "i") {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
                drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
-            }
-            else {
+            } else {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
             }
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            if (char === "l" && "i".includes(nextchar) && !"l".includes(prevchar)) {
+               if (charInSet(nextchar,["dl"])) {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at: "start"})
+               } else {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "roundcut", at: "start"})
+               }
+               drawModule(letter, "round", 4, 4, 0, 0, {})
+            } else {
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            }
             break;
          case "j":
             letter.ytier = 1

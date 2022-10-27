@@ -3,7 +3,7 @@
 import { finalValues, font, charInSet, endCapStyle, waveValue, mode } from '../sketch.mjs';
 
 
-export function kerningAfter(char, nextchar, inner, outer) {
+export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    const weight = (outer - inner) * 0.5 + finalValues.spreadX * 0.5;
 
    // negative spacing can't go past width of lines
@@ -212,6 +212,11 @@ export function kerningAfter(char, nextchar, inner, outer) {
          overwriteBefore = -outer + weight * 2 + 2 - finalValues.stretchX;
          ligatureBefore = true;
       }
+   } else if (font === "fontc") {
+      if ("l".includes(char) && "i".includes(nextchar) && !"l".includes(prevchar)) {
+         overwriteAfter = -weight;
+         ligatureAfter = true;
+      }
    }
 
    // minimum spacing: special cases
@@ -240,7 +245,7 @@ export function kerningAfter(char, nextchar, inner, outer) {
    } else if (font === "fontc") {
       if (finalValues.rings >= 2 && endCapStyle === "none") {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
-               ("dilj".includes(char) && "i".includes(nextchar))) {
+               ("dij".includes(char) && "i".includes(nextchar))) {
             minSpaceAfter = 1;
          }
       } else if (finalValues.rings < 2) {
@@ -435,13 +440,17 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             charWidth = weight * 3 + inner * 2;
             break;
          case "i":
-         case "l":
          case "1":
          case ".":
          case ",":
          case ":":
          case "!":
             charWidth = weight;
+            break;
+         case "l":
+            if (!"i".includes(nextchar) || "l".includes(prevchar)) {
+               charWidth = weight;
+            }
             break;
          case "f":
          case "r":
@@ -496,6 +505,8 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case ".":
          case ",":
          case "!":
+         case "|":
+         case ":":
          case " ":
          case "‸": //caret
             stretchWidth = 0;
@@ -516,6 +527,8 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case ".":
          case ",":
          case "!":
+         case "|":
+         case ":":
          case " ":
          case "‸": //caret
             stretchWidth = 0;
@@ -530,14 +543,22 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             stretchWidth = finalValues.stretchX*2;
             break;
          case "i":
-         case "l":
          case "1":
          case ".":
          case ",":
          case "!":
+         case "|":
+         case ":":
          case " ":
          case "‸": //caret
             stretchWidth = 0;
+            break;
+         case "l":
+            if (nextchar !== "i") {
+               stretchWidth = 0
+            }else {
+               stretchWidth = finalValues.stretchX + finalValues.spreadX
+            }
             break;
          default:
             stretchWidth = (finalValues.stretchX + finalValues.spreadX);

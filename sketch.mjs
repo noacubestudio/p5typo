@@ -1885,7 +1885,7 @@ function getWidths (lineText, position, type) {
    let letterOuter = finalValues.size //+ [2,4,3,-2,0,2,4,5][i % 8] 
 
    if (type === "kerningAfter") {
-      return (lineText[position+1] !== undefined) ? kerningAfter(char, nextchar, letterInner, letterOuter) : 0
+      return (lineText[position+1] !== undefined) ? kerningAfter(prevchar, char, nextchar, letterInner, letterOuter) : 0
    } else if (type === "width") {
       const extendOffset = ((letterOuter % 2 == 0) ? 0 : 0.5) + ((finalValues.stretchX+finalValues.spreadX)-((finalValues.stretchX+finalValues.spreadX)%2))*0.5
       return letterWidth(prevchar, char, nextchar, letterInner, letterOuter, extendOffset)
