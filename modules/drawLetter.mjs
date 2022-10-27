@@ -1385,14 +1385,22 @@ export function drawLetter (letter, font) {
             // but is always at least 1
             drawModule(letter, "vert", 1, 1, 0, 0, {extend: min(ascenders, max(sizeOuter - letter.weight - 1, 1))})
             drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at:"end"})
-            drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: horiRightAdd})
-            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
-            drawModule(letter, "vert", 3, 3, 0, 0, {extra: false})
+            if ((charInSet(nextchar,["gap"]) && !mode.noLigatures) || "i".includes(nextchar)) {
+               drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: -spreadWeightX-1})
+            } else {
+               drawModule(letter, "hori", 2, 2, 0, 0, {cap: true, extend: horiRightAdd})
+               drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
+               drawModule(letter, "vert", 3, 3, 0, 0, {extra: false})
+            }
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
-            drawModule(letter, "vert", 2, 2, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {})
+            if ((charInSet(nextchar,["gap"]) && !mode.noLigatures) || "i".includes(nextchar)) {
+               drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at: "start"})
+            } else {
+               drawModule(letter, "vert", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+            }
             drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
          case "u":

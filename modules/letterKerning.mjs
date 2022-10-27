@@ -217,6 +217,10 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
          overwriteAfter = -weight;
          ligatureAfter = true;
       }
+      if ("t".includes(char) && "i".includes(nextchar)) {
+         overwriteAfter = -weight;
+         ligatureAfter = true;
+      }
    }
 
    // minimum spacing: special cases
@@ -455,6 +459,11 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case "f":
          case "r":
             if (charInSet(nextchar, ["gap", "ul"]) && !mode.noLigatures) {
+               charWidth = outer - weight - 1;
+            }
+            break;
+         case "t":
+            if (charInSet(nextchar, ["gap"])) {
                charWidth = outer - weight - 1;
             }
             break;
