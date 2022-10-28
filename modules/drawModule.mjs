@@ -401,7 +401,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
          pickCornerModule(xpos, ypos, 0, 0, 0);
 
-         // offset effect
+         // fill spread effect
          if (layer === "fg" && mode.spreadFills && (useSpreadX || useSpreadY)) {
             for (let i = 1; i <= style.spreadFillSteps; i++) { // dont draw first step again
                let fillStep = (i / style.spreadFillSteps) * 2;

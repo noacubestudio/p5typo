@@ -1507,10 +1507,9 @@ function drawText (lineNum) {
 
    // get steps and spacing for stretch effect here //td
    const SPREADFILLSTEPSX = (() => {
-      if (finalValues.rings === 1) return 1
       const MINDISTANCETOFILL = finalValues.weight/10
-      const SPREADFILLWIDTH = (finalValues.spreadX*0.5) / (finalValues.rings-1)
-      const SPREADFILLHEIGHT = (finalValues.spreadY*0.5) / (finalValues.rings-1)
+      const SPREADFILLWIDTH = (finalValues.spreadX*0.5) / (finalValues.rings)
+      const SPREADFILLHEIGHT = (finalValues.spreadY*0.5) / (finalValues.rings)
       const SPREADFILLMAX = Math.max(SPREADFILLWIDTH, SPREADFILLHEIGHT)
       const ROUNDUPBY = 0.01 //so it ALWAYS rounds up if it would be perfect
 

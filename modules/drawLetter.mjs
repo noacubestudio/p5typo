@@ -95,7 +95,7 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 4, 4, 0, 0, {type: "linecut", at: "start"})
                drawModule(letter, "hori", 4, 4, 0, 0, {extend:horiLeftAdd})
             } else {
-               if (descenders <= letter.weight) {
+               if (descenders < letter.weight) {
                   // if only one ring, move line down so there is a gap
                   const extragap = (sizeOuter > sizeInner) ? 0:1
                   const lineOffset = (extragap+letter.weight > descenders) ? -(letter.weight-descenders) : extragap
@@ -113,7 +113,7 @@ export function drawLetter (letter, font) {
                   drawModule(letter, "square", 3, 3, 0, descenders, {noStretchY: true})
                   drawModule(letter, "hori", 4, 4, 0, descenders, {extend: -1, noStretchY: true})
                }
-               if (descenders > letter.weight) drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
+               if (descenders >= letter.weight) drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at: "end"})
                else drawModule(letter, "round", 3, 3, 0, 0, {})
                drawModule(letter, "round", 4, 4, 0, 0, {})
             }
@@ -558,10 +558,10 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
             break;
          case "#":
-            drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at: "end"})
-            drawModule(letter, "square", 2, 2, 0, 0, {type: "branch", at: "end"})
-            drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at: "start"})
-            drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at: "start"})
+            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
+            drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at: "end"})
+            drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at: "start"})
+            drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "end"})
             break;
          default:
             letter.sizes = [sizeOuter]
@@ -1274,7 +1274,7 @@ export function drawLetter (letter, font) {
             } else {
                letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
-               drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at:"start"})
+               drawModule(letter, "round", 2, 2, 0, 0, {})
                drawModule(letter, "round", 4, 4, 0, 0, {})
                letter.ytier = 0
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight - 1})
@@ -1282,7 +1282,7 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 3, 3, 0, 0, {})
                drawModule(letter, "round", 4, 4, 0, 0, {})
                letter.ytier = 1
-               drawModule(letter, letter.branchStyle, 3, 3, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, "square", 3, 3, 0, 0, {type: "branch", at:"end"})
             }
             break;
          case "i":
@@ -1566,8 +1566,8 @@ export function drawLetter (letter, font) {
             break;
          case "-":
             letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
-            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 1, 1, -1, 0, {extend: -1})
+            drawModule(letter, "hori", 2, 2, -1, 0, {extend: -1})
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;
          case "_":
@@ -1634,10 +1634,10 @@ export function drawLetter (letter, font) {
          case "#":
             //drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
             //drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
-            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "end"})
+            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
             drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at: "end"})
             drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at: "start"})
-            drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "start"})
+            drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "end"})
             break;
          default:
             letter.opacity = 0.5
