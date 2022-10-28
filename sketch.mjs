@@ -264,12 +264,12 @@ function createGUI () {
       mode.altSquare = toggles.altSquareToggle.checked
       writeToURL()
    })
-   toggles.altSToggle = document.getElementById('checkbox-altS')
-   toggles.altSToggle.checked = mode.altS
-   toggles.altSToggle.addEventListener('click', () => {
-      mode.altS = toggles.altSToggle.checked
-      writeToURL()
-   })
+   // toggles.altSToggle = document.getElementById('checkbox-altS')
+   // toggles.altSToggle.checked = mode.altS
+   // toggles.altSToggle.addEventListener('click', () => {
+   //    mode.altS = toggles.altSToggle.checked
+   //    writeToURL()
+   // })
    toggles.roundcapsToggle = document.getElementById('checkbox-roundcaps')
    toggles.roundcapsToggle.checked = (endCapStyle === "round")
    toggles.roundcapsToggle.addEventListener('click', () => {
@@ -1296,7 +1296,7 @@ export function charInSet (char, sets) {
                case "dr":
                   //down right sharp
                   found ||= "aähimnqyeg".includes(char)
-                  found ||= (mode.altDia && "w".includes(char))
+                  found ||= (mode.altDia && "wv".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
@@ -1312,22 +1312,24 @@ export function charInSet (char, sets) {
             switch (set) {
                case "ul":
                   //up left sharp
-                  found ||= "abdefhijklmnprtuvwxyz".includes(char)
+                  found ||= "abdefhijklmnprtuvwxyz1457".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
-                  found ||= "abdefhikmnprvwxz".includes(char)
+                  found ||= "abdefhikmnprvwxz1247".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
-                  found ||= "aefhijkmntuvwxyz".includes(char)
+                  found ||= "aefhijkmtuvwxyz1457".includes(char)
+                  found ||= (mode.altSquare && "nßg".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
-                  found ||= "aefhikmnprvwxz".includes(char)
+                  found ||= "aefhikmnprvwxz1247".includes(char)
+                  found ||= (mode.altSquare && "g".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
@@ -1350,6 +1352,7 @@ export function charInSet (char, sets) {
                case "ul":
                   //up left sharp
                   found ||= "bhijkltuüvwxyz1457".includes(char)
+                  found ||= (mode.altSquare && "n".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
@@ -1360,6 +1363,7 @@ export function charInSet (char, sets) {
                case "ur":
                   //up right sharp
                   found ||= "dfijkltuüvwxyz1457".includes(char)
+                  found ||= (mode.altSquare && "nh".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dr":

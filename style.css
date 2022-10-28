@@ -144,6 +144,9 @@ kbd {
 #checkboxes-style {
   grid-template-rows: repeat(2, max-content);
 }
+#checkboxes-alts {
+  grid-template-rows: repeat(1, max-content);
+}
 hr.solid {
   width: 98%;
   border: 0;
@@ -267,6 +270,10 @@ textarea::-webkit-scrollbar {
 /* When the checkbox is checked, add a background */
 .checkbox-container input:checked ~ .checkmark {
   background-color: rgba(var(--fg-color), 1);
+}
+
+.checkbox-container:hover input:checked ~ .checkmark {
+  background-color: rgba(var(--fg-color), 0.6);
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
