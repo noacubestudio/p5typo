@@ -1327,7 +1327,7 @@ export function charInSet (char, sets) {
                   break;
                case "dl":
                   //down left sharp
-                  found ||= "abdfhikmnprvwxz1247&".includes(char)
+                  found ||= "abdfhijkmnprvwxz1247&".includes(char)
                   found ||= (mode.altSquare && "e".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
@@ -1370,6 +1370,7 @@ export function charInSet (char, sets) {
                case "dl":
                   //down left sharp
                   found ||= "fhiklmnprvxzß1247".includes(char)
+                  found ||= (!mode.noLigatures && "j".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
@@ -1381,6 +1382,7 @@ export function charInSet (char, sets) {
                case "dr":
                   //down right sharp
                   found ||= "fghiklmnqrxyz1247".includes(char)
+                  found ||= (!mode.noLigatures && "t".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "gap":
@@ -1492,7 +1494,7 @@ function drawText (lineNum) {
    // go in a weird order so that lower letters go first
    let connectingUnderPrev = "sjzx"
    if (font === "fontb") connectingUnderPrev = "jt"
-   else if (font === "fontc") connectingUnderPrev = ""
+   else if (font === "fontc") connectingUnderPrev = "j"
 
    let prevOverlapCharCount = 0
    for (let c = 0; c < lineText.length; c++) {

@@ -38,7 +38,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    const PLUSX = STRETCHX + SPREADX;
    const PLUSY = STRETCHY + SPREADY + EXTRAY;
 
-   const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (SIZES.length >= 2);
+   const DRAWCAP = (shapeParams.extend !== undefined || shapeParams.cap === true) && (shapeParams.noCap !== true) && (SIZES.length >= 2);
    const DRAWREVCAP = (shapeParams.from !== undefined) && (SIZES.length >= 2);
 
    // offset halfs
