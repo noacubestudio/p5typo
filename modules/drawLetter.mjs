@@ -794,7 +794,7 @@ export function drawLetter (letter, font) {
          case "e":
          case "f":
             letter.ytier = 1
-            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, ((mode.altSquare)?"square":"round"), 1, 1, 0, 0, {})
             drawModule(letter, "hori", 2, 2, 0, 0, {extend: -letter.weight-1})
             drawModule(letter, "vert", 4, 4, 0, 0, {})
             letter.ytier = 0
@@ -804,7 +804,7 @@ export function drawLetter (letter, font) {
                if (!"j".includes(nextchar)) {
                   drawModule(letter, "hori", 3, 3, 0, 0, {extend: -letter.weight-1})
                }
-               drawModule(letter, "square", 4, 4, 0, 0, {})
+               drawModule(letter, ((mode.altSquare)?"square":"round"), 4, 4, 0, 0, {})
             } else if (char === "f"){
                drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             }
@@ -944,11 +944,11 @@ export function drawLetter (letter, font) {
             letter.ytier = 1
             drawModule(letter, "round", 1, 1, 0, 0, {})
             drawModule(letter, "round", 2, 2, 0, 0, {})
-            drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+            drawModule(letter, "vert", 3, 3, 0, 0, {extend: -letter.weight -1})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             letter.ytier = 0
             letter.flipped = true
-            drawModule(letter, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -letter.weight -1})
             drawModule(letter, "round", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -1021,7 +1021,7 @@ export function drawLetter (letter, font) {
             break;
          case "y":
             letter.ytier = 0
-            drawModule(letter, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "vert", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
@@ -1036,11 +1036,11 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 1, 1, 0, 0, {})
             drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "round", 3, 3, 0, 0, {})
-            drawModule(letter, "round", 4, 4, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -spreadWeightY -1})
             letter.ytier = 0
             letter.flipped = true
             drawModule(letter, "round", 1, 1, 0, 0, {})
-            drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+            drawModule(letter, "vert", 2, 2, 0, 0, {extend: -spreadWeightY -1})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
@@ -1528,7 +1528,7 @@ export function drawLetter (letter, font) {
                drawModule(letter, "round", 4, 4, 0, 0, {})
             } else {
                letter.ytier = 0
-               drawModule(letter, "round", 1, 1, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: -spreadWeightY -1})
                drawModule(letter, "vert", 2, 2, 0, 0, {})
                drawModule(letter, "round", 3, 3, 0, 0, {})
                drawModule(letter, "round", 4, 4, 0, 0, {})

@@ -546,6 +546,17 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case "‸": //caret
             stretchWidth = 0;
             break;
+         case "e":
+         case "f":
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX*1.5);
+            break;
+         // case "j":
+         //    stretchWidth = (finalValues.stretchX + finalValues.spreadX*0.5);
+         //    break;
+         case "l":
+         case "c":
+            stretchWidth = (finalValues.stretchX + finalValues.spreadX*2);
+            break;
          default:
             stretchWidth = (finalValues.stretchX + finalValues.spreadX);
       }

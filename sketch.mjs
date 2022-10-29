@@ -1312,23 +1312,27 @@ export function charInSet (char, sets) {
             switch (set) {
                case "ul":
                   //up left sharp
-                  found ||= "abdefhijklmnprtuvwxyz1457".includes(char)
+                  found ||= "bdhijklmnprtuvwxyz1457".includes(char)
+                  found ||= (mode.altSquare && "ef".includes(char))
+                  found ||= (mode.altDia && "a".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
-                  found ||= "abdefhikmnprvwxz1247".includes(char)
+                  found ||= "abdfhikmnprvwxz1247&".includes(char)
+                  found ||= (mode.altSquare && "e".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
-                  found ||= "aefhijkmtuvwxyz1457".includes(char)
-                  found ||= (mode.altSquare && "nßg".includes(char))
+                  found ||= "efhijkmtuvwxyz1457".includes(char)
+                  found ||= (mode.altSquare && "nßg&".includes(char))
+                  found ||= (mode.altDia && "a".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
-                  found ||= "aefhikmnprvwxz1247".includes(char)
+                  found ||= "aefhikmnpqrvwxz1247".includes(char)
                   found ||= (mode.altSquare && "g".includes(char))
                   found ||= !validLetters[font].includes(char)
                   break;
