@@ -64,6 +64,7 @@ export const mode = {
    wave: false,
    centeredEffect: false,
    centeredOffset: false,
+   boundingBoxes: false,
    // use alt letters?
    noLigatures: false,
    altS: false,
@@ -685,6 +686,13 @@ window.keyTyped = function () {
       dropdownTextToEffect("more colorful")
    } else if (key === "4") {
       dropdownTextToEffect("monochrome")
+   } else if (key === "x") {
+      mode.boundingBoxes = true;
+   }
+}
+window.keyReleased = function () {
+   if (key === "x") {
+      mode.boundingBoxes = false;
    }
 }
 

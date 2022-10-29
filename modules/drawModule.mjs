@@ -44,6 +44,9 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    // offset halfs
    const OFFSETBOTTOM = (offQ === 3 || offQ === 4) ? 1 : 0;
    const OFFSETRIGHT  = (offQ === 2 || offQ === 3) ? 1 : 0;
+   // get orientations in both axes
+   const SIDEX = (arcQ === 1 || arcQ === 4) ? -1 : 1;
+   const SIDEY = (arcQ === 1 || arcQ === 2) ? -1 : 1;
 
 
    // modify the module position before drawing
@@ -123,6 +126,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    })();
 
    (function drawModuleFG() {
+      if (mode.boundingBoxes) return
+
       // draw the foreground
       if (!webglEffects.includes(effect) && defaultRenderer !== WEBGL) {
          strokeCap(ROUND);
@@ -154,6 +159,36 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       });
    })();
 
+   (function drawBoundingBox() {
+      if (!mode.boundingBoxes) return
+
+      strokeCap(SQUARE);
+      strokeWeight(0.2 * strokeScaleFactor)
+      noFill()
+
+      const EXTENDX = (shapeParams.extend !== undefined && shape === "hori") ? shapeParams.extend : 0
+      const EXTENDY = (shapeParams.extend !== undefined && shape === "vert") ? shapeParams.extend : 0
+
+      const innerX = basePos.x - SIDEX * (STRETCHX*0.5 + SPREADX*0.5)
+      const innerY = basePos.y - SIDEY * (STRETCHY*0.5 + SPREADY*0.5)
+      const outerX = basePos.x + SIDEX * (OUTERSIZE*0.5 + EXTENDX)
+      const outerY = basePos.y + SIDEY * (OUTERSIZE*0.5 + EXTENDY)
+
+      //rect(outerX-0.5*SIDEX, innerY, outerX, outerY)
+      //rect(innerX, outerY-0.5*SIDEY, outerX, outerY)
+      for (let step = 0; step < 5; step++) {
+         palette.fg.setAlpha(map(step, 0, 4, 20, 255))
+         stroke(palette.fg)
+         line(
+            map(step, 0, 5, innerX, outerX),
+            map(step, 0, 5, innerY, outerY),
+            map(step+1, 0, 5, innerX, outerX),
+            map(step+1, 0, 5, innerY, outerY)
+         )
+      }
+      palette.fg.setAlpha(255)
+   })();
+
 
 
    function drawSinglePathOfModule(size, layer, outerSpreadX, outerSpreadY, useSpreadX, useSpreadY) {
@@ -164,10 +199,6 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          // gradient from inside to outside - color or weight
          ringStyle(style, shape, size, INNERSIZE, OUTERSIZE);
       }
-      // get orientations in both axes
-      const sideX = (arcQ === 1 || arcQ === 4) ? -1 : 1;
-      const sideY = (arcQ === 1 || arcQ === 2) ? -1 : 1;
-
 
       // specific modules:
       if (shape === "vert" || shape === "hori") {
@@ -219,8 +250,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          if (layer === "fg" && mode.spreadFills && (useSpreadX || useSpreadY)) {
             for (let i = 1; i <= style.spreadFillSteps; i++) {
                let fillStep = (i / style.spreadFillSteps) * 2;
-               let movedPosX = ((SPREADX > 0 && shape === "vert") ? spreadXScale * fillStep * -sideX : 0);
-               let movedPosY = ((SPREADY > 0 && shape === "hori") ? spreadYScale * fillStep * -sideY : 0);
+               let movedPosX = ((SPREADX > 0 && shape === "vert") ? spreadXScale * fillStep * -SIDEX : 0);
+               let movedPosY = ((SPREADY > 0 && shape === "hori") ? spreadYScale * fillStep * -SIDEY : 0);
                pickLineModule({
                   x1: basePos.x + movedPosX, x2: basePos.x + movedPosX, 
                   y1: basePos.y + movedPosY, y2: basePos.y + movedPosY
@@ -246,21 +277,21 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          }
 
          function drawVerticalModule(linePos, spreadFillStepX, spreadFillStepY, fillIndexX) {
-            linePos.x1 += sideX * (size * 0.5 + outerSpreadX);
-            linePos.x2 += sideX * (size * 0.5 + outerSpreadX);
-            linePos.y1 += sideY * (LINE_START + outerSpreadY);
-            linePos.y2 += sideY * LINE_END;
+            linePos.x1 += SIDEX * (size * 0.5 + outerSpreadX);
+            linePos.x2 += SIDEX * (size * 0.5 + outerSpreadX);
+            linePos.y1 += SIDEY * (LINE_START + outerSpreadY);
+            linePos.y2 += SIDEY * LINE_END;
 
             // if centered midlines are active, don't draw the vertical line, instead add to array
             if (midlineEffects.includes(effect) && mode.centeredEffect && (font === "fontb" || font === "fontc")) {
 
                // relevant possible spots
-               if ((style.ytier === 1 && sideY === 1) || (style.ytier === 0 && sideY === -1)) {
+               if ((style.ytier === 1 && SIDEY === 1) || (style.ytier === 0 && SIDEY === -1)) {
                   if (!shapeParams.broken && shapeParams.extend === undefined && shapeParams.from === undefined) {
-                     if (style.ytier === 1 && sideY === 1) {
+                     if (style.ytier === 1 && SIDEY === 1) {
                         if (layer === "fg") includeInCenteredEffect()
                         return
-                     } else if (style.ytier === 0 && sideY === -1) {
+                     } else if (style.ytier === 0 && SIDEY === -1) {
                         return
                      }
                   } else if (layer === "fg") {
@@ -281,22 +312,22 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   // for some reason size is never OUTERSIZE then, so this is needed for now
                   //should only add this once, like only if size is smallest
                   if (size === INNERSIZE && fillIndexX !== 0) {
-                     sortIntoArray(style.centerFxSpots[0][fillIndexX], linePos.x1+sideX*(OUTERSIZE*0.5));
+                     sortIntoArray(style.centerFxSpots[0][fillIndexX], linePos.x1+SIDEX*(OUTERSIZE*0.5));
                   }
                }
             }
 
 
             //only draw the non-stretch part if it is long enough to be visible
-            if (sideY * (linePos.y2 - linePos.y1) >= 0) {
+            if (SIDEY * (linePos.y2 - linePos.y1) >= 0) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2);
 
                // draw the end cap
                if (layer === "fg" && style.endCap !== "none" && (DRAWCAP || DRAWREVCAP)) {
                   if (DRAWCAP)
-                     drawVerticalCaps(style.endCap, linePos.y2, sideY);
+                     drawVerticalCaps(style.endCap, linePos.y2, SIDEY);
                   if (DRAWREVCAP)
-                     drawVerticalCaps(style.endCap, linePos.y1, -sideY);
+                     drawVerticalCaps(style.endCap, linePos.y1, -SIDEY);
                }
             }
             function drawVerticalCaps(capStyle, endPoint, endDir) {
@@ -304,13 +335,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   const capScale = map(style.weight, 0, 2, 0, 1, true)
                   if (size === OUTERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
-                        linePos.x2 - 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 - 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
+                        linePos.x2 - 0.5 * capScale * SIDEX, endPoint + endDir * 1 * capScale, linePos.x2 - 1 * capScale * SIDEX, endPoint + endDir * 1 * capScale);
                   } else if (size === INNERSIZE) {
                      bezier(linePos.x1, endPoint, linePos.x1, endPoint + endDir * 0.5 * capScale,
-                        linePos.x2 + 0.5 * capScale * sideX, endPoint + endDir * 1 * capScale, linePos.x2 + 1 * capScale * sideX, endPoint + endDir * 1 * capScale);
+                        linePos.x2 + 0.5 * capScale * SIDEX, endPoint + endDir * 1 * capScale, linePos.x2 + 1 * capScale * SIDEX, endPoint + endDir * 1 * capScale);
                      if (style.weight >= 2) {
-                        lineType(linePos.x2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadX) * sideX - spreadFillStepX, endPoint + 1 * endDir,
-                           linePos.x2 + 1 * sideX, endPoint + 1 * endDir);
+                        lineType(linePos.x2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadX) * SIDEX - spreadFillStepX, endPoint + 1 * endDir,
+                           linePos.x2 + 1 * SIDEX, endPoint + 1 * endDir);
                      }
                   }
                }
@@ -318,24 +349,24 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (PLUSY > 0 && LINE_FROM === 0) {
                if (STRETCHY > 0)
-                  drawStretchLines("stretch", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
-               if (EXTRAY > 0 && drawExtra && sideY * (linePos.y2 - linePos.y1) >= 0)
-                  drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+                  drawStretchLines("stretch", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+               if (EXTRAY > 0 && drawExtra && SIDEY * (linePos.y2 - linePos.y1) >= 0)
+                  drawStretchLines("extra", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
                if (SPREADY > 0)
-                  drawStretchLines("spread", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+                  drawStretchLines("spread", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
             }
 
             if (layer === "fg") drawDot(linePos.x1, linePos.y1)
          }
 
          function drawHorizontalModule(linePos, spreadFillStepX, spreadFillStepY, fillIndexX) {
-            linePos.y1 += sideY * (size * 0.5 + outerSpreadY);
-            linePos.y2 += sideY * (size * 0.5 + outerSpreadY);
-            linePos.x1 += sideX * (LINE_START + outerSpreadX);
-            linePos.x2 += sideX * LINE_END;
+            linePos.y1 += SIDEY * (size * 0.5 + outerSpreadY);
+            linePos.y2 += SIDEY * (size * 0.5 + outerSpreadY);
+            linePos.x1 += SIDEX * (LINE_START + outerSpreadX);
+            linePos.x2 += SIDEX * LINE_END;
 
             //only draw the non-stretch part if it is long enough to be visible
-            if (sideX * (linePos.x2 - linePos.x1) >= 0) {
+            if (SIDEX * (linePos.x2 - linePos.x1) >= 0) {
                lineType(linePos.x1, linePos.y1, linePos.x2, linePos.y2);
 
                // draw the end cap
@@ -349,14 +380,14 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   const capScale = map(style.weight, 0, 2, 0, 1, true)
                   if (size === OUTERSIZE) {
                      //lineType(linePos.x1, linePos.y2 , linePos.x2-1*sideX , linePos.y2 + sideY*1)
-                     bezier(linePos.x2, linePos.y1, linePos.x2 + sideX * 0.5 * capScale, linePos.y1,
-                        linePos.x2 + sideX * 1 * capScale, linePos.y2 - 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 - 1 * capScale * sideY);
+                     bezier(linePos.x2, linePos.y1, linePos.x2 + SIDEX * 0.5 * capScale, linePos.y1,
+                        linePos.x2 + SIDEX * 1 * capScale, linePos.y2 - 0.5 * capScale * SIDEY, linePos.x2 + SIDEX * 1 * capScale, linePos.y2 - 1 * capScale * SIDEY);
                   } else if (size === INNERSIZE) {
-                     bezier(linePos.x2, linePos.y2, linePos.x2 + sideX * 0.5 * capScale, linePos.y2,
-                        linePos.x2 + sideX * 1 * capScale, linePos.y2 + 0.5 * capScale * sideY, linePos.x2 + sideX * 1 * capScale, linePos.y2 + 1 * capScale * sideY);
+                     bezier(linePos.x2, linePos.y2, linePos.x2 + SIDEX * 0.5 * capScale, linePos.y2,
+                        linePos.x2 + SIDEX * 1 * capScale, linePos.y2 + 0.5 * capScale * SIDEY, linePos.x2 + SIDEX * 1 * capScale, linePos.y2 + 1 * capScale * SIDEY);
                      if (style.weight >= 2) {
-                        lineType(linePos.x2 + 1 * sideX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * sideY - spreadFillStepY,
-                           linePos.x2 + 1 * sideX, linePos.y2 + 1 * sideY);
+                        lineType(linePos.x2 + 1 * SIDEX, linePos.y2 + (OUTERSIZE / 2 - INNERSIZE / 2 - 1 - outerSpreadY) * SIDEY - spreadFillStepY,
+                           linePos.x2 + 1 * SIDEX, linePos.y2 + 1 * SIDEY);
                         //lineType(linePos.x2, linePos.y2+(OUTERSIZE/2-INNERSIZE/2-1)*sideY , linePos.x2 , linePos.y2+1*sideY)
                      }
                   }
@@ -365,9 +396,9 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (PLUSX > 0 && LINE_FROM === 0) {
                if (STRETCHX > 0)
-                  drawStretchLines("stretch", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0);
+                  drawStretchLines("stretch", SIDEX, SIDEY, "hori", spreadFillStepX, spreadFillStepY, 0);
                if (SPREADX > 0)
-                  drawStretchLines("spread", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0);
+                  drawStretchLines("spread", SIDEX, SIDEY, "hori", spreadFillStepX, spreadFillStepY, 0);
             }
 
             if (layer === "fg") drawDot(linePos.x1, linePos.y1)
@@ -390,12 +421,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             // move corner inwards vertically if it's cut and facing to middle
             if (isCutVertical && SPREADY > 0) {
                outerSpreadY = 0;
-               ypos -= sideY * SPREADY / 2;
+               ypos -= SIDEY * SPREADY / 2;
             }
             // move corner inwards horizontally if it's cut and facing to middle in font a
             if (isCutHorizontal && SPREADX > 0) {
                outerSpreadX = 0;
-               xpos -= sideX * SPREADX / 2;
+               xpos -= SIDEX * SPREADX / 2;
             }
          }
 
@@ -405,8 +436,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          if (layer === "fg" && mode.spreadFills && (useSpreadX || useSpreadY)) {
             for (let i = 1; i <= style.spreadFillSteps; i++) { // dont draw first step again
                let fillStep = (i / style.spreadFillSteps) * 2;
-               let fillOffsetX = (SPREADX > 0) ? spreadXScale * fillStep * -sideX : 0;
-               let fillOffsetY = (SPREADY > 0) ? spreadYScale * fillStep * -sideY : 0;
+               let fillOffsetX = (SPREADX > 0) ? spreadXScale * fillStep * -SIDEX : 0;
+               let fillOffsetY = (SPREADY > 0) ? spreadYScale * fillStep * -SIDEY : 0;
                pickCornerModule(xpos + fillOffsetX, ypos + fillOffsetY, fillOffsetX, fillOffsetY, ((SPREADX > 0) ? i : 0));
                if (SPREADX > 0) {
                   pickCornerModule(xpos, ypos, fillOffsetX, fillOffsetY, i);
@@ -430,8 +461,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   break;
             }
             //drawCornerFillCaps(xpos, ypos, spreadFillStepX, spreadFillStepY) //WIP BROKEN/USELESS?
-            if (layer === "fg") drawDot(xpos + sideX * size / 2, ypos)
-            if (layer === "fg") drawDot(xpos, ypos + sideY * size / 2)
+            if (layer === "fg") drawDot(xpos + SIDEX * size / 2, ypos)
+            if (layer === "fg") drawDot(xpos, ypos + SIDEY * size / 2)
             drawCornerStretch(xpos, ypos, spreadFillStepX, spreadFillStepY, fillIndexX); // UHHH DOESN"T ACTUALLY MAKE COPIES
          }
 
@@ -519,15 +550,15 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                         if (spreadFillStepY === 0 && useSpreadY) {
                            const fHeight = spreadYScale*2;
                            const offsetY = -Math.abs(outerSpreadY) + arcUntilLineAt(overlapWeight - 2).position;
-                           const distance = (INNERSIZE / 2 - 1)*sideX;
-                           line(xpos + distance, ypos + (offsetY) * sideY, xpos + distance, ypos + (offsetY - fHeight) * sideY);
+                           const distance = (INNERSIZE / 2 - 1)*SIDEX;
+                           line(xpos + distance, ypos + (offsetY) * SIDEY, xpos + distance, ypos + (offsetY - fHeight) * SIDEY);
                         }
                         //horizontal
                         if (spreadFillStepX === 0 && useSpreadX) {
                            const fWidth = spreadXScale*2;
                            const offsetX = -Math.abs(outerSpreadX) + arcUntilLineAt(overlapWeight - 2).position;
-                           const distance = (INNERSIZE / 2 - 1)*sideY;
-                           line(xpos + (offsetX) * sideX, ypos + distance, xpos + (offsetX - fWidth) * sideX, ypos + distance);
+                           const distance = (INNERSIZE / 2 - 1)*SIDEY;
+                           line(xpos + (offsetX) * SIDEX, ypos + distance, xpos + (offsetX - fWidth) * SIDEX, ypos + distance);
                         }
                      }
                   }
@@ -550,7 +581,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
                   if (layer === "fg" && INNERSIZE > 1) {
 
-                     let heightDistance = Math.abs(outerSpreadY) - spreadFillStepY * sideY;
+                     let heightDistance = Math.abs(outerSpreadY) - spreadFillStepY * SIDEY;
 
                      if (heightDistance > arcUntilLineAt(INNERSIZE - 2).position) {
                         // use if far enough inside letter
@@ -558,7 +589,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      } else {
                         // use round cut
                         // WIP should use spreadFillStepX here somehow
-                        let circleDistance = INNERSIZE + style.weight - (SPREADX / 2 - Math.abs(outerSpreadX) + spreadFillStepX*sideX);
+                        let circleDistance = INNERSIZE + style.weight - (SPREADX / 2 - Math.abs(outerSpreadX) + spreadFillStepX*SIDEX);
 
                         // adjust angle to account for this diagonal because of spread...
                         // if the circles are vertically offset, get the proper distance of the diagonal
@@ -586,7 +617,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (drawCurve && shapeParams.type === "branch") {
 
                // basic curve for lines, shortened if needed
-               arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
+               arcType(xpos + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY, size, size, startAngle, endAngle);
 
                // now draw the lines
                let branchAxis = ((arcQ % 2 === 1) === (shapeParams.at === "start")) ? "hori" : "vert";
@@ -598,19 +629,19 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   const revSizeY = outerSpreadY + cutPosition;
 
                   if (branchAxis === "hori") {
-                     const baseY = ypos + sideY * (swappedSize / 2 + outerSpreadY);
-                     lineType(xpos + revSizeX * sideX, baseY, xpos + sideX * OUTERSIZE / 2, baseY);
+                     const baseY = ypos + SIDEY * (swappedSize / 2 + outerSpreadY);
+                     lineType(xpos + revSizeX * SIDEX, baseY, xpos + SIDEX * OUTERSIZE / 2, baseY);
                   } else {
-                     const baseX = xpos + sideX * (swappedSize / 2 + outerSpreadX);
-                     lineType(baseX, ypos + revSizeY * sideY, baseX, ypos + sideY * OUTERSIZE / 2);
+                     const baseX = xpos + SIDEX * (swappedSize / 2 + outerSpreadX);
+                     lineType(baseX, ypos + revSizeY * SIDEY, baseX, ypos + SIDEY * OUTERSIZE / 2);
                   }
                } else {
                   if (branchAxis === "hori") {
-                     const baseY = ypos + sideY * (size / 2 + outerSpreadY);
-                     lineType(xpos, baseY, xpos + sideX * OUTERSIZE / 2, baseY);
+                     const baseY = ypos + SIDEY * (size / 2 + outerSpreadY);
+                     lineType(xpos, baseY, xpos + SIDEX * OUTERSIZE / 2, baseY);
                   } else {
-                     const baseX = xpos + sideX * (size / 2 + outerSpreadX);
-                     lineType(baseX, ypos, baseX, ypos + sideY * OUTERSIZE / 2);
+                     const baseX = xpos + SIDEX * (size / 2 + outerSpreadX);
+                     lineType(baseX, ypos, baseX, ypos + SIDEY * OUTERSIZE / 2);
                   }
                }
             } else if (drawCurve) { // draw the line (until the cut angle if foreground)
@@ -620,7 +651,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                if (layer === "fg" || shapeParams.type === undefined || shapeParams.type === "extend") {
 
                   // basic curve for lines, shortened if needed
-                  arcType(xpos + outerSpreadX * sideX, ypos + outerSpreadY * sideY, size, size, startAngle, endAngle);
+                  arcType(xpos + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY, size, size, startAngle, endAngle);
 
                } else if (wipGraphics && layer === "bg" && (mode.svg || viewMode === "xray" || stripeEffects.includes(effect))) {
 
@@ -682,51 +713,51 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                }
 
                // side bit, not in branch direction
-               const baseX = xpos + sideX * (size / 2 + outerSpreadX);
-               const baseY = ypos + sideY * (size / 2 + outerSpreadY);
+               const baseX = xpos + SIDEX * (size / 2 + outerSpreadX);
+               const baseY = ypos + SIDEY * (size / 2 + outerSpreadY);
                if (branchAxis === "vert") {
-                  lineType(xpos + outerSpreadX * sideX, baseY, xpos + sideX * branchLengthX / 2, baseY);
+                  lineType(xpos + outerSpreadX * SIDEX, baseY, xpos + SIDEX * branchLengthX / 2, baseY);
                } else {
-                  lineType(baseX, ypos + outerSpreadY * sideY, baseX, ypos + sideY * branchLengthY / 2);
+                  lineType(baseX, ypos + outerSpreadY * SIDEY, baseX, ypos + SIDEY * branchLengthY / 2);
                }
 
                if (branchAxis === "vert") {
                   if (size < (OUTERSIZE + INNERSIZE) / 2) {
                      //from outside
                      if (SPREADY === 0) {
-                        lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (OUTERSIZE / 2 + (OUTERSIZE - revSizeY) / -2));
+                        lineType(baseX, ypos + OUTERSIZE / 2 * SIDEY, baseX, ypos + SIDEY * (OUTERSIZE / 2 + (OUTERSIZE - revSizeY) / -2));
                      }
                      // if not the innermost one (right one in t)
                      if (Math.abs(outerSpreadY) !== SPREADY / 2) {
                         // change branch length of the ones getting shorter again because of spread
                         branchLengthY = (OUTERSIZE + INNERSIZE - size)/2; // WIP still no idea
-                        lineType(baseX, ypos + OUTERSIZE / 2 * sideY, baseX, ypos + sideY * (branchLengthY));
+                        lineType(baseX, ypos + OUTERSIZE / 2 * SIDEY, baseX, ypos + SIDEY * (branchLengthY));
                      }
                      // from inside
                      branchLengthY = size / 2 + outerSpreadY;
-                     lineType(baseX, ypos + outerSpreadY * sideY, baseX, ypos + sideY * (branchLengthY));
+                     lineType(baseX, ypos + outerSpreadY * SIDEY, baseX, ypos + SIDEY * (branchLengthY));
 
                   } else {
                      // outer rings
-                     lineType(baseX, ypos + outerSpreadY * sideY, baseX, ypos + sideY * (OUTERSIZE / 2));
+                     lineType(baseX, ypos + outerSpreadY * SIDEY, baseX, ypos + SIDEY * (OUTERSIZE / 2));
                   }
                } else if (branchAxis === "hori") {
                   if (size < (OUTERSIZE + INNERSIZE) / 2) {
                      //from outside
                      if (SPREADX === 0) {
-                        lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (OUTERSIZE / 2 + (OUTERSIZE - revSizeX) / -2), baseY);
+                        lineType(xpos + OUTERSIZE / 2 * SIDEX, baseY, xpos + SIDEX * (OUTERSIZE / 2 + (OUTERSIZE - revSizeX) / -2), baseY);
                      }
                      if (Math.abs(outerSpreadX) !== SPREADX / 2) {
                         // change branch length of the ones getting shorter again because of spread
                         branchLengthX = revSizeX/2 - SPREADX/2 + outerSpreadX + SPREADX/2;
-                        lineType(xpos + OUTERSIZE / 2 * sideX, baseY, xpos + sideX * (branchLengthX), baseY);
+                        lineType(xpos + OUTERSIZE / 2 * SIDEX, baseY, xpos + SIDEX * (branchLengthX), baseY);
                      }
                      // from inside
                      branchLengthX = OUTERSIZE / 2 + (OUTERSIZE - size) / -2 + outerSpreadX;
-                     lineType(xpos + outerSpreadX * sideX, baseY, xpos + sideX * (branchLengthX), baseY);
+                     lineType(xpos + outerSpreadX * SIDEX, baseY, xpos + SIDEX * (branchLengthX), baseY);
                   } else {
                      // outer rings
-                     lineType(xpos + outerSpreadX * sideX, baseY, xpos + sideX * (OUTERSIZE / 2), baseY);
+                     lineType(xpos + outerSpreadX * SIDEX, baseY, xpos + SIDEX * (OUTERSIZE / 2), baseY);
                   }
                }
 
@@ -734,23 +765,23 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                // regular square corner
                beginShape();
-               vertex(xpos + sideX * size / 2 + outerSpreadX * sideX, ypos + outerSpreadY * sideY); // start
+               vertex(xpos + SIDEX * size / 2 + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY); // start
                if (cornerRoundLength === 1 && size === OUTERSIZE) {
                   //rounded corner on outer size
-                  const xBez1 = xpos + sideX * size / 2 + outerSpreadX * sideX;
-                  const yBez1 = ypos + sideY * size / 2 + outerSpreadY * sideY - 1 * sideY;
-                  const xBez2 = xpos + sideX * size / 2 + outerSpreadX * sideX - 1 * sideX;
-                  const yBez2 = ypos + sideY * size / 2 + outerSpreadY * sideY;
+                  const xBez1 = xpos + SIDEX * size / 2 + outerSpreadX * SIDEX;
+                  const yBez1 = ypos + SIDEY * size / 2 + outerSpreadY * SIDEY - 1 * SIDEY;
+                  const xBez2 = xpos + SIDEX * size / 2 + outerSpreadX * SIDEX - 1 * SIDEX;
+                  const yBez2 = ypos + SIDEY * size / 2 + outerSpreadY * SIDEY;
                   vertex(xBez1, yBez1);
                   endShape();
-                  bezier(xBez1, yBez1, xBez1, yBez1 + 0.5 * sideY,
-                     xBez2 + 0.5 * sideX, yBez2, xBez2, yBez2);
+                  bezier(xBez1, yBez1, xBez1, yBez1 + 0.5 * SIDEY,
+                     xBez2 + 0.5 * SIDEX, yBez2, xBez2, yBez2);
                   beginShape();
                   vertex(xBez2, yBez2);
                } else {
-                  vertex(xpos + sideX * size / 2 + outerSpreadX * sideX, ypos + sideY * size / 2 + outerSpreadY * sideY); // middle
+                  vertex(xpos + SIDEX * size / 2 + outerSpreadX * SIDEX, ypos + SIDEY * size / 2 + outerSpreadY * SIDEY); // middle
                }
-               vertex(xpos + outerSpreadX * sideX, ypos + sideY * size / 2 + outerSpreadY * sideY);
+               vertex(xpos + outerSpreadX * SIDEX, ypos + SIDEY * size / 2 + outerSpreadY * SIDEY);
                endShape();
             }
          }
@@ -759,8 +790,8 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             const step = (size - INNERSIZE) / 2 + 1;
             const stepslope = step * tan(HALF_PI / 4);
-            let xPoint = createVector(xpos + sideX * size / 2, ypos + sideY * stepslope);
-            let yPoint = createVector(xpos + sideX * stepslope, ypos + sideY * size / 2);
+            let xPoint = createVector(xpos + SIDEX * size / 2, ypos + SIDEY * stepslope);
+            let yPoint = createVector(xpos + SIDEX * stepslope, ypos + SIDEY * size / 2);
 
             if (layer === "fg") {
                if (shapeParams.type === "linecut" && ((OUTERSIZE - INNERSIZE) / 2 + 1) * tan(HALF_PI / 4) < INNERSIZE / 2 - 2) {
@@ -771,28 +802,28 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                      changeAxis = (arcQ === 1 || arcQ === 3) ? "y" : "x";
                   }
                   if (changeAxis === "x") {
-                     xPoint.x = xpos + sideX * (OUTERSIZE / 2 - style.weight - 1);
-                     xPoint.y = yPoint.y - (OUTERSIZE / 2 - style.weight - 1) + sideY * stepslope;
-                     lineType(xpos + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY, yPoint.x + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY);
+                     xPoint.x = xpos + SIDEX * (OUTERSIZE / 2 - style.weight - 1);
+                     xPoint.y = yPoint.y - (OUTERSIZE / 2 - style.weight - 1) + SIDEY * stepslope;
+                     lineType(xpos + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY, yPoint.x + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY);
                   } else if (changeAxis === "y") {
-                     yPoint.y = ypos + sideY * (OUTERSIZE / 2 - style.weight - 1);
-                     yPoint.x = xPoint.x - (OUTERSIZE / 2 - style.weight - 1) + sideX * stepslope;
-                     lineType(xPoint.x + outerSpreadX * sideX, ypos + outerSpreadY * sideY, xPoint.x + outerSpreadX * sideX, xPoint.y + outerSpreadY * sideY);
+                     yPoint.y = ypos + SIDEY * (OUTERSIZE / 2 - style.weight - 1);
+                     yPoint.x = xPoint.x - (OUTERSIZE / 2 - style.weight - 1) + SIDEX * stepslope;
+                     lineType(xPoint.x + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY, xPoint.x + outerSpreadX * SIDEX, xPoint.y + outerSpreadY * SIDEY);
                   }
-                  lineType(xPoint.x + outerSpreadX * sideX, xPoint.y + outerSpreadY * sideY, yPoint.x + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY);
+                  lineType(xPoint.x + outerSpreadX * SIDEX, xPoint.y + outerSpreadY * SIDEY, yPoint.x + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY);
                } else {
-                  lineType(xPoint.x + outerSpreadX * sideX, xPoint.y + outerSpreadY * sideY, yPoint.x + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY);
+                  lineType(xPoint.x + outerSpreadX * SIDEX, xPoint.y + outerSpreadY * SIDEY, yPoint.x + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY);
                   if (step > 0) {
-                     lineType(xPoint.x + outerSpreadX * sideX, ypos + outerSpreadY * sideY, xPoint.x + outerSpreadX * sideX, xPoint.y + outerSpreadY * sideY);
-                     lineType(xpos + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY, yPoint.x + outerSpreadX * sideX, yPoint.y + outerSpreadY * sideY);
+                     lineType(xPoint.x + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY, xPoint.x + outerSpreadX * SIDEX, xPoint.y + outerSpreadY * SIDEY);
+                     lineType(xpos + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY, yPoint.x + outerSpreadX * SIDEX, yPoint.y + outerSpreadY * SIDEY);
                   }
                }
             } else {
                beginShape();
-               vertex(xpos + sideX * size / 2 + outerSpreadX * sideX, ypos + outerSpreadY * sideY);
-               vertex(xpos + sideX * size / 2 + outerSpreadX * sideX, ypos + sideY * stepslope + outerSpreadY * sideY);
-               vertex(xpos + sideX * stepslope + outerSpreadX * sideX, ypos + sideY * size / 2 + outerSpreadY * sideY);
-               vertex(xpos + outerSpreadX * sideX, ypos + sideY * size / 2 + outerSpreadY * sideY);
+               vertex(xpos + SIDEX * size / 2 + outerSpreadX * SIDEX, ypos + outerSpreadY * SIDEY);
+               vertex(xpos + SIDEX * size / 2 + outerSpreadX * SIDEX, ypos + SIDEY * stepslope + outerSpreadY * SIDEY);
+               vertex(xpos + SIDEX * stepslope + outerSpreadX * SIDEX, ypos + SIDEY * size / 2 + outerSpreadY * SIDEY);
+               vertex(xpos + outerSpreadX * SIDEX, ypos + SIDEY * size / 2 + outerSpreadY * SIDEY);
                endShape();
             }
          }
@@ -818,10 +849,10 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
                if (font === "fonta" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "fontb" || font === "fontc") {
                   if (SPREADX > 0)
-                     drawStretchLines("spread", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0);
+                     drawStretchLines("spread", SIDEX, SIDEY, "hori", spreadFillStepX, spreadFillStepY, 0);
                }
                if (STRETCHX > 0)
-                  drawStretchLines("stretch", sideX, sideY, "hori", spreadFillStepX, spreadFillStepY, 0);
+                  drawStretchLines("stretch", SIDEX, SIDEY, "hori", spreadFillStepX, spreadFillStepY, 0);
 
             }
 
@@ -830,12 +861,12 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                // round shapes should get vertical spread effect, unless...
                if (font === "fonta" && !(shapeParams.type === "linecut" && isCutVertical) || font === "fontb" || font === "fontc") {
                   if (SPREADY > 0)
-                     drawStretchLines("spread", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+                     drawStretchLines("spread", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
                }
                if (STRETCHY > 0)
-                  drawStretchLines("stretch", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+                  drawStretchLines("stretch", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
                if (EXTRAY > 0)
-                  drawStretchLines("extra", sideX, sideY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
+                  drawStretchLines("extra", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
             }
 
             const extendamount = ((OUTERSIZE % 2 == 0) ? 0 : 0.5) + (style.stretchX - (style.stretchX % 2)) * 0.5;
@@ -843,8 +874,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                const toSideX = (arcQ === 1 || arcQ === 2) ? -1 : 1;
                let extendXPos = xpos;
                let extendYPos = ypos + (size * 0.5 + outerSpreadY) * toSideX;
-               const dirX = (arcQ === 1 || arcQ === 4) ? 1 : -1;
-               lineType(extendXPos, extendYPos, extendXPos + dirX * extendamount, extendYPos);
+               lineType(extendXPos, extendYPos, extendXPos + SIDEX*-1 * extendamount, extendYPos);
             }
          }
 
