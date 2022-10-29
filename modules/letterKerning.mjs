@@ -596,8 +596,11 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
                stretchWidth = finalValues.stretchX + finalValues.spreadX
             }
             break;
+         case "j":
+            stretchWidth = finalValues.stretchX + finalValues.spreadX*0.5
+            break;
          default:
-            stretchWidth = (finalValues.stretchX + finalValues.spreadX);
+            stretchWidth = finalValues.stretchX + finalValues.spreadX;
       }
    }
 
