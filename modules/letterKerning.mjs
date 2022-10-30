@@ -110,6 +110,26 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
             }
             break;
       }
+   } else if (font === "lower2x3") {
+      switch (char) {
+         case "r":
+         case "c":
+            if (!charInSet(nextchar, ["gap", "ul"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 1;
+            }
+            break;
+         case "f":
+            if (!charInSet(nextchar, ["gap", "dl"])) {
+               overwriteAfter = -weight;
+               ligatureAfter = true;
+            } else {
+               minSpaceAfter = 1;
+            }
+            break;
+      }
    }
 
    // depending on the next char, adjust the spacing
@@ -500,6 +520,58 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             charWidth = max(1, outer-2)
             break;
       }
+   } else if (font === "lower2x3") {
+      switch (char) {
+         case "o":
+         case "ö":
+         case "v":
+            break;
+         case " ":
+            charWidth = max([2, finalValues.spacing * 2, inner-1]);
+            break;
+         case "i":
+         case "l":
+         case "j":
+         case ".":
+         case ",":
+         case "!":
+            charWidth = weight;
+            break;
+         case "‸":
+            charWidth = 1;
+            if (charInSet(nextchar, ["gap"])) {
+               charWidth = 0;
+            }
+            break;
+         case "c":
+            if (charInSet(nextchar, ["gap", "ul"])) {
+               charWidth = outer - weight - 1;
+            } else {
+               charWidth = outer;
+            }
+            break;
+         case "r":
+            if (charInSet(nextchar, ["gap", "ul"])) {
+               charWidth = outer + inner - 1;
+            } else {
+               charWidth = weight * 3 + inner * 2;
+            }
+            break;
+         case "f":
+            if (charInSet(nextchar, ["gap", "dl"])) {
+               charWidth = outer + inner - 1;
+            } else {
+               charWidth = weight * 3 + inner * 2;
+            }
+            break;
+         case "m":
+         case "w":
+            charWidth = weight * 4 + inner * 3;
+            break;
+         default:
+            charWidth = weight * 3 + inner * 2;
+            break;
+      }
    }
 
    // stretchWidth
@@ -601,6 +673,26 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             break;
          default:
             stretchWidth = finalValues.stretchX + finalValues.spreadX;
+      }
+   } else if (font === "lower2x3") {
+      switch (char) {
+         case "i":
+         case "j":
+         case "l":
+            stretchWidth = 0
+            break;
+         case "o":
+         case "ö":
+         case "v":
+            stretchWidth = finalValues.stretchX
+            break;
+         case "m":
+         case "w":
+            stretchWidth = finalValues.stretchX*3
+            break;
+         default:
+            stretchWidth = finalValues.stretchX*2;
+            break;
       }
    }
 

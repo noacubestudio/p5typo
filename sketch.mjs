@@ -3,7 +3,10 @@
 import { drawLetter } from "./modules/drawLetter.mjs"
 import { kerningAfter, letterWidth } from "./modules/letterKerning.mjs"
 
-export let font = "lower3x2"
+export let font = "lower3x2" // default
+export let fonts2x = ["lower2x2", "lower2x3"]
+export let fonts3x = ["upper3x2", "lower3x2"]
+export let fontsLower = ["lower2x2", "lower2x3", "lower3x2"]
 
 // gui
 let canvasEl
@@ -35,6 +38,7 @@ const validLetters = {
    lower2x2: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸ ",
    upper3x2: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 ",
    lower3x2: "abcdefghijklmnopqrstuvwxyzäöüß,.!?-_|‸1234567890 ",
+   lower2x3: "abcdefghijklmnopqrstuvwxyz‸ "
 }
 
 
@@ -452,14 +456,20 @@ function loadFromURL () {
    }
    if (params.font !== undefined) {
       switch (params.font) {
-         case "b":
+         case "up3x2":
             font = "upper3x2"
-            print("Loaded font: B")
+            print("Loaded typeface: Uppercase 3x2")
             break;
-         case "a":
+         case "low2x2":
             font = "lower2x2"
-            print("Loaded font: A")
+            print("Loaded typeface: Lowercase 2x2")
             break;
+         case "low2x3":
+            font = "lower2x3"
+            print("Loaded with typeface: Lowercase 2x3")
+            break;
+         default:
+            print("Loaded with default typeface")
       }
    }
    if (params.lines !== null && params.lines.length > 0) {
@@ -624,10 +634,13 @@ function writeToURL (noReload) {
    if (font !== "lower3x2") {
       switch (font) {
          case "upper3x2":
-            newParams.append("font", "b")
+            newParams.append("font", "up3x2")
             break;
          case "lower2x2":
-            newParams.append("font", "a")
+            newParams.append("font", "low2x2")
+            break;
+         case "lower2x3":
+            newParams.append("font", "low2x3")
             break;
       }
    }
@@ -915,10 +928,11 @@ window.draw = function () {
    }
 
    // if inner size is below 2, add 1 grid size of vertical stretch
-   animExtraY = map(getInnerSize(finalValues.size, finalValues.rings), 1,2, 1,0, true)
+   animExtraY = 0;
+   if (font !== "lower2x3") animExtraY = map(getInnerSize(finalValues.size, finalValues.rings), 1,2, 1,0, true)
 
    finalValues.spacing = lerpValues("spacing")
-   // if less than 2 rings, approach a minimum forced spacing of 1 no matter what - right now just for font c
+   // if less than 2 rings, approach a minimum forced spacing of 1 no matter what - right now just for lowercase 3x
    // something similar happens in the letterKerning function...
    if (font === "lower3x2" && finalValues.rings < 2) finalValues.spacing = max(2-finalValues.rings, finalValues.spacing)
    finalValues.offsetX = lerpValues("offsetX")
@@ -1006,7 +1020,7 @@ function drawElements() {
    scale(finalValues.zoom)
 
    // font styles with ascenders and descenders start lower so they stay on screen
-   if (font === "lower2x2" || font === "lower3x2") {
+   if (fontsLower.includes(font)) {
       translate(0, finalValues.ascenders)
    }
 
@@ -1034,10 +1048,10 @@ function drawElements() {
       push()
       if (webglEffects.includes(effect)) translate(0,0,-1)
       let fontSize = finalValues.size
-      if (font === "upper3x2" || font === "lower3x2") fontSize = finalValues.size*2 - min(finalValues.rings, finalValues.size/2) + 1
+      if (fonts3x.includes(font)) fontSize = finalValues.size*2 - min(finalValues.rings, finalValues.size/2) + 1
       const gridHeight = fontSize + Math.abs(finalValues.offsetY) + finalValues.stretchY + finalValues.spreadY + animExtraY
       const gridWidth = (width-60)/finalValues.zoom
-      const asc = (font === "upper3x2") ? 0 : finalValues.ascenders
+      const asc = (!fontsLower.includes(font)) ? 0 : finalValues.ascenders
 
       if (type === "xray") {
          translate(0,0.5*finalValues.size)
@@ -1050,7 +1064,7 @@ function drawElements() {
             // special horizontal gridlines
             lineType(0, i, gridWidth, i)
             lineType(0, i+gridHeight, gridWidth, i+gridHeight)
-            if (font === "lower2x2") {
+            if (font === "lower2x2" || font === "lower2x3") {
                //asc/desc
                lineType(0, i-asc, gridWidth, i-asc)
                lineType(0, i+gridHeight+asc, gridWidth, i+gridHeight+asc)
@@ -1095,7 +1109,7 @@ function drawElements() {
             // markers for start of each letter
             push()
             translate(0,i+gridHeight+Math.ceil(finalValues.ascenders/2)) //gridHeight*0.5
-            if (finalValues.offsetX>0) translate(finalValues.offsetX * ((font === "upper3x2"||font==="lower3x2")?2:1),0)
+            if (finalValues.offsetX>0) translate(finalValues.offsetX * ((fonts3x.includes(font))?2:1),0)
 
             stroke(palette.fg)
             strokeWeight(0.8*strokeScaleFactor)
@@ -1390,6 +1404,33 @@ export function charInSet (char, sets) {
                   found ||= "., :;-_!?‸|".includes(char)
                   break;
             }
+         } else if (font === "lower2x3") {
+            switch (set) {
+               case "ul":
+                  //up left sharp
+                  found ||= "befhijklnprtuvwyz".includes(char)
+                  found ||= !validLetters[font].includes(char)
+                  break;
+               case "dl":
+                  //down left sharp
+                  found ||= "befhijklmnprvz".includes(char)
+                  found ||= !validLetters[font].includes(char)
+                  break;
+               case "ur":
+                  //up right sharp
+                  found ||= "adgijlqruvwyz".includes(char)
+                  found ||= !validLetters[font].includes(char)
+                  break;
+               case "dr":
+                  //down right sharp
+                  found ||= "adghijlmnqruwyz".includes(char)
+                  found ||= !validLetters[font].includes(char)
+                  break;
+               case "gap":
+                  //separating regular letters
+                  found ||= "., :;-_!?‸|".includes(char)
+                  break;
+            }
          }
       }
    });
@@ -1458,7 +1499,7 @@ function drawText (lineNum) {
    // total height
    let fontSize = finalValues.size
    let stretchSize = finalValues.stretchY + finalValues.spreadY + animExtraY*0.5
-   if (font === "upper3x2" || font === "lower3x2") {
+   if (fonts3x.includes(font)) {
       fontSize = finalValues.size*2 - min(finalValues.rings, finalValues.size/2)
 
       //WIP: this would make each stretch side be an integer...
@@ -1470,7 +1511,7 @@ function drawText (lineNum) {
 
    totalHeight[lineNum] = fontSize + Math.abs(finalValues.offsetY) + stretchSize + finalValues.ascenders + max(1,finalValues.spacing)
    // add a space so that 0 space means they have a single gap
-   if (font === "upper3x2" || font === "lower3x2") totalHeight[lineNum]++;
+   if (fonts3x.includes(font)) totalHeight[lineNum]++;
 
    // wip test: always fit on screen?
    //values.zoom.from = (width) / (Math.max(...totalWidth)+7)
@@ -1480,14 +1521,14 @@ function drawText (lineNum) {
    push()
    if (finalValues.offsetX < 0 && effect !== "staircase") {
       translate(-finalValues.offsetX,0)
-   } else if (finalValues.offsetX > 0 && effect !== "staircase" && (font === "upper3x2" || font === "lower3x2")) {
+   } else if (finalValues.offsetX > 0 && effect !== "staircase" && (fonts3x.includes(font))) {
       //go the other way for 3-tiered text
       translate(finalValues.offsetX,0)
    }
 
    //translate to (lower) midline
    translate(0,fontSize-0.5*finalValues.size)
-   if (font === "upper3x2" || font === "lower3x2") translate(0, 1 + (finalValues.stretchY + finalValues.spreadY)*0.5)
+   if (fonts3x.includes(font)) translate(0, 1 + (finalValues.stretchY + finalValues.spreadY)*0.5)
 
 
    // go through all the letters, but this time to actually draw them
@@ -1544,7 +1585,7 @@ function drawText (lineNum) {
       caretSpots: [],
       spaceSpots: [],
    }
-   if (font === "upper3x2" || font === "lower3x2") {
+   if (fonts3x.includes(font)) {
       lineStyle.stretchFxSpots = [
          [...Array(SPREADFILLSTEPSX+1)].map(x => []), 
          [...Array(SPREADFILLSTEPSX+1)].map(x => [])
@@ -1656,7 +1697,7 @@ function drawText (lineNum) {
          strokeWeight(0.2*strokeScaleFactor)
       }
       // run for each stage
-      if (font === "upper3x2" || font === "lower3x2") {
+      if (fonts3x.includes(font)) {
          if (mode.centeredEffect) {
             drawMidlineEffects(0, "centered", lineStyle)
          }
@@ -1683,7 +1724,7 @@ function drawText (lineNum) {
       stroke(palette.fg)
 
       // remove stretch fx spots where center fx spots are to prevent overlaps
-      if (mode.centeredEffect && positionMode === "stretch" && (font === "upper3x2" || font === "lower3x2")) {
+      if (mode.centeredEffect && positionMode === "stretch" && (fonts3x.includes(font))) {
          for (let i = 0; i < lineStyle.stretchFxSpots[ytier].length; i++) {
             // compare only tier 0 for now, but do for every spread (i)
             const myArray = lineStyle.stretchFxSpots[ytier][i];
@@ -1693,13 +1734,13 @@ function drawText (lineNum) {
          }
       }
 
-      const stretchFxSpots = (positionMode === "centered" && (font === "upper3x2" || font === "lower3x2")) ? lineStyle.centerFxSpots : lineStyle.stretchFxSpots;
+      const stretchFxSpots = (positionMode === "centered" && (fonts3x.includes(font))) ? lineStyle.centerFxSpots : lineStyle.stretchFxSpots;
       const caretSpots = lineStyle.caretSpots;
       const spaceSpots = lineStyle.spaceSpots;
       const stopSpots = lineStyle.stopSpots;
 
       let stretchHeight = finalValues.stretchY
-      if (font === "upper3x2" || font === "lower3x2") {
+      if (fonts3x.includes(font)) {
          if (positionMode === "centered") {
             stretchHeight = (finalValues.size - finalValues.rings) + 1 + finalValues.stretchY
          } else {
@@ -1707,7 +1748,7 @@ function drawText (lineNum) {
          }
       }
 
-      if ((font === "upper3x2" || font === "lower3x2")) {
+      if (fonts3x.includes(font)) {
          if (positionMode === "centered") {
             translate(0, -stretchHeight*0.5 + finalValues.stretchY*0.5)
          } else {
@@ -2157,15 +2198,19 @@ function dropdownTextToEffect (text) {
          break;
       case "Lowercase 2x2":
          font = "lower2x2"
-         print("Switched to Font A")
+         print("Switched to Lowercase 2x2 Typeface")
          break;
       case "Uppercase 3x2":
          font = "upper3x2"
-         print("Switched to Font B")
+         print("Switched to Uppercase 3x2 Typeface")
          break;
       case "Lowercase 3x2":
          font = "lower3x2"
-         print("Switched to Font C")
+         print("Switched to Lowercase 3x2 Typeface")
+         break;
+      case "Lowercase 2x3":
+         font = "lower2x3"
+         print("Switched to Lowercase 2x3 Typeface")
          break;
       case "weight gradient":
          effect = "weightgradient"

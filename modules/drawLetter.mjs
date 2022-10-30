@@ -1,5 +1,5 @@
 import { drawModule } from "./drawModule.mjs"
-import { mode, charInSet, sortIntoArray, waveValue } from "../sketch.mjs";
+import { mode, charInSet, sortIntoArray, waveValue, fonts2x, fonts3x } from "../sketch.mjs";
 
 export function drawLetter (letter, font) {
 
@@ -573,7 +573,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
       }
-   } else if ((font === "upper3x2" || font === "lower3x2") && "1234567890".includes(char)) {
+   } else if (fonts3x.includes(font) && "1234567890".includes(char)) {
       switch (char) {
          case "1":
             letter.ytier = 1
@@ -1689,6 +1689,210 @@ export function drawLetter (letter, font) {
             letter.ytier = 0
             drawModule(letter, "vert", 1, 1, 0, 0, {})
             drawModule(letter, "vert", 2, 2, 0, 0, {})
+            drawModule(letter, "square", 3, 3, 0, 0, {})
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            break;
+      }
+   } else if (font === "lower2x3") {
+      switch (char) {
+         case "a":
+         case "ä":
+         case "q":
+         case "u":
+         case "ü":
+         case "y":
+         case "g":
+            letter.xtier = 1
+            if (char === "u" || char === "y" || char === "ü") {
+               drawModule(letter, "square", 1, 1, 0, 0, {})
+            } else {
+               drawModule(letter, "hori", 1, 1, 0, 0, {})
+            }
+            drawModule(letter, "square", 2, 2, 0, 0, {})
+            if (char === "g") {
+               drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders - sizeOuter*0.5})
+               drawModule(letter, "square", 3, 3, 0, descenders, {})
+               drawModule(letter, "hori", 4, 4, 0, descenders, {})
+            } else if (char === "q" || char === "y") {
+               drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
+            } else {
+               drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            }
+            letter.xtier = 0
+            if (char === "u" || char === "y" || char === "ü") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+               drawModule(letter, "round", 4, 4, 0, 0, {})
+            } else {
+               drawModule(letter, "round", 1, 1, 0, 0, {})
+               drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at: "end"})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+               drawModule(letter, "round", 4, 4, 0, 0, {})
+            }
+            if (char === "ü" || char === "ä") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
+               drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
+            }
+            break;
+         case "c":
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            if (!"".includes(nextchar)) {
+               if (charInSet(nextchar, ["ul", "gap"])) {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at:"end", alwaysCut:"true"})
+               } else {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at:"end"})
+               }
+            }
+            if (!"".includes(nextchar)) {
+               if (charInSet(nextchar, ["dl", "gap"])) {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "linecut", at:"start", alwaysCut:"true"})
+               } else {
+                  drawModule(letter, "round", 3, 3, 0, 0, {type: "roundcut", at:"start"})
+               }
+            }
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            break;
+         case "d":
+            letter.xtier = 1
+            drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders})
+            drawModule(letter, "square", 3, 3, 0, 0, {})
+            drawModule(letter, "hori", 4, 4, 0, 0, {})
+            letter.xtier = 0
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at: "start"})
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            break;
+         case "e":
+         case "p":
+         case "f":
+            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, "hori", 2, 2, 0, 0, {})
+            if (char === "e") {
+               drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
+               drawModule(letter, "square", 4, 4, 0, 0, {})
+            } else {
+               drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
+            }
+            letter.xtier = 1
+            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
+            if (char === "f") {
+               drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
+               drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
+            } else {
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+            }
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            break;
+         case "i":
+         case "j":
+         case "l":
+            if (char === "l") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            } else {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
+               drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            }
+            if (char === "j") {
+               drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
+            } else {
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            }
+            break;
+         case "m":
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            letter.xtier = 1
+            drawModule(letter, "square", 3, 3, 0, 0, {})
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            letter.xtier = 2
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            break;
+         case "b":
+         case "n":
+         case "h":
+         case "r":
+            if (char === "h" || char === "b") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            } else {
+               drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            }
+            if (char !== "b") {
+               drawModule(letter, "square", 3, 3, 0, 0, {})
+            } else {
+               drawModule(letter, "hori", 3, 3, 0, 0, {})
+            }
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            letter.xtier = 1
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            if (char === "b") {
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+               drawModule(letter, "round", 3, 3, 0, 0, {})
+               drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "end"})
+            } else if (char === "r") {
+               if (charInSet(nextchar,["gap", "ul"])) {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "linecut", at: "end"})
+               } else {
+                  drawModule(letter, "round", 2, 2, 0, 0, {type: "roundcut", at: "end"})
+               }
+            } else {
+               drawModule(letter, "round", 2, 2, 0, 0, {})
+               drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            }
+            break;
+         case "o":
+         case "ö":
+            drawModule(letter, "round", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            if (char === "ö") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
+               drawModule(letter, "vert", 2, 2, 0, 0, {extend: ascenders, from: sizeOuter*0.5 + capGap, noStretchY: true})
+            }
+            break;
+         case "v":
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
+            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            break;
+         case "w":
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            letter.xtier = 1
+            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, "square", 2, 2, 0, 0, {})
+            letter.xtier = 2
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
+            drawModule(letter, "round", 3, 3, 0, 0, {})
+            drawModule(letter, "round", 4, 4, 0, 0, {})
+            break;
+         case " ":
+            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
+            break;
+         case "‸":
+            //caret symbol
+            letter.opacity = 0.5
+            letter.sizes = [sizeOuter]
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
+            break;
+         default:
+            letter.sizes = [sizeOuter]
+            letter.opacity = 0.5
+            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, "square", 2, 2, 0, 0, {})
+            drawModule(letter, "square", 3, 3, 0, 0, {})
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            letter.xtier = 1
+            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
