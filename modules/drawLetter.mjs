@@ -24,7 +24,51 @@ export function drawLetter (letter, font) {
    const horiRightAdd = (letter.spacing > 0 || charInSet(nextchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
    const horiLeftAdd  = (letter.spacing > 0 || charInSet(prevchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
 
-   if (font === "lower2x2") {
+   if (fonts2x.includes(font) && ".,!-_‸|".includes(char)) {
+      // 2 tall lowercase fonts share some punctuation
+      // "?#"" could differ per font
+      switch(char) {
+         case ".":
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
+            break;
+         case ",":
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders, from:sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
+            break;
+         case "!":
+            // wip
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight-1.5})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
+            break;
+         case "-":
+            letter.sizes = [sizeOuter]
+            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
+            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
+            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
+            break;
+         case "_":
+            letter.sizes = [sizeOuter]
+            drawModule(letter, "hori", 3, 3, -1, 0, {extend: -1})
+            drawModule(letter, "hori", 4, 4, -1, 0, {extend: -1})
+            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
+            break;
+         case " ":
+            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
+            break;
+         case "‸":
+            //caret symbol
+            letter.opacity = 0.5
+            letter.sizes = [sizeOuter]
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
+            break;
+         case "|":
+            letter.sizes = [sizeOuter]
+            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
+            break;
+      }
+   } else if (font === "lower2x2") {
       const isFlipped = (!"cktfe".includes(char))
       // draw chars
       switch(char) {
@@ -445,18 +489,6 @@ export function drawLetter (letter, font) {
                drawModule(letter, "square", 4, 4, 0, 0, {})
             }
             break;
-         case ".":
-            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
-            break;
-         case ",":
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders, from:sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
-            break;
-         case "!":
-            // wip
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: -letter.weight-1.5})
-            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true, from: sizeOuter*0.5 - (letter.weight+0.5), noStretchY: true})
-            break;
          case "?":
             // wip
             drawModule(letter, "round", 1, 1, 0, 0, {})
@@ -530,33 +562,6 @@ export function drawLetter (letter, font) {
                   drawModule(letter, "round", 3, 4, lowerZoffset+2+letter.stretchX*2+letter.spreadX*2+oddOffset*2+leftZoffset, 0, {type: "roundcut", at:"start", alwaysCut:"true"})
                }
             }
-            break;
-         case "-":
-            letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 1, 1, -1, +sizeOuter*0.5, {extend: -1})
-            drawModule(letter, "hori", 2, 2, -1, +sizeOuter*0.5, {extend: -1})
-            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
-            break;
-         case "_":
-            letter.sizes = [sizeOuter]
-            drawModule(letter, "hori", 3, 3, -1, 0, {extend: -1})
-            drawModule(letter, "hori", 4, 4, -1, 0, {extend: -1})
-            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
-            break;
-         case " ":
-            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
-            break;
-         case "‸":
-            //caret symbol
-            letter.opacity = 0.5
-            letter.sizes = [sizeOuter]
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
-            break;
-         case "|":
-            letter.sizes = [sizeOuter]
-            drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
-            drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
             break;
          case "#":
             drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
@@ -1710,9 +1715,9 @@ export function drawLetter (letter, font) {
             }
             drawModule(letter, "square", 2, 2, 0, 0, {})
             if (char === "g") {
-               drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders - sizeOuter*0.5})
+               drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders - letter.weight})
                drawModule(letter, "square", 3, 3, 0, descenders, {})
-               drawModule(letter, "hori", 4, 4, 0, descenders, {})
+               drawModule(letter, "hori", 4, 4, 0, descenders, {cap: true})
             } else if (char === "q" || char === "y") {
                drawModule(letter, "vert", 3, 3, 0, 0, {extend: descenders})
             } else {

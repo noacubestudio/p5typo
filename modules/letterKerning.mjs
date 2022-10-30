@@ -570,6 +570,13 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case "w":
             charWidth = weight * 4 + inner * 3;
             break;
+         case "|":
+            charWidth = 0;
+            break;
+         case "-":
+         case "_":
+            charWidth = max(1, outer-2)
+            break;
          default:
             charWidth = weight * 3 + inner * 2;
             break;

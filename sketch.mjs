@@ -221,7 +221,7 @@ function createGUI () {
          "lorem ipsum\ndolor sit amet",
          "the quick brown\nfox jumps over\nthe lazy dog.",
          "Victor jagt zwölf\nBoxkämpfer quer\nüber den großen\nSylter Deich",
-         "abcdefghijklm\nnopqrstuvwxy\nzäöüß_-|.,!?",
+         "abcdefghijklm\nnopqrstuvwxy\nzäöüß_-|.,:!?\n1234567890",
       ]
       let foundNewText = false
       while (!foundNewText) {
