@@ -130,6 +130,9 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
                minSpaceAfter = 1;
             }
             break;
+         case "t":
+            minSpaceAfter = 1;
+            break;
       }
    }
 
@@ -566,6 +569,9 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
                charWidth = weight * 3 + inner * 2;
             }
             break;
+         case "t":
+            charWidth = outer - weight - 1;
+            break;
          case "m":
          case "w":
             charWidth = weight * 4 + inner * 3;
@@ -691,6 +697,8 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             stretchWidth = 0
             break;
          case "o":
+         case "c":
+         case "t":
          case "ö":
          case "v":
             stretchWidth = finalValues.stretchX

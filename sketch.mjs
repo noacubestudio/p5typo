@@ -1408,22 +1408,22 @@ export function charInSet (char, sets) {
             switch (set) {
                case "ul":
                   //up left sharp
-                  found ||= "befhijklnprtuvwyz".includes(char)
+                  found ||= "befhijklnprtuvwysz".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dl":
                   //down left sharp
-                  found ||= "befhijklmnprvz".includes(char)
+                  found ||= "befhijklmnprvsz".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "ur":
                   //up right sharp
-                  found ||= "adgijlqruvwyz".includes(char)
+                  found ||= "adgijlqruvwysz".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "dr":
                   //down right sharp
-                  found ||= "adghijlmnqruwyz".includes(char)
+                  found ||= "adghijlmnqruwysz".includes(char)
                   found ||= !validLetters[font].includes(char)
                   break;
                case "gap":

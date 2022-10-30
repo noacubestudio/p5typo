@@ -1772,28 +1772,35 @@ export function drawLetter (letter, font) {
          case "p":
          case "f":
          case "k":
-            if (char !== "k") drawModule(letter, "square", 1, 1, 0, 0, {})
-            drawModule(letter, "hori", 2, 2, 0, 0, {})
+         case "t":
+            if (char !== "k" && char !== "t") drawModule(letter, "square", 1, 1, 0, 0, {})
+            if (char !== "t") {
+               drawModule(letter, "hori", 2, 2, 0, 0, {})
+            } else {
+               drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
+            }
             if (char === "e") {
                drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
                drawModule(letter, "square", 4, 4, 0, 0, {})
-            } else if (char === "k") {
+            } else if (char === "k" || char === "t") {
                drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
                drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at: "end"})
                drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             } else {
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
             }
-            letter.xtier = 1
-            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
-            if (char === "f" || char === "k") {
-               drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
-               drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
-            } else {
-               drawModule(letter, "round", 2, 2, 0, 0, {})
-               drawModule(letter, "round", 3, 3, 0, 0, {})
+            if (char !== "t") {
+               letter.xtier = 1
+               drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
+               if (char === "f" || char === "k") {
+                  drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
+                  drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
+               } else {
+                  drawModule(letter, "round", 2, 2, 0, 0, {})
+                  drawModule(letter, "round", 3, 3, 0, 0, {})
+               }
+               drawModule(letter, "round", 4, 4, 0, 0, {})
             }
-            drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
          case "i":
          case "j":
@@ -1885,14 +1892,14 @@ export function drawLetter (letter, font) {
             break;
          case "s":
             drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
-            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "hori", 3, 3, 0, 0, {extend: sizeInner*0.5, noCap: true})
             drawModule(letter, "square", 4, 4, 0, 0, {})
             letter.xtier = 1
             drawModule(letter, "hori", 1, 1, 0, 0, {extend: sizeInner*0.5, noCap: true})
             drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
-            drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "hori", 3, 3, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "diagonal", 4, 4, 0, 0, {})
             letter.xtier = 0
             drawModule(letter, "diagonal", 2, 2, 0, 0, {})
@@ -1900,11 +1907,11 @@ export function drawLetter (letter, font) {
          case "z":
             drawModule(letter, "square", 1, 1, 0, 0, {})
             drawModule(letter, "hori", 2, 2, 0, 0, {extend: sizeInner*0.5, noCap: true})
-            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "hori", 4, 4, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             letter.xtier = 1
             drawModule(letter, "diagonal", 1, 1, 0, 0, {})
-            drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "hori", 2, 2, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "hori", 4, 4, 0, 0, {extend: sizeInner*0.5, noCap: true})
