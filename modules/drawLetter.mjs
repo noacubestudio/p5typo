@@ -1766,17 +1766,22 @@ export function drawLetter (letter, font) {
          case "e":
          case "p":
          case "f":
-            drawModule(letter, "square", 1, 1, 0, 0, {})
+         case "k":
+            if (char !== "k") drawModule(letter, "square", 1, 1, 0, 0, {})
             drawModule(letter, "hori", 2, 2, 0, 0, {})
             if (char === "e") {
                drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
                drawModule(letter, "square", 4, 4, 0, 0, {})
+            } else if (char === "k") {
+               drawModule(letter, "vert", 1, 1, 0, 0, {extend: ascenders})
+               drawModule(letter, "square", 1, 1, 0, 0, {type: "branch", at: "end"})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             } else {
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: descenders})
             }
             letter.xtier = 1
             drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
-            if (char === "f") {
+            if (char === "f" || char === "k") {
                drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
                drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
             } else {

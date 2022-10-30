@@ -122,6 +122,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
             }
             break;
          case "f":
+         case "k":
             if (!charInSet(nextchar, ["gap", "dl"])) {
                overwriteAfter = -weight;
                ligatureAfter = true;
@@ -558,6 +559,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             }
             break;
          case "f":
+         case "k":
             if (charInSet(nextchar, ["gap", "dl"])) {
                charWidth = outer + inner - 1;
             } else {
