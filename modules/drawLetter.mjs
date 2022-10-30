@@ -1216,8 +1216,8 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
          case "f":
+            letter.ytier = 1
             if (mode.noLigatures) {
-               letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
                drawModule(letter, "square", 2, 2, 0, 0, {})
                drawModule(letter, "vert", 3, 3, 0, 0, {})
@@ -1229,8 +1229,18 @@ export function drawLetter (letter, font) {
                drawModule(letter, "hori", 3, 3, 0, 0, {cap: true})
                drawModule(letter, "vert", 4, 4, 0, 0, {extend: ascenders})
                drawModule(letter, "square", 4, 4, 0, 0, {type: "branch", at:"start"})
+            } else if (ascenders >= sizeOuter*0.5) {
+               drawModule(letter, (mode.altSquare)?"square":"round",1, 1, 0, -ascenders, {noStretchY: true})
+               drawModule(letter, "hori", 2, 2, 0, -ascenders, {extend: -spreadWeightX -1, noStretchY: true})
+               drawModule(letter, "vert", 4, 1, 0, -ascenders, {extend: ascenders-sizeOuter, noStretchY: true})
+
+               drawModule(letter, "square",1, 1, 0, 0, {type: "branch", at:"end"})
+               drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
+               drawModule(letter, "vert", 4, 4, 0, 0, {})
+               letter.ytier = 0
+               drawModule(letter, "vert", 1, 1, 0, 0, {})
+               drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             } else {
-               letter.ytier = 1
                drawModule(letter, "round", 1, 1, 0, 0, {})
                if (!"j".includes(nextchar)) {
                   if (charInSet(nextchar,["ul", "gap"])) {
