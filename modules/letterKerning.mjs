@@ -15,7 +15,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    let overwriteAfter = 0;
    let ligatureAfter = false;
    let minSpaceAfter;
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       switch (char) {
          case "s":
             if (!mode.altS) {
@@ -64,7 +64,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
             }
             break;
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       switch (char) {
          case "t":
             minSpaceAfter = 1;
@@ -90,7 +90,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
             minSpaceAfter = 1;
             break;
       }
-   } else if (font === "fontc" && !mode.noLigatures) {
+   } else if (font === "lower3x2" && !mode.noLigatures) {
       switch (char) {
          case "f":
          case "r":
@@ -118,7 +118,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    let ligatureBefore = false;
    let minSpaceBefore;
    if (ligatureAfter === false) {
-      if (font === "fonta") {
+      if (font === "lower2x2") {
          switch (nextchar) {
             case "s":
                if (!mode.altS) {
@@ -161,7 +161,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
                }
                break;
          }
-      } else if (font === "fontb") {
+      } else if (font === "upper3x2") {
          switch (nextchar) {
             case "j":
                if (charInSet(char, ["dr"])) {
@@ -174,7 +174,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
                minSpaceBefore = 1;
                break;
          }
-      } else if (font === "fontc") {
+      } else if (font === "lower3x2") {
          switch (nextchar) {
             case "j":
                if (!charInSet(char, ["dr"])) {
@@ -188,7 +188,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    }
 
    // specific letter combination ligatures
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       if ("ktlcrfsxz".includes(char) && nextchar === "s") {
          overwriteBefore = -inner - weight - finalValues.stretchX;
          ligatureBefore = true;
@@ -217,7 +217,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
          overwriteBefore = weight - outer / 2 - finalValues.stretchX / 2;
          ligatureBefore = true;
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       if ("lct".includes(char) && "tj".includes(nextchar)) {
          overwriteBefore = -outer + weight * 2 + 1 - finalValues.stretchX;
          ligatureBefore = true;
@@ -226,7 +226,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
          overwriteBefore = -outer + weight * 2 + 2 - finalValues.stretchX;
          ligatureBefore = true;
       }
-   } else if (font === "fontc") {
+   } else if (font === "lower3x2") {
       if ("l".includes(char) && "i".includes(nextchar) && !"l".includes(prevchar)) {
          overwriteAfter = -weight;
          ligatureAfter = true;
@@ -237,7 +237,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    }
 
    // minimum spacing: special cases
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       if (finalValues.rings >= 2) {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
                ("dgi".includes(char) && "i".includes(nextchar))) {
@@ -251,7 +251,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
                   minSpaceAfter = 2 - finalValues.rings; // if there's less than two rings, introduce forced gap
          }
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       if (finalValues.rings < 2) {
          if (("g".includes(char) && "abcdefghiklmnopqruvw".includes(nextchar))
                || ("i".includes(char) && "abcdefhiklnpruvwxz".includes(nextchar))
@@ -259,7 +259,7 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
             minSpaceAfter = 2 - finalValues.rings; // if there's less than two rings, introduce forced gap
          }
       }
-   } else if (font === "fontc") {
+   } else if (font === "lower3x2") {
       if (finalValues.rings >= 2 && endCapStyle === "none") {
          if (("i".includes(char) && "bhkltiv".includes(nextchar)) ||
                ("dij".includes(char) && "i".includes(nextchar))) {
@@ -313,7 +313,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
    const optionalGap = map(inner, 1, 2, 0, 1, true); // WIP why is this here lol
    // widths of letters without overlapping
    let charWidth = outer;
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       switch (char) {
          case "m":
          case "w":
@@ -400,7 +400,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             charWidth = max(1, outer-2)
             break;
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       switch (char) {
          case "m":
          case "w":
@@ -450,7 +450,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             charWidth = max(1, outer-2)
             break;
       }
-   } else if (font === "fontc") {
+   } else if (font === "lower3x2") {
       switch (char) {
          case "m":
          case "w":
@@ -504,7 +504,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
 
    // stretchWidth
    let stretchWidth = undefined;
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       switch (char) {
          case "s":
             if (!mode.altS) {
@@ -539,7 +539,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          default:
             stretchWidth = finalValues.stretchX + finalValues.spreadX;
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       switch (char) {
          case "m":
          case "w":
@@ -572,7 +572,7 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          default:
             stretchWidth = (finalValues.stretchX + finalValues.spreadX);
       }
-   } else if (font === "fontc") {
+   } else if (font === "lower3x2") {
       switch (char) {
          case "m":
          case "w":

@@ -24,7 +24,7 @@ export function drawLetter (letter, font) {
    const horiRightAdd = (letter.spacing > 0 || charInSet(nextchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
    const horiLeftAdd  = (letter.spacing > 0 || charInSet(prevchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
 
-   if (font === "fonta") {
+   if (font === "lower2x2") {
       const isFlipped = (!"cktfe".includes(char))
       // draw chars
       switch(char) {
@@ -573,7 +573,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
       }
-   } else if ((font === "fontb" || font === "fontc") && "1234567890".includes(char)) {
+   } else if ((font === "upper3x2" || font === "lower3x2") && "1234567890".includes(char)) {
       switch (char) {
          case "1":
             letter.ytier = 1
@@ -705,7 +705,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX -1})
             break;
       }
-   } else if (font === "fontb") {
+   } else if (font === "upper3x2") {
       switch (char) {
          case "a":
          case "ä":
@@ -1135,7 +1135,7 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 4, 4, 0, 0, {})
             break;
       }
-   } else if (font === "fontc") {
+   } else if (font === "lower3x2") {
       switch (char) {
          case "a":
          case "ä":

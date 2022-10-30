@@ -60,7 +60,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
    basePos.y += style.offsetY * (OFFSETRIGHT  + style.vOffset + style.xtier);
    // offset based on quarter and stretch
    basePos.x += OFFSETRIGHT * PLUSX;
-   basePos.y += OFFSETBOTTOM * PLUSY * ((font === "fontb" || font === "fontc") ? 0.5 : 1);
+   basePos.y += OFFSETBOTTOM * PLUSY * ((font === "upper3x2" || font === "lower3x2") ? 0.5 : 1);
    // modify based on tier (top/right half)
    basePos.y -= style.ytier * (OUTERSIZE - style.weight + PLUSY * 0.5);
    basePos.x += style.xtier * (OUTERSIZE - style.weight + SPREADX * 0.5 + STRETCHX);
@@ -116,7 +116,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       if (shapeParams.noStretch)
          return;
 
-      if (font === "fonta" || ((OFFSETBOTTOM === 0 && style.ytier === 1) || (OFFSETBOTTOM === 1 && style.ytier === 0))) {
+      if (font === "lower2x2" || ((OFFSETBOTTOM === 0 && style.ytier === 1) || (OFFSETBOTTOM === 1 && style.ytier === 0))) {
          let outerSpreadY = -(OUTERSIZE - INNERSIZE) * spreadYScale;
          for (let betweenStep = 0; betweenStep > outerSpreadY; betweenStep -= style.weight) {
             drawSinglePathOfModule(INNERSIZE + style.weight, "bg", 0, betweenStep);
@@ -142,7 +142,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       )
       const useSpreadY = (
          (SPREADY > 0 && shapeParams.noStretchY === undefined && shapeParams.noStretch === undefined) &&
-         (font === "fonta" || (OFFSETBOTTOM===0&&style.ytier===1) || (OFFSETBOTTOM===1&&style.ytier===0))
+         (font === "lower2x2" || (OFFSETBOTTOM===0&&style.ytier===1) || (OFFSETBOTTOM===1&&style.ytier===0))
       )
 
       SIZES.forEach((size) => {
@@ -283,7 +283,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             linePos.y2 += SIDEY * LINE_END;
 
             // if centered midlines are active, don't draw the vertical line, instead add to array
-            if (midlineEffects.includes(effect) && mode.centeredEffect && (font === "fontb" || font === "fontc")) {
+            if (midlineEffects.includes(effect) && mode.centeredEffect && (font === "upper3x2" || font === "lower3x2")) {
 
                // relevant possible spots
                if ((style.ytier === 1 && SIDEY === 1) || (style.ytier === 0 && SIDEY === -1)) {
@@ -414,7 +414,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
          const isCutVertical = (shapeParams.at === "end" && arcQ % 2 === 1 || shapeParams.at === "start" && arcQ % 2 === 0);
          const isCutHorizontal = (shapeParams.at === "end" && arcQ % 2 === 0 || shapeParams.at === "start" && arcQ % 2 === 1);
 
-         if (shapeParams.type === "linecut" && font === "fonta") {
+         if (shapeParams.type === "linecut" && font === "lower2x2") {
             if (isCutVertical) useSpreadY = false; // fix the inside of e
             if (isCutHorizontal) useSpreadX = false; // fix the inside of a
 
@@ -494,11 +494,11 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   if (dangerousOverlap && isCutVertical && inNextLetter) {
                      // might have to be removed
                      //but depends on what letter is adjacent
-                     if (font === "fonta") {
+                     if (font === "lower2x2") {
                         // only really matters for e
                         if (charInSet(style.nextchar, ["ml"]) && OFFSETRIGHT === 1)
                            return 0;
-                     } else if (font === "fontb") {
+                     } else if (font === "upper3x2") {
                         // matters for s,z,y
                         if (charInSet(style.nextchar, ["ml"]) && OFFSETRIGHT === 1)
                            return 0;
@@ -847,7 +847,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
 
             if (shapeParams.noStretchX === undefined && !isCutInDir(shapeParams.type, "x") && (layer === "fg" || outerSpreadX === 0)) {
 
-               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "fontb" || font === "fontc") {
+               if (font === "lower2x2" && !(shapeParams.type === "linecut" && isCutHorizontal) || font === "upper3x2" || font === "lower3x2") {
                   if (SPREADX > 0)
                      drawStretchLines("spread", SIDEX, SIDEY, "hori", spreadFillStepX, spreadFillStepY, 0);
                }
@@ -859,7 +859,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
             if (shapeParams.noStretchY === undefined && !isCutInDir(shapeParams.type, "y") && (layer === "fg" || outerSpreadY === 0)) {
 
                // round shapes should get vertical spread effect, unless...
-               if (font === "fonta" && !(shapeParams.type === "linecut" && isCutVertical) || font === "fontb" || font === "fontc") {
+               if (font === "lower2x2" && !(shapeParams.type === "linecut" && isCutVertical) || font === "upper3x2" || font === "lower3x2") {
                   if (SPREADY > 0)
                      drawStretchLines("spread", SIDEX, SIDEY, "vert", spreadFillStepX, spreadFillStepY, fillIndexX);
                }
@@ -884,13 +884,13 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
       function drawStretchLines (stretchMode, sideX, sideY, axis, spreadFillStepX, spreadFillStepY, fillIndexX) {
 
          if (stretchMode === "extra") {
-            if (font === "fontb" || font === "fontc") {
+            if (font === "upper3x2" || font === "lower3x2") {
                if (style.ytier === 1 && sideY === -1 || style.ytier === 0 && sideY === 1) {
                   return;
                }
             } 
          } else {
-            if ((font === "fontb" || font === "fontc") && axis === "vert") {
+            if ((font === "upper3x2" || font === "lower3x2") && axis === "vert") {
                if (style.ytier === 1 && sideY === 1 || style.ytier === 0 && sideY === -1) {
                   return;
                }
@@ -970,7 +970,7 @@ export function drawModule(style, shape, arcQ, offQ, tx, ty, shapeParams) {
                   }
 
                   if (!midlineEffects.includes(effect) || stretchMode === "extra") {
-                     if (SPREADY > 0 && (font === "fontb" || font === "fontc")) {
+                     if (SPREADY > 0 && (font === "upper3x2" || font === "lower3x2")) {
                         if ((style.ytier === 1 && sideY === -1) || (style.ytier === 0 && sideY === 1)) {
                            lineType(sPos.x - offsetShift, sPos.y + stretchDifference, sPos.x - offsetShift, sPos.y);
                         }
