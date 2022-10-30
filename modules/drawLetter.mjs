@@ -1883,6 +1883,34 @@ export function drawLetter (letter, font) {
             drawModule(letter, "round", 3, 3, 0, 0, {})
             drawModule(letter, "round", 4, 4, 0, 0, {})
             break;
+         case "s":
+            drawModule(letter, "vert", 1, 1, 0, 0, {cap: true})
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "hori", 3, 3, 0, 0, {extend: sizeInner*0.5, noCap: true})
+            drawModule(letter, "square", 4, 4, 0, 0, {})
+            letter.xtier = 1
+            drawModule(letter, "hori", 1, 1, 0, 0, {extend: sizeInner*0.5, noCap: true})
+            drawModule(letter, "square", 2, 2, 0, 0, {})
+            drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
+            drawModule(letter, "hori", 3, 3, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "diagonal", 4, 4, 0, 0, {})
+            letter.xtier = 0
+            drawModule(letter, "diagonal", 2, 2, 0, 0, {})
+            break;
+         case "z":
+            drawModule(letter, "square", 1, 1, 0, 0, {})
+            drawModule(letter, "hori", 2, 2, 0, 0, {extend: sizeInner*0.5, noCap: true})
+            drawModule(letter, "hori", 4, 4, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
+            letter.xtier = 1
+            drawModule(letter, "diagonal", 1, 1, 0, 0, {})
+            drawModule(letter, "hori", 2, 2, 0, 0, {extend: -spreadWeightX-1})
+            drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
+            drawModule(letter, "square", 3, 3, 0, 0, {})
+            drawModule(letter, "hori", 4, 4, 0, 0, {extend: sizeInner*0.5, noCap: true})
+            letter.xtier = 0
+            drawModule(letter, "diagonal", 3, 3, 0, 0, {})
+            break;
          case " ":
             sortIntoArray(letter.spaceSpots, letter.posFromLeft)
             break;

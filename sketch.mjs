@@ -1961,47 +1961,74 @@ function getWidths (lineText, position, type) {
 
 function letterYOffsetCount (prevchar, char, nextchar) {
 
+   if (" ‸!.,:;|".includes(char)) return 0;
+
    // width for vertical offset
    let offsetSegments = 0
-   switch (char) {
-      case "m":
-      case "w":
-         offsetSegments = 2
-         break;
-      case "x":
-         if (font === "lower2x2") offsetSegments = 2
-         else offsetSegments = 1
-         break;
-      case "s":
-         if (font === "lower2x2") {
-            if (!mode.altS) {
-               // stretch spacing depends on if it connects
-               if (charInSet(prevchar,["gap", "dr"])) {
-                  offsetSegments +=1
+   if (font !== "lower2x3") {
+      switch (char) {
+         case "m":
+         case "w":
+            offsetSegments = 2
+            break;
+         case "x":
+            if (font === "lower2x2") offsetSegments = 2
+            else offsetSegments = 1
+            break;
+         case "s":
+            if (font === "lower2x2") {
+               if (!mode.altS) {
+                  // stretch spacing depends on if it connects
+                  if (charInSet(prevchar,["gap", "dr"])) {
+                     offsetSegments +=1
+                  }
+                  if (charInSet(nextchar,["gap", "ul"])) {
+                     offsetSegments +=1
+                  }
                }
-               if (charInSet(nextchar,["gap", "ul"])) {
-                  offsetSegments +=1
-               }
+            } else {
+               offsetSegments = 1
             }
-         } else {
+            break;
+         case "i":
+            offsetSegments = 0
+            break;
+         case "l":
+            if (font === "lower3x2") {
+               offsetSegments = 0
+            } else {
+               offsetSegments = 1
+            }
+            break;
+         case "z":
+            if (font === "lower2x2") offsetSegments = 2
+            else offsetSegments = 1
+            break;
+         default:
             offsetSegments = 1
-         }
-         break;
-      case "i":
-      case ".":
-      case ",":
-      case "!":
-      case " ":
-      case "‸":
-         offsetSegments = 0
-         break;
-      case "z":
-         if (font === "lower2x2") offsetSegments = 2
-         else offsetSegments = 1
-         break;
-      default:
-         offsetSegments = 1
-         break;
+            break;
+      }
+   } else {
+      switch (char) {
+         case "o":
+         case "ö":
+         case "c":
+         case "v":
+            offsetSegments = 1
+            break;
+         case "m":
+         case "w":
+            offsetSegments = 3
+            break;
+         case "i":
+         case "l":
+         case "j":
+            offsetSegments = 0
+            break;
+         default:
+            offsetSegments = 2
+            break;
+      }
    }
 
    return offsetSegments
