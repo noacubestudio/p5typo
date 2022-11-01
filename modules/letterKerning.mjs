@@ -694,6 +694,13 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
          case "i":
          case "j":
          case "l":
+         case ".":
+         case ",":
+         case "!":
+         case "|":
+         case ":":
+         case " ":
+         case "‸": //caret
             stretchWidth = 0
             break;
          case "o":

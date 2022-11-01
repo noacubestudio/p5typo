@@ -18,13 +18,13 @@ export function drawLetter (letter, font) {
    const spreadWeightX = letter.weight + letter.spreadX/2
    const spreadWeightY = letter.weight + letter.spreadY/2
 
-   const capGap = (letter.endCap === "round") ? map(letter.weight, 0, 1, 1, 0, true) : 1
+   const capGap = (letter.endCap === "round" && ascenders < 2) ? map(letter.weight, 0, 1, 1, 0, true) : 1
    const centersDistance = letter.weight + sizeInner //keep distance of 1, approaching center of double ytier letters
 
    const horiRightAdd = (letter.spacing > 0 || charInSet(nextchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
    const horiLeftAdd  = (letter.spacing > 0 || charInSet(prevchar, ["gap"])) ? 0 : letter.spacing - capGap //WIP
 
-   if (fonts2x.includes(font) && ".,!-_‸|".includes(char)) {
+   if (fonts2x.includes(font) && ".,!-_‸| ".includes(char)) {
       // 2 tall lowercase fonts share some punctuation
       // "?#"" could differ per font
       switch(char) {
@@ -1900,9 +1900,9 @@ export function drawLetter (letter, font) {
             drawModule(letter, "square", 2, 2, 0, 0, {})
             drawModule(letter, "vert", 3, 3, 0, 0, {cap: true})
             drawModule(letter, "hori", 3, 3, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
-            drawModule(letter, "diagonal", 4, 4, 0, 0, {})
+            drawModule(letter, "round", 4, 4, 0, 0, {type: "branch", at: "end"})
             letter.xtier = 0
-            drawModule(letter, "diagonal", 2, 2, 0, 0, {})
+            drawModule(letter, "round", 2, 2, 0, 0, {type: "branch", at: "end"})
             break;
          case "z":
             drawModule(letter, "square", 1, 1, 0, 0, {})
@@ -1910,16 +1910,13 @@ export function drawLetter (letter, font) {
             drawModule(letter, "hori", 4, 4, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             letter.xtier = 1
-            drawModule(letter, "diagonal", 1, 1, 0, 0, {})
+            drawModule(letter, "round", 1, 1, 0, 0, {type: "branch", at: "start"})
             drawModule(letter, "hori", 2, 2, 0, 0, {extend: min(-spreadWeightX-1, -sizeOuter*0.5+0.5)})
             drawModule(letter, "vert", 2, 2, 0, 0, {cap: true})
             drawModule(letter, "square", 3, 3, 0, 0, {})
             drawModule(letter, "hori", 4, 4, 0, 0, {extend: sizeInner*0.5, noCap: true})
             letter.xtier = 0
-            drawModule(letter, "diagonal", 3, 3, 0, 0, {})
-            break;
-         case " ":
-            sortIntoArray(letter.spaceSpots, letter.posFromLeft)
+            drawModule(letter, "round", 3, 3, 0, 0, {type: "branch", at: "start"})
             break;
          case "‸":
             //caret symbol
