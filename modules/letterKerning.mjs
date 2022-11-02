@@ -10,59 +10,18 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    let spacing = max(finalValues.spacing, -weight);
    const optionalGap = map(inner, 1, 2, 0, 1, true);
 
-   // overlap after letter, overwrites default variable spacing
-   // only happens if it connects into next letter
+   // letters that connect into the next letter have a minimum or fixed spacing
+   // instead of just the default
    let overwriteAfter = 0;
    let ligatureAfter = false;
    let minSpaceAfter;
    if (font === "lower2x2") {
-      switch (char) {
-         case "s":
-            if (!mode.altS) {
-               if (!charInSet(nextchar, ["gap", "ul"])) {
-                  overwriteAfter = -weight;
-                  ligatureAfter = true;
-               } else {
-                  minSpaceAfter = 1;
-               }
-            }
-            break;
-         case "k":
-         case "z":
-            if (!charInSet(nextchar, ["gap", "dl"])) {
-               overwriteAfter = -weight;
-               ligatureAfter = true;
-            } else {
-               minSpaceAfter = 1;
-            }
-            break;
-         case "x":
-            if (!(charInSet(nextchar, ["gap", "dl"]) && charInSet(nextchar, ["gap", "ul"]))) {
-               overwriteAfter = -weight;
-               ligatureAfter = true;
-            } else {
-               minSpaceAfter = 1;
-            }
-            break;
-         case "t":
-         case "l":
-            if (!charInSet(nextchar, ["gap", "dl"])) {
-               overwriteAfter = -weight;
-               ligatureAfter = true;
-            } else {
-               minSpaceAfter = 1;
-            }
-            break;
-         case "f":
-         case "c":
-         case "r":
-            if (!charInSet(nextchar, ["gap", "ul"])) {
-               overwriteAfter = -weight;
-               ligatureAfter = true;
-            } else {
-               minSpaceAfter = 1;
-            }
-            break;
+      if ("kzxtlfcr".includes(char)) {
+         minSpaceAfter = 1;
+      } else if ("s".includes(char)) {
+         if (!mode.altS) {
+            minSpaceAfter = 1;
+         }
       }
    } else if (font === "upper3x2") {
       switch (char) {
@@ -143,47 +102,8 @@ export function kerningAfter(prevchar, char, nextchar, inner, outer) {
    let minSpaceBefore;
    if (ligatureAfter === false) {
       if (font === "lower2x2") {
-         switch (nextchar) {
-            case "s":
-               if (!mode.altS) {
-                  if (!charInSet(char, ["gap", "dr"])) {
-                     overwriteBefore = -weight;
-                     ligatureBefore = true;
-                  } else {
-                     if ("e".includes(char)) {
-                        ligatureBefore = true;
-                        overwriteBefore = optionalGap;
-                     } else {
-                        minSpaceBefore = optionalGap;
-                     }
-                  }
-               } else {
-                  //alt s
-                  if (!charInSet(char, ["gap"])) {
-                     overwriteBefore = -weight;
-                     ligatureBefore = true;
-                  }
-               }
-               break;
-            case "x":
-               if (!(charInSet(char, ["gap", "ur"]) && charInSet(char, ["gap", "dr"]))) {
-                  overwriteBefore = -weight;
-                  ligatureBefore = true;
-               } else {
-                  if ("e".includes(char)) {
-                     ligatureBefore = true;
-                  } else {
-                     minSpaceBefore = 1;
-                  }
-               }
-               break;
-            case "z":
-            case "j":
-               if (!(charInSet(char, ["gap"]))) {
-                  overwriteBefore = -weight;
-                  ligatureBefore = true;
-               }
-               break;
+         if ("sxzj". includes(nextchar)) {
+            minSpaceBefore = 1;
          }
       } else if (font === "upper3x2") {
          switch (nextchar) {
@@ -344,27 +264,15 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             charWidth = weight * 3 + inner * 2;
             break;
          case "x":
-            charWidth = weight * 2 + inner * 2 + 1;
-            if ((charInSet(prevchar, ["ur"])&&charInSet(prevchar, ["dr"])) || charInSet(prevchar, ["gap"])) {
-               charWidth += -weight*1 -1;
-            }
-            if ((charInSet(nextchar, ["ul"])&&charInSet(nextchar, ["dl"])) || charInSet(nextchar, ["gap"])) {
-               charWidth += -weight*1 -1;
-            }
-            break;
-         case "j":
-            if (charInSet(prevchar, ["gap"])) {
-               charWidth = weight * 1 + inner - 1;
-            }
+            charWidth = inner * 2 + weight - 2;
             break;
          case "s":
             if (!mode.altS) {
-               charWidth = weight * 3 + inner * 2;
+               charWidth = weight * 3 + inner * 2 -2 + optionalGap;
                if (charInSet(nextchar, ["gap", "ul"])) {
-                  charWidth += -0.5 * outer + optionalGap -1;
-               }
-               if (charInSet(prevchar, ["gap", "dr"])) {
-                  charWidth += -0.5 * outer;
+                  charWidth += -1.0 * outer + optionalGap + map(inner, 1, 2, 0, 1, true);
+               } else {
+                  charWidth += -0.5 * outer -weight;
                }
             } else {
                if (charInSet(prevchar, ["gap"])) {
@@ -373,32 +281,21 @@ export function letterWidth(prevchar, char, nextchar, inner, outer, extendOffset
             }
             break;
          case "z":
-            charWidth = outer + 2 + weight + waveValue(outer, 0, 1);
-            if (charInSet(prevchar, ["gap"])) {
-               charWidth += -weight -1;
-            }
-            if (charInSet(nextchar, ["gap", "dl"])) {
-               charWidth += -weight -1;
-            }
+            charWidth = outer - weight + waveValue(outer, 0, 1);
             break;
          case "t":
          case "l":
-            if (charInSet(nextchar, ["gap", "dl"])) {
-               charWidth = outer - weight - 1;
-            }
-            break;
          case "f":
          case "c":
          case "r":
-            if (charInSet(nextchar, ["gap", "ul"])) {
-               charWidth = outer - weight - 1;
-            }
+         case "j":
+            charWidth = outer - weight - 1;
             break;
          case "k":
             if (charInSet(nextchar, ["gap", "dl"])) {
                charWidth = outer - 1;
             } else {
-               charWidth = outer + 1;
+               charWidth = outer - weight;
             }
             break;
          case " ":

@@ -259,19 +259,18 @@ export function drawLetter (letter, font) {
             break;
          case "s":
             if (!mode.altS) {
+               let xOffset = -letter.weight-1 
                //LEFT OVERLAP
                letter.flipped = isFlipped
                if (prevchar === "s") {
-                  drawModule(letter, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                  drawModule(letter, "round", 4, 4, xOffset, 0, {type: "roundcut", at:"end"})
                } else if (prevchar === "r") {
-                  drawModule(letter, "round", 4, 4, 0, 0, {type: "linecut", at:"end"})
                } else if (!charInSet(prevchar,["gap", "dr"]) && !"fkz".includes(prevchar)) {
-                  drawModule(letter, "round", 4, 4, 0, 0, {type: "roundcut", at:"end"})
+                  drawModule(letter, "round", 4, 4, xOffset, 0, {type: "roundcut", at:"end"})
+               } else {
+                  xOffset = -sizeOuter * 0.5 -1 + extendOffset -letter.stretchX -letter.spreadX + map(sizeInner, 1, 2, 0, 1, true)
                }
-               let xOffset = 0
-               //start further left if not connecting left
-               if (charInSet(prevchar,["gap", "dr"])) {
-                  xOffset = -sizeOuter*0.5 + extendOffset -letter.stretchX -letter.spreadX
+               if (charInSet(prevchar,["gap", "dr"])) { 
                   drawModule(letter, "round", 3, 3, xOffset, 0, {type: "extend", at:"end"})
                } else {
                   drawModule(letter, "round", 3, 3, xOffset, 0, {})
@@ -298,10 +297,7 @@ export function drawLetter (letter, font) {
             }
             break;
          case "x":
-            let leftXoffset = 0
-            if (charInSet(prevchar,["gap","ur"]) && charInSet(prevchar,["gap","dr"])) {
-               leftXoffset = -letter.weight-1
-            }
+            let leftXoffset = -letter.weight-1
             //LEFT OVERLAP
             // top connection
             if (!charInSet(prevchar,["gap"]) && !"xz".includes(prevchar)) {
@@ -503,10 +499,8 @@ export function drawLetter (letter, font) {
             drawModule(letter, "vert", 4, 4, 0, 0, {cap: true})
             break;
          case "j":
-            let leftOffset = 0
-            if (charInSet(prevchar,["gap"])) {
-               leftOffset = -letter.weight-1
-            }
+            let leftOffset = -letter.weight-1
+            
             // LEFT OVERLAP
             if (prevchar !== undefined) {
                if (!"tkz".includes(prevchar)) {
@@ -531,13 +525,8 @@ export function drawLetter (letter, font) {
             break;
          case "z":
             let oddOffset = waveValue(sizeOuter, 0, 0.5)
-            let leftZoffset = 0
+            let leftZoffset = -letter.weight-1
             const lowerZoffset = letter.weight
-            if (charInSet(prevchar,["gap"])) {
-               leftZoffset = -letter.weight-1
-            } else if ("czfkxt".includes(prevchar)) {
-               leftZoffset = -letter.weight-1
-            }
             // TOP LEFT OVERLAP
             if (!"czfkxt".includes(prevchar)) {
                if (charInSet(prevchar,["ur", "gap"])) {
